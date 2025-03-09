@@ -1,7 +1,6 @@
 const router = require("express").Router();
+const { getRestaurantInfo } = require("./controller");
 
-router.get("/", (req, res) => {
-  res.send("this is restaurants router");
-});
+router.get("/:restaurant_idx", getRestaurantInfo);
 
 module.exports = router;
