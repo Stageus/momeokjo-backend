@@ -1,3 +1,5 @@
+const pool = require("../database/db");
+
 // 일반 wrapper
 const tryCatchWrapper = (func) => async (req, res, next) => {
   try {
