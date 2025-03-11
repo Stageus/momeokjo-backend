@@ -1,11 +1,15 @@
 const router = require("express").Router();
 const {
+  getRestaurantInfoList,
   createRestaurantInfo,
   getRestaurantCategoryList,
   createRestaurantCategory,
   updateRestaurantCategoryByIdx,
   getRestaurantInfoByIdx,
 } = require("./controller");
+
+// 음식점 리스트 조회
+router.get("/", getRestaurantInfoList);
 
 // 음식점 등록
 router.post("/", createRestaurantInfo);

@@ -1,3 +1,58 @@
+// 음식점 리스트 조회
+const getRestaurantInfoListFromDb = async (
+  user_idx,
+  category_idx,
+  range,
+  page,
+  user_longitude,
+  user_latitude,
+  client
+) => {
+  const results = await client.query(
+    `
+      SELECT 
+        CEIL(COUNT(list.idx) / 15::float) AS total_pages,
+        json_agg(
+          json_build_object(
+            'restaurant_idx', list.idx,
+            'category_name', category.name,
+            'restaurant_name', list.name,
+            'longitude', longitude,
+            'latitude', latitude,
+            'address', address,
+            'address_detail', address_detail,
+            'phone', phone,
+            'start_time', start_time,
+            'end_time', end_time,
+            'is_mine', CASE WHEN list.users_idx = $1 THEN true ELSE false END
+          )
+        ) AS data
+      FROM restaurants.lists AS list
+      JOIN restaurants.categories AS category ON list.categories_idx = category.idx
+      WHERE list.is_deleted = false
+      AND category.is_deleted = false
+      AND category.idx = $2
+      AND ST_DWithin(
+        list.location, 
+        ST_SetSRID(ST_MakePoint($3, $4), 4326), 
+        $5
+      )
+      OFFSET $6
+      LIMIT 15
+    `,
+    [
+      user_idx,
+      category_idx,
+      user_longitude,
+      user_latitude,
+      range,
+      15 * (page - 1),
+    ]
+  );
+
+  return results.rows[0];
+};
+
 // 음식점 등록
 const createRestaurantInfoAtDb = async (
   category_idx,
@@ -125,6 +180,7 @@ const getRestaurantInfoByIdxFromDb = async (restaurant_idx, client) => {
 };
 
 module.exports = {
+  getRestaurantInfoListFromDb,
   createRestaurantInfoAtDb,
   getRestaurantCategoryListFromDb,
   createRestaurantCategoryAtDb,
