@@ -1,4 +1,5 @@
-const getRestaurantInfoByIdxFromDB = async (restaurant_idx, client) => {
+// 음식점 상세보기 조회
+const getRestaurantInfoByIdxFromDb = async (restaurant_idx, client) => {
   const results = await client.query(
     `
       SELECT 
@@ -22,4 +23,4 @@ const getRestaurantInfoByIdxFromDB = async (restaurant_idx, client) => {
   return results.rows[0];
 };
 
-module.exports = { getRestaurantInfoByIdxFromDB };
+module.exports = { getRestaurantInfoByIdxFromDb };

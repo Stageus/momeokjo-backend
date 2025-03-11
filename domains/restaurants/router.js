@@ -1,6 +1,7 @@
 const router = require("express").Router();
-const { getRestaurantInfo } = require("./controller");
+const { getRestaurantInfoByIdx } = require("./controller");
 
-router.get("/:restaurant_idx", getRestaurantInfo);
+// 음식점 상세보기 조회
+router.get("/:restaurant_idx", getRestaurantInfoByIdx);
 
 module.exports = router;
