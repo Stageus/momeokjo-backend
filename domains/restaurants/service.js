@@ -1,3 +1,18 @@
+// 음식점 카테고리 리스트 조회
+const getRestaurantCategoryListFromDb = async (client) => {
+  const results = await client.query(
+    `
+      SELECT
+        idx AS category_idx,
+        name AS category_name
+      FROM restaurants.categories
+      WHERE is_deleted = false;
+    `
+  );
+
+  return results.rows;
+};
+
 // 음식점 상세보기 조회
 const getRestaurantInfoByIdxFromDb = async (restaurant_idx, client) => {
   const results = await client.query(
@@ -23,4 +38,7 @@ const getRestaurantInfoByIdxFromDb = async (restaurant_idx, client) => {
   return results.rows[0];
 };
 
-module.exports = { getRestaurantInfoByIdxFromDb };
+module.exports = {
+  getRestaurantCategoryListFromDb,
+  getRestaurantInfoByIdxFromDb,
+};
