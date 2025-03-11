@@ -13,6 +13,26 @@ const getRestaurantCategoryListFromDb = async (client) => {
   return results.rows;
 };
 
+// 음식점 카테고리 등록
+const createRestaurantCategoryAtDb = async (
+  user_idx,
+  category_name,
+  client
+) => {
+  await client.query(
+    `
+      INSERT INTO restaurants.categories (
+        users_idx,
+        name
+      ) VALUES (
+        $1,
+        $2 
+      )
+    `,
+    [user_idx, category_name]
+  );
+};
+
 // 음식점 상세보기 조회
 const getRestaurantInfoByIdxFromDb = async (restaurant_idx, client) => {
   const results = await client.query(
@@ -40,5 +60,6 @@ const getRestaurantInfoByIdxFromDb = async (restaurant_idx, client) => {
 
 module.exports = {
   getRestaurantCategoryListFromDb,
+  createRestaurantCategoryAtDb,
   getRestaurantInfoByIdxFromDb,
 };
