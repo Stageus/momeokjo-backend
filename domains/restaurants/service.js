@@ -33,6 +33,23 @@ const createRestaurantCategoryAtDb = async (
   );
 };
 
+// 음식점 카테고리 수정
+const updateRestaurantCategoryByIdxAtDb = async (
+  category_idx,
+  category_name,
+  client
+) => {
+  await client.query(
+    `
+      UPDATE restaurants.categories
+      SET name = $1
+      WHERE idx = $2
+      AND is_deleted = false
+    `,
+    [category_name, category_idx]
+  );
+};
+
 // 음식점 상세보기 조회
 const getRestaurantInfoByIdxFromDb = async (restaurant_idx, client) => {
   const results = await client.query(
@@ -61,5 +78,6 @@ const getRestaurantInfoByIdxFromDb = async (restaurant_idx, client) => {
 module.exports = {
   getRestaurantCategoryListFromDb,
   createRestaurantCategoryAtDb,
+  updateRestaurantCategoryByIdxAtDb,
   getRestaurantInfoByIdxFromDb,
 };

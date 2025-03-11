@@ -5,6 +5,7 @@ const {
 const {
   getRestaurantCategoryListFromDb,
   createRestaurantCategoryAtDb,
+  updateRestaurantCategoryByIdxAtDb,
   getRestaurantInfoByIdxFromDb,
 } = require("./service");
 
@@ -29,6 +30,22 @@ const createRestaurantCategory = tryCatchWrapperWithDbTransaction(
   }
 );
 
+// 음식점 카테고리 수정
+const updateRestaurantCategoryByIdx = tryCatchWrapperWithDbTransaction(
+  async (req, res, next, client) => {
+    const { category_idx } = req.params;
+    const { category_name } = req.body;
+
+    await updateRestaurantCategoryByIdxAtDb(
+      category_idx,
+      category_name,
+      client
+    );
+
+    res.status(200).json({ message: "요청 처리 성공" });
+  }
+);
+
 // 음식점 상세보기 조회
 const getRestaurantInfoByIdx = tryCatchWrapperWithDb(
   async (req, res, next, client) => {
@@ -43,5 +60,6 @@ const getRestaurantInfoByIdx = tryCatchWrapperWithDb(
 module.exports = {
   getRestaurantCategoryList,
   createRestaurantCategory,
+  updateRestaurantCategoryByIdx,
   getRestaurantInfoByIdx,
 };
