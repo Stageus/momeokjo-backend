@@ -3,11 +3,47 @@ const {
   tryCatchWrapperWithDbTransaction,
 } = require("../../utils/customWrapper");
 const {
+  createRestaurantInfoAtDb,
   getRestaurantCategoryListFromDb,
   createRestaurantCategoryAtDb,
   updateRestaurantCategoryByIdxAtDb,
   getRestaurantInfoByIdxFromDb,
 } = require("./service");
+
+// 음식점 등록
+const createRestaurantInfo = tryCatchWrapperWithDbTransaction(
+  async (req, res, next, client) => {
+    //TODO: 추후 인증 미들웨어 추가되면 user_idx 수정해야함
+    const { user_idx } = { user_idx: 1 };
+    const {
+      category_idx,
+      restaurant_name,
+      latitude,
+      longitude,
+      address,
+      address_detail,
+      phone,
+      start_time,
+      end_time,
+    } = req.body;
+
+    await createRestaurantInfoAtDb(
+      category_idx,
+      user_idx,
+      restaurant_name,
+      latitude,
+      longitude,
+      address,
+      address_detail,
+      phone,
+      start_time,
+      end_time,
+      client
+    );
+
+    res.status(200).json({ message: "요청 처리 성공" });
+  }
+);
 
 // 음식점 카테고리 리스트 조회
 const getRestaurantCategoryList = tryCatchWrapperWithDb(
@@ -62,4 +98,5 @@ module.exports = {
   createRestaurantCategory,
   updateRestaurantCategoryByIdx,
   getRestaurantInfoByIdx,
+  createRestaurantInfo,
 };

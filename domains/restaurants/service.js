@@ -1,3 +1,52 @@
+// 음식점 등록
+const createRestaurantInfoAtDb = async (
+  category_idx,
+  user_idx,
+  restaurant_name,
+  latitude,
+  longitude,
+  address,
+  address_detail,
+  phone,
+  start_time,
+  end_time,
+  client
+) => {
+  await client.query(
+    `
+      INSERT INTO restaurants.lists (
+        categories_idx,
+        users_idx,
+        name,
+        longitude,
+        latitude,
+        location,
+        address,
+        address_detail,
+        phone,
+        start_time,
+        end_time
+      ) VALUES (
+        $1, $2, $3, $4, $5,
+        ST_SetSRID(ST_MakePoint($4, $5), 4326), 
+        $6, $7, $8, $9, $10
+      )
+    `,
+    [
+      category_idx,
+      user_idx,
+      restaurant_name,
+      longitude,
+      latitude,
+      address,
+      address_detail,
+      phone,
+      start_time,
+      end_time,
+    ]
+  );
+};
+
 // 음식점 카테고리 리스트 조회
 const getRestaurantCategoryListFromDb = async (client) => {
   const results = await client.query(
@@ -76,6 +125,7 @@ const getRestaurantInfoByIdxFromDb = async (restaurant_idx, client) => {
 };
 
 module.exports = {
+  createRestaurantInfoAtDb,
   getRestaurantCategoryListFromDb,
   createRestaurantCategoryAtDb,
   updateRestaurantCategoryByIdxAtDb,
