@@ -8,11 +8,28 @@ const getRestaurantInfoListFromDb = async (
   user_latitude,
   client
 ) => {
+  const check_total = await client.query(
+    `
+      SELECT 
+        COALESCE(CEIL(COUNT(list.idx) / 15::float), 1) AS total_pages
+      FROM restaurants.lists AS list
+      JOIN restaurants.categories AS category ON list.categories_idx = category.idx
+      WHERE list.is_deleted = false
+      AND category.is_deleted = false
+      AND category.idx = $1
+      AND ST_DWithin(
+        list.location, 
+        ST_SetSRID(ST_MakePoint($2, $3), 4326), 
+        $4
+      )
+    `,
+    [category_idx, user_longitude, user_latitude, range]
+  );
+
   const results = await client.query(
     `
       SELECT 
-        CEIL(COUNT(list.idx) / 15::float) AS total_pages,
-        json_agg(
+        COALESCE(json_agg(
           json_build_object(
             'restaurant_idx', list.idx,
             'category_name', category.name,
@@ -26,7 +43,7 @@ const getRestaurantInfoListFromDb = async (
             'end_time', end_time,
             'is_mine', CASE WHEN list.users_idx = $1 THEN true ELSE false END
           )
-        ) AS data
+        ), '[]'::json) AS data
       FROM restaurants.lists AS list
       JOIN restaurants.categories AS category ON list.categories_idx = category.idx
       WHERE list.is_deleted = false
@@ -50,7 +67,10 @@ const getRestaurantInfoListFromDb = async (
     ]
   );
 
-  return results.rows[0];
+  return {
+    total_pages: check_total.rows[0].total_pages,
+    data: results.rows[0]?.data || [],
+  };
 };
 
 // 음식점 등록
