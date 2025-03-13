@@ -7,6 +7,7 @@ const {
   updateRestaurantCategoryByIdx,
   getRecommendRestaurant,
   getRestaurantInfoByIdx,
+  updateRestaurantInfoByIdx,
 } = require("./controller");
 
 // 음식점 리스트 조회
@@ -29,5 +30,8 @@ router.get("/recommends", getRecommendRestaurant);
 
 // 음식점 상세보기 조회
 router.get("/:restaurant_idx", getRestaurantInfoByIdx);
+
+// 음식점 상세보기 수정
+router.put("/:restaurant_idx", updateRestaurantInfoByIdx);
 
 module.exports = router;

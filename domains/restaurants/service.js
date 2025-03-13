@@ -219,6 +219,42 @@ const getRestaurantInfoByIdxFromDb = async (restaurant_idx, client) => {
   return results.rows[0];
 };
 
+// 음식점 상세보기 수정
+const updateRestaurantInfoByIdxAtDb = async (
+  restaurant_idx,
+  category_idx,
+  restaurant_name,
+  address_detail,
+  phone,
+  start_time,
+  end_time,
+  client
+) => {
+  await client.query(
+    `
+      UPDATE restaurants.lists
+      SET
+        categories_idx = $2,
+        name = $3,
+        address_detail = $4,
+        phone = $5,
+        start_time = $6,
+        end_time = $7
+      WHERE idx = $1
+      AND is_deleted = false
+    `,
+    [
+      restaurant_idx,
+      category_idx,
+      restaurant_name,
+      address_detail,
+      phone,
+      start_time,
+      end_time,
+    ]
+  );
+};
+
 module.exports = {
   getRestaurantInfoListFromDb,
   createRestaurantInfoAtDb,
@@ -227,4 +263,5 @@ module.exports = {
   updateRestaurantCategoryByIdxAtDb,
   getRecommendRestaurantFromDb,
   getRestaurantInfoByIdxFromDb,
+  updateRestaurantInfoByIdxAtDb,
 };
