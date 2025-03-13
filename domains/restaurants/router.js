@@ -7,6 +7,7 @@ const {
   updateRestaurantCategoryByIdx,
   getRecommendRestaurant,
   createRestaruatnMenu,
+  updateRestaurantMenuByIdx,
   getRestaurantInfoByIdx,
   updateRestaurantInfoByIdx,
 } = require("./controller");
@@ -31,6 +32,9 @@ router.get("/recommends", getRecommendRestaurant);
 
 // 음식점 메뉴 등록
 router.post("/:restaurant_idx/menus", createRestaruatnMenu);
+
+// 음식점 메뉴 수정
+router.put("/menus/:menu_idx", updateRestaurantMenuByIdx);
 
 // 음식점 상세보기 조회
 router.get("/:restaurant_idx", getRestaurantInfoByIdx);

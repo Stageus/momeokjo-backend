@@ -217,6 +217,24 @@ const createRestaruatnMenuAtDb = async (
   );
 };
 
+// 음식점 메뉴 수정
+const updateRestaurantMenuByIdxAtDb = async (
+  menu_idx,
+  menu_name,
+  price,
+  client
+) => {
+  await client.query(
+    `
+      UPDATE menus.lists
+      SET name = $2, price = $3
+      WHERE idx = $1
+      AND is_deleted = false
+    `,
+    [menu_idx, menu_name, price]
+  );
+};
+
 // 음식점 상세보기 조회
 const getRestaurantInfoByIdxFromDb = async (restaurant_idx, client) => {
   const results = await client.query(
@@ -286,6 +304,7 @@ module.exports = {
   updateRestaurantCategoryByIdxAtDb,
   getRecommendRestaurantFromDb,
   createRestaruatnMenuAtDb,
+  updateRestaurantMenuByIdxAtDb,
   getRestaurantInfoByIdxFromDb,
   updateRestaurantInfoByIdxAtDb,
 };
