@@ -154,6 +154,46 @@ const updateRestaurantCategoryByIdxAtDb = async (
   );
 };
 
+// 음식점 랜덤 조회
+const getRecommendRestaurantFromDb = async (
+  category_idx,
+  range,
+  user_longitude,
+  user_latitude,
+  client
+) => {
+  const results = await client.query(
+    `
+    SELECT
+          list.idx AS restaurant_idx,
+          category.name AS category_name,
+          list.name AS restaurant_name,
+          longitude,
+          latitude,
+          address,
+          address_detail,
+          phone,
+          start_time,
+          end_time
+      FROM restaurants.lists AS list
+      JOIN restaurants.categories AS category ON list.categories_idx = category.idx
+      WHERE list.is_deleted = false
+      AND category.is_deleted = false
+      AND category.idx = $1
+      AND ST_DWithin(
+        list.location, 
+        ST_SetSRID(ST_MakePoint($2, $3), 4326), 
+        $4
+      )
+      ORDER BY RANDOM()
+      LIMIT 1
+    `,
+    [category_idx, user_longitude, user_latitude, range]
+  );
+
+  return results.rows[0];
+};
+
 // 음식점 상세보기 조회
 const getRestaurantInfoByIdxFromDb = async (restaurant_idx, client) => {
   const results = await client.query(
@@ -185,5 +225,6 @@ module.exports = {
   getRestaurantCategoryListFromDb,
   createRestaurantCategoryAtDb,
   updateRestaurantCategoryByIdxAtDb,
+  getRecommendRestaurantFromDb,
   getRestaurantInfoByIdxFromDb,
 };
