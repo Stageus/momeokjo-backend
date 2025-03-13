@@ -9,7 +9,8 @@ const {
   createRestaurantCategoryAtDb,
   updateRestaurantCategoryByIdxAtDb,
   getRecommendRestaurantFromDb,
-  createRestaruatnMenuAtDb,
+  getRestaurantMenuInfoListFromDb,
+  createRestaurantMenuAtDb,
   updateRestaurantMenuByIdxAtDb,
   getRestaurantInfoByIdxFromDb,
   updateRestaurantInfoByIdxAtDb,
@@ -132,15 +133,36 @@ const getRecommendRestaurant = tryCatchWrapperWithDb(
   }
 );
 
+// 음식점 메뉴 리스트 조회
+const getRestaurantMenuInfoList = tryCatchWrapperWithDb(
+  async (req, res, next, client) => {
+    const { restaurant_idx } = req.params;
+    const { page } = req.query;
+
+    const { total_pages, data } = await getRestaurantMenuInfoListFromDb(
+      restaurant_idx,
+      page,
+      client
+    );
+    console.log(data);
+    res.status(200).json({
+      message: "요청 처리 성공",
+      total_pages,
+      current_page: parseInt(page),
+      data,
+    });
+  }
+);
+
 // 음식점 메뉴 등록
-const createRestaruatnMenu = tryCatchWrapperWithDbTransaction(
+const createRestaurantMenu = tryCatchWrapperWithDbTransaction(
   async (req, res, next, client) => {
     //TODO: 추후 인증 미들웨어 추가되면 user_idx 수정해야함
     const { user_idx } = { user_idx: 1 };
     const { restaurant_idx } = req.params;
     const { menu_name, price } = req.body;
 
-    await createRestaruatnMenuAtDb(
+    await createRestaurantMenuAtDb(
       user_idx,
       restaurant_idx,
       menu_name,
@@ -210,7 +232,8 @@ module.exports = {
   createRestaurantCategory,
   updateRestaurantCategoryByIdx,
   getRecommendRestaurant,
-  createRestaruatnMenu,
+  getRestaurantMenuInfoList,
+  createRestaurantMenu,
   updateRestaurantMenuByIdx,
   getRestaurantInfoByIdx,
   updateRestaurantInfoByIdx,

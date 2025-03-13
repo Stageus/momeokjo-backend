@@ -194,8 +194,51 @@ const getRecommendRestaurantFromDb = async (
   return results.rows[0];
 };
 
+// 음식점 메뉴 리스트 조회
+const getRestaurantMenuInfoListFromDb = async (
+  restaurant_idx,
+  page,
+  client
+) => {
+  const check_total = await client.query(
+    `
+      SELECT
+        COALESCE(CEIL(COUNT(idx) / 15::float), 1) AS total_pages
+      FROM menus.lists
+      WHERE restaurants_idx = $1
+      AND is_deleted = false
+    `,
+    [restaurant_idx]
+  );
+
+  //TODO:후기 등록 api 작성 후 이미지 경로 추가 필요
+  const results = await client.query(
+    `
+      SELECT
+        COALESCE(json_agg(
+          json_build_object(
+            'menu_idx', idx,
+            'menu_name', name,
+            'price', price
+          )
+        ), '[]'::json) AS data
+      FROM menus.lists
+      WHERE restaurants_idx = $1
+      AND is_deleted = false
+      OFFSET $2
+      LIMIT 15
+    `,
+    [restaurant_idx, (page - 1) * 15]
+  );
+
+  return {
+    total_pages: check_total.rows[0].total_pages,
+    data: results.rows[0]?.data || [],
+  };
+};
+
 // 음식점 메뉴 등록
-const createRestaruatnMenuAtDb = async (
+const createRestaurantMenuAtDb = async (
   user_idx,
   restaurant_idx,
   menu_name,
@@ -303,7 +346,8 @@ module.exports = {
   createRestaurantCategoryAtDb,
   updateRestaurantCategoryByIdxAtDb,
   getRecommendRestaurantFromDb,
-  createRestaruatnMenuAtDb,
+  getRestaurantMenuInfoListFromDb,
+  createRestaurantMenuAtDb,
   updateRestaurantMenuByIdxAtDb,
   getRestaurantInfoByIdxFromDb,
   updateRestaurantInfoByIdxAtDb,

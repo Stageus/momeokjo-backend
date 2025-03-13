@@ -6,7 +6,8 @@ const {
   createRestaurantCategory,
   updateRestaurantCategoryByIdx,
   getRecommendRestaurant,
-  createRestaruatnMenu,
+  getRestaurantMenuInfoList,
+  createRestaurantMenu,
   updateRestaurantMenuByIdx,
   getRestaurantInfoByIdx,
   updateRestaurantInfoByIdx,
@@ -30,8 +31,11 @@ router.put("/categories/:category_idx", updateRestaurantCategoryByIdx);
 // 음식점 랜덤 조회
 router.get("/recommends", getRecommendRestaurant);
 
+// 음식점 메뉴 리스트 조회
+router.get("/:restaurant_idx/menus", getRestaurantMenuInfoList);
+
 // 음식점 메뉴 등록
-router.post("/:restaurant_idx/menus", createRestaruatnMenu);
+router.post("/:restaurant_idx/menus", createRestaurantMenu);
 
 // 음식점 메뉴 수정
 router.put("/menus/:menu_idx", updateRestaurantMenuByIdx);
