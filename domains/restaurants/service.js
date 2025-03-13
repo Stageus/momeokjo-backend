@@ -194,6 +194,29 @@ const getRecommendRestaurantFromDb = async (
   return results.rows[0];
 };
 
+// 음식점 메뉴 등록
+const createRestaruatnMenuAtDb = async (
+  user_idx,
+  restaurant_idx,
+  menu_name,
+  price,
+  client
+) => {
+  await client.query(
+    `
+      INSERT INTO menus.lists (
+        users_idx,
+        restaurants_idx,
+        name,
+        price
+      ) VALUES (
+        $1, $2, $3, $4
+      )
+    `,
+    [user_idx, restaurant_idx, menu_name, price]
+  );
+};
+
 // 음식점 상세보기 조회
 const getRestaurantInfoByIdxFromDb = async (restaurant_idx, client) => {
   const results = await client.query(
@@ -219,7 +242,7 @@ const getRestaurantInfoByIdxFromDb = async (restaurant_idx, client) => {
   return results.rows[0];
 };
 
-// 음식점 상세보기 수정
+// 음식점 수정
 const updateRestaurantInfoByIdxAtDb = async (
   restaurant_idx,
   category_idx,
@@ -262,6 +285,7 @@ module.exports = {
   createRestaurantCategoryAtDb,
   updateRestaurantCategoryByIdxAtDb,
   getRecommendRestaurantFromDb,
+  createRestaruatnMenuAtDb,
   getRestaurantInfoByIdxFromDb,
   updateRestaurantInfoByIdxAtDb,
 };

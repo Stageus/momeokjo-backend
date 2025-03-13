@@ -6,6 +6,7 @@ const {
   createRestaurantCategory,
   updateRestaurantCategoryByIdx,
   getRecommendRestaurant,
+  createRestaruatnMenu,
   getRestaurantInfoByIdx,
   updateRestaurantInfoByIdx,
 } = require("./controller");
@@ -27,6 +28,9 @@ router.put("/categories/:category_idx", updateRestaurantCategoryByIdx);
 
 // 음식점 랜덤 조회
 router.get("/recommends", getRecommendRestaurant);
+
+// 음식점 메뉴 등록
+router.post("/:restaurant_idx/menus", createRestaruatnMenu);
 
 // 음식점 상세보기 조회
 router.get("/:restaurant_idx", getRestaurantInfoByIdx);
