@@ -315,6 +315,19 @@ const createMenuReviewAtDb = async (user_idx, menu_idx, content, client) => {
   );
 };
 
+// 메뉴 후기 수정
+const updateMenuReviewByIdxAtDb = async (review_idx, content, client) => {
+  await client.query(
+    `
+      UPDATE reviews.lists
+      SET content = $1
+      WHERE idx = $2
+      AND is_deleted = false
+    `,
+    [content, review_idx]
+  );
+};
+
 // 음식점 상세보기 조회
 const getRestaurantInfoByIdxFromDb = async (restaurant_idx, client) => {
   const results = await client.query(
@@ -387,6 +400,7 @@ module.exports = {
   createRestaurantMenuAtDb,
   updateRestaurantMenuByIdxAtDb,
   createMenuReviewAtDb,
+  updateMenuReviewByIdxAtDb,
   getRestaurantInfoByIdxFromDb,
   updateRestaurantInfoByIdxAtDb,
 };

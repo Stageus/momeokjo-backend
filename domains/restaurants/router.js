@@ -10,6 +10,7 @@ const {
   createRestaurantMenu,
   updateRestaurantMenuByIdx,
   createMenuReview,
+  updateMenuReviewByIdx,
   getRestaurantInfoByIdx,
   updateRestaurantInfoByIdx,
 } = require("./controller");
@@ -34,6 +35,9 @@ router.get("/recommends", getRecommendRestaurant);
 
 // 메뉴 후기 등록
 router.post("/menus/:menu_idx/reviews", createMenuReview);
+
+// 메뉴 후기 수정
+router.put("/menus/reviews/:review_idx", updateMenuReviewByIdx);
 
 // 음식점 메뉴 리스트 조회
 router.get("/:restaurant_idx/menus", getRestaurantMenuInfoList);

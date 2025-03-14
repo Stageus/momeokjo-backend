@@ -13,6 +13,7 @@ const {
   createRestaurantMenuAtDb,
   updateRestaurantMenuByIdxAtDb,
   createMenuReviewAtDb,
+  updateMenuReviewByIdxAtDb,
   getRestaurantInfoByIdxFromDb,
   updateRestaurantInfoByIdxAtDb,
 } = require("./service");
@@ -202,6 +203,18 @@ const createMenuReview = tryCatchWrapperWithDbTransaction(
   }
 );
 
+// 메뉴 후기 수정
+const updateMenuReviewByIdx = tryCatchWrapperWithDb(
+  async (req, res, next, client) => {
+    const { review_idx } = req.params;
+    const { content } = req.body;
+
+    await updateMenuReviewByIdxAtDb(review_idx, content, client);
+
+    res.status(200).json({ message: "요청 처리 성공" });
+  }
+);
+
 // 음식점 상세보기 조회
 const getRestaurantInfoByIdx = tryCatchWrapperWithDb(
   async (req, res, next, client) => {
@@ -252,6 +265,7 @@ module.exports = {
   createRestaurantMenu,
   updateRestaurantMenuByIdx,
   createMenuReview,
+  updateMenuReviewByIdx,
   getRestaurantInfoByIdx,
   updateRestaurantInfoByIdx,
 };
