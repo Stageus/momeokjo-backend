@@ -9,6 +9,7 @@ const {
   getRestaurantMenuInfoList,
   createRestaurantMenu,
   updateRestaurantMenuByIdx,
+  getMenuReviewInfoList,
   createMenuReview,
   updateMenuReviewByIdx,
   getRestaurantInfoByIdx,
@@ -32,6 +33,9 @@ router.put("/categories/:category_idx", updateRestaurantCategoryByIdx);
 
 // 음식점 랜덤 조회
 router.get("/recommends", getRecommendRestaurant);
+
+// 메뉴 후기 리스트 조회
+router.get("/menus/:menu_idx/reviews", getMenuReviewInfoList);
 
 // 메뉴 후기 등록
 router.post("/menus/:menu_idx/reviews", createMenuReview);

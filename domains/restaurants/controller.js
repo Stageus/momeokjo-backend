@@ -12,6 +12,7 @@ const {
   getRestaurantMenuInfoListFromDb,
   createRestaurantMenuAtDb,
   updateRestaurantMenuByIdxAtDb,
+  getMenuReviewInfoListFromDb,
   createMenuReviewAtDb,
   updateMenuReviewByIdxAtDb,
   getRestaurantInfoByIdxFromDb,
@@ -188,6 +189,27 @@ const updateRestaurantMenuByIdx = tryCatchWrapperWithDb(
   }
 );
 
+// 메뉴 후기 리스트 조회
+const getMenuReviewInfoList = tryCatchWrapperWithDb(
+  async (req, res, next, client) => {
+    const { menu_idx } = req.params;
+    const { page } = req.query;
+
+    const { total_pages, data } = await getMenuReviewInfoListFromDb(
+      menu_idx,
+      page,
+      client
+    );
+
+    res.status(200).json({
+      message: "요청 처리 성공",
+      total_pages,
+      current_page: parseInt(page),
+      data,
+    });
+  }
+);
+
 // 메뉴 후기 등록
 const createMenuReview = tryCatchWrapperWithDbTransaction(
   async (req, res, next, client) => {
@@ -264,6 +286,7 @@ module.exports = {
   getRestaurantMenuInfoList,
   createRestaurantMenu,
   updateRestaurantMenuByIdx,
+  getMenuReviewInfoList,
   createMenuReview,
   updateMenuReviewByIdx,
   getRestaurantInfoByIdx,

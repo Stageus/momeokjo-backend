@@ -298,6 +298,55 @@ const updateRestaurantMenuByIdxAtDb = async (
   );
 };
 
+// 메뉴 후기 리스트 조회
+const getMenuReviewInfoListFromDb = async (menu_idx, page, client) => {
+  const check_total = await client.query(
+    `
+      SELECT
+        COALESCE(CEIL(COUNT(reviews.idx) / 15::float), 1) AS total_pages
+      FROM reviews.lists reviews
+      JOIN menus.lists menus ON reviews.menus_idx = menus.idx
+      JOIN users.lists users ON reviews.users_idx = users.idx
+      WHERE reviews.menus_idx = $1
+      AND reviews.is_deleted = false
+      AND menus.is_deleted = false
+      AND users.is_deleted = false
+    `,
+    [menu_idx]
+  );
+
+  const results = await client.query(
+    `
+      SELECT
+        COALESCE(json_agg(
+          json_build_object(
+            'review_idx', reviews.idx,
+            'user_idx', reviews.users_idx,
+            'user_name', users.nickname,
+            'menu_name', menus.name,
+            'content', content,
+            'image_url', COALESCE(image_url, '')
+          ) ORdeR BY reviews.created_at DESC
+        ), '[]'::json) AS data
+      FROM reviews.lists reviews
+      JOIN menus.lists menus ON reviews.menus_idx = menus.idx
+      JOIN users.lists users ON reviews.users_idx = users.idx
+      WHERE reviews.menus_idx = $1
+      AND reviews.is_deleted = false
+      AND menus.is_deleted = false
+      AND users.is_deleted = false
+      OFFSET $2
+      LIMIT 15
+    `,
+    [menu_idx, (page - 1) * 15]
+  );
+
+  return {
+    total_pages: check_total.rows[0].total_pages,
+    data: results.rows[0]?.data || [],
+  };
+};
+
 // 메뉴 후기 등록
 const createMenuReviewAtDb = async (user_idx, menu_idx, content, client) => {
   //TODO:이미지 컬럼 추가해야함.
@@ -399,6 +448,7 @@ module.exports = {
   getRestaurantMenuInfoListFromDb,
   createRestaurantMenuAtDb,
   updateRestaurantMenuByIdxAtDb,
+  getMenuReviewInfoListFromDb,
   createMenuReviewAtDb,
   updateMenuReviewByIdxAtDb,
   getRestaurantInfoByIdxFromDb,
