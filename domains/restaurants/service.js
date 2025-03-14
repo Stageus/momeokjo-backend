@@ -298,6 +298,23 @@ const updateRestaurantMenuByIdxAtDb = async (
   );
 };
 
+// 메뉴 후기 등록
+const createMenuReviewAtDb = async (user_idx, menu_idx, content, client) => {
+  //TODO:이미지 컬럼 추가해야함.
+  await client.query(
+    `
+      INSERT INTO reviews.lists (
+        users_idx,
+        menus_idx,
+        content
+      ) VALUES (
+        $1, $2, $3
+      )
+    `,
+    [user_idx, menu_idx, content]
+  );
+};
+
 // 음식점 상세보기 조회
 const getRestaurantInfoByIdxFromDb = async (restaurant_idx, client) => {
   const results = await client.query(
@@ -369,6 +386,7 @@ module.exports = {
   getRestaurantMenuInfoListFromDb,
   createRestaurantMenuAtDb,
   updateRestaurantMenuByIdxAtDb,
+  createMenuReviewAtDb,
   getRestaurantInfoByIdxFromDb,
   updateRestaurantInfoByIdxAtDb,
 };
