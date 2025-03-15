@@ -123,15 +123,16 @@ const createRestaurantInfoAtDb = async (
 };
 
 // 음식점 카테고리 리스트 조회
-const getRestaurantCategoryListFromDb = async (client) => {
+const getRestaurantCategoryListFromDb = async (include_deleted, client) => {
   const results = await client.query(
     `
       SELECT
         idx AS category_idx,
         name AS category_name
       FROM restaurants.categories
-      WHERE is_deleted = false;
-    `
+      WHERE (is_deleted = false OR true = $1);
+    `,
+    [include_deleted]
   );
 
   return results.rows;

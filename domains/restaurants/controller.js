@@ -84,7 +84,10 @@ const createRestaurantInfo = tryCatchWrapperWithDbTransaction(
 // 음식점 카테고리 리스트 조회
 const getRestaurantCategoryList = tryCatchWrapperWithDb(
   async (req, res, next, client) => {
-    const data = await getRestaurantCategoryListFromDb(client);
+    const { include_deleted } = req.query;
+
+    const data = await getRestaurantCategoryListFromDb(include_deleted, client);
+
     res.status(200).json({ message: "요청 처리 성공", data });
   }
 );
