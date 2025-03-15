@@ -334,7 +334,12 @@ const updateRestaurantMenuByIdxAtDb = async (
 };
 
 // 메뉴 후기 리스트 조회
-const getMenuReviewInfoListFromDb = async (menu_idx, page, client) => {
+const getMenuReviewInfoListFromDb = async (
+  user_idx,
+  menu_idx,
+  page,
+  client
+) => {
   const check_total = await client.query(
     `
       SELECT
@@ -352,6 +357,14 @@ const getMenuReviewInfoListFromDb = async (menu_idx, page, client) => {
 
   const results = await client.query(
     `
+      WITH likes AS (
+        SELECT COUNT(*) AS likes_count,
+        reviews_idx
+        FROM reviews.likes
+        WHERE is_deleted = false
+        GROUP BY reviews_idx
+      )
+
       SELECT
         COALESCE(json_agg(
           json_build_object(
@@ -359,21 +372,24 @@ const getMenuReviewInfoListFromDb = async (menu_idx, page, client) => {
             'user_idx', reviews.users_idx,
             'user_name', users.nickname,
             'menu_name', menus.name,
-            'content', content,
-            'image_url', COALESCE(image_url, '')
-          ) ORdeR BY reviews.created_at DESC
+            'content', reviews.content,
+            'image_url', COALESCE(reviews.image_url, ''),
+            'is_mine', CASE WHEN reviews.users_idx = $1 THEN true ELSE false END,
+            'likes_count', COALESCE(likes.likes_count::integer, 0)
+          ) ORDER BY reviews.created_at DESC
         ), '[]'::json) AS data
       FROM reviews.lists reviews
       JOIN menus.lists menus ON reviews.menus_idx = menus.idx
       JOIN users.lists users ON reviews.users_idx = users.idx
-      WHERE reviews.menus_idx = $1
+      LEFT JOIN likes ON reviews.idx = likes.reviews_idx
+      WHERE reviews.menus_idx = $2
       AND reviews.is_deleted = false
       AND menus.is_deleted = false
       AND users.is_deleted = false
-      OFFSET $2
+      OFFSET $3
       LIMIT 15
     `,
-    [menu_idx, (page - 1) * 15]
+    [user_idx, menu_idx, (page - 1) * 15]
   );
 
   return {

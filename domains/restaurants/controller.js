@@ -199,10 +199,12 @@ const updateRestaurantMenuByIdx = tryCatchWrapperWithDb(
 // 메뉴 후기 리스트 조회
 const getMenuReviewInfoList = tryCatchWrapperWithDb(
   async (req, res, next, client) => {
+    const { user_idx } = { user_idx: 1 };
     const { menu_idx } = req.params;
     const { page } = req.query;
 
     const { total_pages, data } = await getMenuReviewInfoListFromDb(
+      user_idx,
       menu_idx,
       page,
       client
