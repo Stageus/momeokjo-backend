@@ -399,28 +399,43 @@ const updateMenuReviewByIdxAtDb = async (review_idx, content, client) => {
 };
 
 // 음식점 상세보기 조회
-const getRestaurantInfoByIdxFromDb = async (restaurant_idx, client) => {
+const getRestaurantInfoByIdxFromDb = async (
+  user_idx,
+  restaurant_idx,
+  client
+) => {
   const results = await client.query(
     `
+      WITH likes AS (
+        SELECT COUNT(*) AS likes_count,
+        restaurants_idx
+        FROM restaurants.likes
+        WHERE is_deleted = false
+        GROUP BY restaurants_idx
+      )
+      
       SELECT 
         list.idx AS restaurant_idx,
         category.name AS category_name,
+        COALESCE(likes_count::integer , 0) AS likes_count,
         list.name AS restaurant_name,
         address,
         address_detail,
         phone,
         start_time,
-        end_time
+        end_time,
+        CASE WHEN list.users_idx = $1 THEN true ELSE false END AS is_mine
       FROM restaurants.lists AS list
       JOIN restaurants.categories AS category ON list.categories_idx = category.idx
-      WHERE list.idx = $1
+      LEFT JOIN likes ON list.idx = likes.restaurants_idx
+      WHERE list.idx = $2
       AND list.is_deleted = false
       AND category.is_deleted = false
     `,
-    [restaurant_idx]
+    [user_idx, restaurant_idx]
   );
 
-  return results.rows[0];
+  return results.rows[0] || {};
 };
 
 // 음식점 수정
