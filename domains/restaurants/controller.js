@@ -225,10 +225,11 @@ const createMenuReview = tryCatchWrapperWithDbTransaction(
     //TODO: 추후 인증 미들웨어 추가되면 user_idx 수정해야함
     const { user_idx } = { user_idx: 1 };
     const { menu_idx } = req.params;
-    //TODO:이미지 등록 기능 추가해야함.
     const { content } = req.body;
 
-    await createMenuReviewAtDb(user_idx, menu_idx, content, client);
+    const image_url = req.file?.location;
+
+    await createMenuReviewAtDb(user_idx, menu_idx, content, image_url, client);
 
     res.status(200).json({ message: "요청 처리 성공" });
   }

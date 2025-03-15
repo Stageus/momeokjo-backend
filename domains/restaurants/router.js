@@ -1,4 +1,5 @@
 const router = require("express").Router();
+const upload = require("../../config/aws-s3");
 const {
   getRestaurantInfoList,
   createRestaurantInfo,
@@ -38,7 +39,11 @@ router.get("/recommends", getRecommendRestaurant);
 router.get("/menus/:menu_idx/reviews", getMenuReviewInfoList);
 
 // 메뉴 후기 등록
-router.post("/menus/:menu_idx/reviews", createMenuReview);
+router.post(
+  "/menus/:menu_idx/reviews",
+  upload.single("image"),
+  createMenuReview
+);
 
 // 메뉴 후기 수정
 router.put("/menus/reviews/:review_idx", updateMenuReviewByIdx);

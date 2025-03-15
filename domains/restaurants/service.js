@@ -399,19 +399,26 @@ const getMenuReviewInfoListFromDb = async (
 };
 
 // 메뉴 후기 등록
-const createMenuReviewAtDb = async (user_idx, menu_idx, content, client) => {
+const createMenuReviewAtDb = async (
+  user_idx,
+  menu_idx,
+  content,
+  image_url,
+  client
+) => {
   //TODO:이미지 컬럼 추가해야함.
   await client.query(
     `
       INSERT INTO reviews.lists (
         users_idx,
         menus_idx,
-        content
+        content,
+        image_url
       ) VALUES (
-        $1, $2, $3
+        $1, $2, $3, $4
       )
     `,
-    [user_idx, menu_idx, content]
+    [user_idx, menu_idx, content, image_url]
   );
 };
 
