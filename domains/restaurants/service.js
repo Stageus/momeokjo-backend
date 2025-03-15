@@ -332,6 +332,7 @@ const createRestaurantMenuAtDb = async (
 
 // 음식점 메뉴 수정
 const updateRestaurantMenuByIdxAtDb = async (
+  user_idx,
   menu_idx,
   menu_name,
   price,
@@ -340,11 +341,12 @@ const updateRestaurantMenuByIdxAtDb = async (
   await client.query(
     `
       UPDATE menus.lists
-      SET name = $2, price = $3
-      WHERE idx = $1
+      SET name = $1, price = $2
+      WHERE idx = $3
+      AND users_idx = $4
       AND is_deleted = false
     `,
-    [menu_idx, menu_name, price]
+    [menu_name, price, menu_idx, user_idx]
   );
 };
 
@@ -500,6 +502,7 @@ const getRestaurantInfoByIdxFromDb = async (
 
 // 음식점 수정
 const updateRestaurantInfoByIdxAtDb = async (
+  user_idx,
   restaurant_idx,
   category_idx,
   restaurant_name,
@@ -513,23 +516,25 @@ const updateRestaurantInfoByIdxAtDb = async (
     `
       UPDATE restaurants.lists
       SET
-        categories_idx = $2,
-        name = $3,
-        address_detail = $4,
-        phone = $5,
-        start_time = $6,
-        end_time = $7
-      WHERE idx = $1
+        categories_idx = $1,
+        name = $2,
+        address_detail = $3,
+        phone = $4,
+        start_time = $5,
+        end_time = $6
+      WHERE idx = $7
+      AND users_idx = $8
       AND is_deleted = false
     `,
     [
-      restaurant_idx,
       category_idx,
       restaurant_name,
       address_detail,
       phone,
       start_time,
       end_time,
+      restaurant_idx,
+      user_idx,
     ]
   );
 };

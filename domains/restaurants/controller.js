@@ -124,6 +124,7 @@ const updateRestaurantCategoryByIdx = tryCatchWrapperWithDbTransaction(
 // 음식점 랜덤 조회
 const getRecommendRestaurant = tryCatchWrapperWithDb(
   async (req, res, next, client) => {
+    //TODO: 추후 인증 미들웨어 추가되면 user_idx 수정해야함
     const { user_idx } = { user_idx: 1 };
     const { category_idx, range } = req.query;
     const { user_longitude, user_latitude } = req.body;
@@ -144,6 +145,7 @@ const getRecommendRestaurant = tryCatchWrapperWithDb(
 // 음식점 메뉴 리스트 조회
 const getRestaurantMenuInfoList = tryCatchWrapperWithDb(
   async (req, res, next, client) => {
+    //TODO: 추후 인증 미들웨어 추가되면 user_idx 수정해야함
     const { user_idx } = { user_idx: 1 };
     const { restaurant_idx } = req.params;
     const { page } = req.query;
@@ -187,10 +189,18 @@ const createRestaurantMenu = tryCatchWrapperWithDbTransaction(
 // 음식점 메뉴 수정
 const updateRestaurantMenuByIdx = tryCatchWrapperWithDb(
   async (req, res, next, client) => {
+    //TODO: 추후 인증 미들웨어 추가되면 user_idx 수정해야함
+    const { user_idx } = { user_idx: 1 };
     const { menu_idx } = req.params;
     const { menu_name, price } = req.body;
 
-    await updateRestaurantMenuByIdxAtDb(menu_idx, menu_name, price, client);
+    await updateRestaurantMenuByIdxAtDb(
+      user_idx,
+      menu_idx,
+      menu_name,
+      price,
+      client
+    );
 
     res.status(200).json({ message: "요청 처리 성공" });
   }
@@ -199,6 +209,7 @@ const updateRestaurantMenuByIdx = tryCatchWrapperWithDb(
 // 메뉴 후기 리스트 조회
 const getMenuReviewInfoList = tryCatchWrapperWithDb(
   async (req, res, next, client) => {
+    //TODO: 추후 인증 미들웨어 추가되면 user_idx 수정해야함
     const { user_idx } = { user_idx: 1 };
     const { menu_idx } = req.params;
     const { page } = req.query;
@@ -237,6 +248,7 @@ const createMenuReview = tryCatchWrapperWithDbTransaction(
 // 메뉴 후기 수정
 const updateMenuReviewByIdx = tryCatchWrapperWithDb(
   async (req, res, next, client) => {
+    //TODO: 추후 인증 미들웨어 추가되면 user_idx 수정해야함
     const { user_idx } = { user_idx: 1 };
     const { review_idx } = req.params;
     const { content } = req.body;
@@ -257,6 +269,7 @@ const updateMenuReviewByIdx = tryCatchWrapperWithDb(
 // 음식점 상세보기 조회
 const getRestaurantInfoByIdx = tryCatchWrapperWithDb(
   async (req, res, next, client) => {
+    //TODO: 추후 인증 미들웨어 추가되면 user_idx 수정해야함
     const { user_idx } = { user_idx: 1 };
     const { restaurant_idx } = req.params;
 
@@ -273,6 +286,8 @@ const getRestaurantInfoByIdx = tryCatchWrapperWithDb(
 // 음식점 상세보기 수정
 const updateRestaurantInfoByIdx = tryCatchWrapperWithDbTransaction(
   async (req, res, next, client) => {
+    //TODO: 추후 인증 미들웨어 추가되면 user_idx 수정해야함
+    const { user_idx } = { user_idx: 1 };
     const { restaurant_idx } = req.params;
     const {
       category_idx,
@@ -284,6 +299,7 @@ const updateRestaurantInfoByIdx = tryCatchWrapperWithDbTransaction(
     } = req.body;
 
     await updateRestaurantInfoByIdxAtDb(
+      user_idx,
       restaurant_idx,
       category_idx,
       restaurant_name,
