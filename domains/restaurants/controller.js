@@ -226,7 +226,6 @@ const createMenuReview = tryCatchWrapperWithDbTransaction(
     const { user_idx } = { user_idx: 1 };
     const { menu_idx } = req.params;
     const { content } = req.body;
-
     const image_url = req.file?.location;
 
     await createMenuReviewAtDb(user_idx, menu_idx, content, image_url, client);
@@ -238,10 +237,18 @@ const createMenuReview = tryCatchWrapperWithDbTransaction(
 // 메뉴 후기 수정
 const updateMenuReviewByIdx = tryCatchWrapperWithDb(
   async (req, res, next, client) => {
+    const { user_idx } = { user_idx: 1 };
     const { review_idx } = req.params;
     const { content } = req.body;
+    const image_url = req.file?.location;
 
-    await updateMenuReviewByIdxAtDb(review_idx, content, client);
+    await updateMenuReviewByIdxAtDb(
+      user_idx,
+      review_idx,
+      content,
+      image_url,
+      client
+    );
 
     res.status(200).json({ message: "요청 처리 성공" });
   }

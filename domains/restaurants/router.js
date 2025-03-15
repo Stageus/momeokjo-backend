@@ -46,7 +46,11 @@ router.post(
 );
 
 // 메뉴 후기 수정
-router.put("/menus/reviews/:review_idx", updateMenuReviewByIdx);
+router.put(
+  "/menus/reviews/:review_idx",
+  upload.single("image"),
+  updateMenuReviewByIdx
+);
 
 // 음식점 메뉴 리스트 조회
 router.get("/:restaurant_idx/menus", getRestaurantMenuInfoList);

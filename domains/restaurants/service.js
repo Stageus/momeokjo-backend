@@ -423,15 +423,23 @@ const createMenuReviewAtDb = async (
 };
 
 // 메뉴 후기 수정
-const updateMenuReviewByIdxAtDb = async (review_idx, content, client) => {
+const updateMenuReviewByIdxAtDb = async (
+  user_idx,
+  review_idx,
+  content,
+  image_url,
+  client
+) => {
   await client.query(
     `
       UPDATE reviews.lists
-      SET content = $1
-      WHERE idx = $2
+      SET content = $1,
+        image_url = CASE WHEN CAST($2 AS VARCHAR(255)) IS NOT NULL THEN $2 ELSE null END
+      WHERE idx = $3
       AND is_deleted = false
+      AND users_idx = $4
     `,
-    [content, review_idx]
+    [content, image_url, review_idx, user_idx]
   );
 };
 
