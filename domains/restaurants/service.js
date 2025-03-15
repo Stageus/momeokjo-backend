@@ -239,6 +239,7 @@ const getRecommendRestaurantFromDb = async (
 
 // 음식점 메뉴 리스트 조회
 const getRestaurantMenuInfoListFromDb = async (
+  user_idx,
   restaurant_idx,
   page,
   client
@@ -257,21 +258,32 @@ const getRestaurantMenuInfoListFromDb = async (
   //TODO:후기 등록 api 작성 후 이미지 경로 추가 필요
   const results = await client.query(
     `
+      WITH likes AS (
+        SELECT COUNT(*) AS likes_count,
+        menus_idx
+        FROM menus.likes
+        WHERE is_deleted = false
+        GROUP BY menus_idx
+      )
+
       SELECT
         COALESCE(json_agg(
           json_build_object(
             'menu_idx', idx,
             'menu_name', name,
-            'price', price
+            'price', price,
+            'likes_count', COALESCE(likes_count::integer, 0),
+            'is_mine', CASE WHEN users_idx = $1 THEN true ELSE false END
           )
         ), '[]'::json) AS data
-      FROM menus.lists
-      WHERE restaurants_idx = $1
+      FROM menus.lists AS list
+      LEFT JOIN likes ON list.idx = likes.menus_idx
+      WHERE restaurants_idx = $2
       AND is_deleted = false
-      OFFSET $2
+      OFFSET $3
       LIMIT 15
     `,
-    [restaurant_idx, (page - 1) * 15]
+    [user_idx, restaurant_idx, (page - 1) * 15]
   );
 
   return {

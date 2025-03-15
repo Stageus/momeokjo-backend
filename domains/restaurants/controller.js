@@ -144,10 +144,12 @@ const getRecommendRestaurant = tryCatchWrapperWithDb(
 // 음식점 메뉴 리스트 조회
 const getRestaurantMenuInfoList = tryCatchWrapperWithDb(
   async (req, res, next, client) => {
+    const { user_idx } = { user_idx: 1 };
     const { restaurant_idx } = req.params;
     const { page } = req.query;
 
     const { total_pages, data } = await getRestaurantMenuInfoListFromDb(
+      user_idx,
       restaurant_idx,
       page,
       client
