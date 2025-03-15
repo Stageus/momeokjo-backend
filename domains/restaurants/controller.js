@@ -124,10 +124,12 @@ const updateRestaurantCategoryByIdx = tryCatchWrapperWithDbTransaction(
 // 음식점 랜덤 조회
 const getRecommendRestaurant = tryCatchWrapperWithDb(
   async (req, res, next, client) => {
+    const { user_idx } = { user_idx: 1 };
     const { category_idx, range } = req.query;
     const { user_longitude, user_latitude } = req.body;
 
     const data = await getRecommendRestaurantFromDb(
+      user_idx,
       category_idx,
       range,
       user_longitude,

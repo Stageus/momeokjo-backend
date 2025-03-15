@@ -177,6 +177,7 @@ const updateRestaurantCategoryByIdxAtDb = async (
 
 // 음식점 랜덤 조회
 const getRecommendRestaurantFromDb = async (
+  user_idx,
   category_idx,
   range,
   user_longitude,
@@ -185,9 +186,17 @@ const getRecommendRestaurantFromDb = async (
 ) => {
   const results = await client.query(
     `
+    WITH likes AS (
+      SELECT COUNT(*) AS likes_count,
+      restaurants_idx
+      FROM restaurants.likes
+      GROUP BY restaurants_idx
+    )
+
     SELECT
           list.idx AS restaurant_idx,
           category.name AS category_name,
+          COALESCE(likes_count::integer , 0) AS likes_count,
           list.name AS restaurant_name,
           longitude,
           latitude,
@@ -195,24 +204,26 @@ const getRecommendRestaurantFromDb = async (
           address_detail,
           phone,
           start_time,
-          end_time
+          end_time,
+          CASE WHEN list.users_idx = $1 THEN true ELSE false END AS is_mine
       FROM restaurants.lists AS list
       JOIN restaurants.categories AS category ON list.categories_idx = category.idx
+      LEFT JOIN likes ON list.idx = likes.restaurants_idx
       WHERE list.is_deleted = false
       AND category.is_deleted = false
-      AND category.idx = $1
+      AND category.idx = $2
       AND ST_DWithin(
         list.location, 
-        ST_SetSRID(ST_MakePoint($2, $3), 4326), 
-        $4
+        ST_SetSRID(ST_MakePoint($3, $4), 4326), 
+        $5
       )
       ORDER BY RANDOM()
       LIMIT 1
     `,
-    [category_idx, user_longitude, user_latitude, range]
+    [user_idx, category_idx, user_longitude, user_latitude, range]
   );
 
-  return results.rows[0];
+  return results.rows[0] ?? {};
 };
 
 // 음식점 메뉴 리스트 조회
