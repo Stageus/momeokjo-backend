@@ -32,6 +32,7 @@ const getRestaurantInfoListFromDb = async (
         SELECT COUNT(*) AS likes_count,
         restaurants_idx
         FROM restaurants.likes
+        WHERE is_deleted = false
         GROUP BY restaurants_idx
       )
 
@@ -199,6 +200,7 @@ const getRecommendRestaurantFromDb = async (
       SELECT COUNT(*) AS likes_count,
       restaurants_idx
       FROM restaurants.likes
+      WHERE is_deleted = false
       GROUP BY restaurants_idx
     )
 
