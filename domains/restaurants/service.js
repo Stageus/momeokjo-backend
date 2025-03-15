@@ -28,11 +28,19 @@ const getRestaurantInfoListFromDb = async (
 
   const results = await client.query(
     `
+      WITH likes AS (
+        SELECT COUNT(*) AS likes_count,
+        restaurants_idx
+        FROM restaurants.likes
+        GROUP BY restaurants_idx
+      )
+
       SELECT 
         COALESCE(json_agg(
           json_build_object(
             'restaurant_idx', list.idx,
             'category_name', category.name,
+            'likes_count', COALESCE(likes_count::integer , 0),
             'restaurant_name', list.name,
             'longitude', longitude,
             'latitude', latitude,
@@ -46,6 +54,7 @@ const getRestaurantInfoListFromDb = async (
         ), '[]'::json) AS data
       FROM restaurants.lists AS list
       JOIN restaurants.categories AS category ON list.categories_idx = category.idx
+      LEFT JOIN likes ON list.idx = likes.restaurants_idx
       WHERE list.is_deleted = false
       AND category.is_deleted = false
       AND category.idx = $2
