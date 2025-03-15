@@ -255,7 +255,7 @@ const getRestaurantMenuInfoListFromDb = async (
     [restaurant_idx]
   );
 
-  //TODO:후기 등록 api 작성 후 이미지 경로 추가 필요
+  //TODO:MERGE 후 main branch에서 erd 수정 및 데이터베이스 테이블 컬럼 추가(restaurants_idx)
   const results = await client.query(
     `
       WITH likes AS (
@@ -264,7 +264,20 @@ const getRestaurantMenuInfoListFromDb = async (
         FROM menus.likes
         WHERE is_deleted = false
         GROUP BY menus_idx
-      )
+      ),
+      images AS (
+        SELECT
+          reviews.menus_idx,
+          reviews.image_url
+        FROM reviews.lists AS reviews
+        JOIN menus.lists AS menus ON reviews.menus_idx = menus.idx
+        LEFT JOIN likes ON reviews.menus_idx = likes.menus_idx
+        WHERE restaurants_idx = $2
+        AND reviews.is_deleted = false
+        AND menus.is_deleted = false
+        ORDER BY likes.likes_count DESC
+        LIMIT 1
+      ) 
 
       SELECT
         COALESCE(json_agg(
@@ -273,11 +286,13 @@ const getRestaurantMenuInfoListFromDb = async (
             'menu_name', name,
             'price', price,
             'likes_count', COALESCE(likes_count::integer, 0),
-            'is_mine', CASE WHEN users_idx = $1 THEN true ELSE false END
+            'is_mine', CASE WHEN users_idx = $1 THEN true ELSE false END,
+            'image_url', COALESCE(images.image_url, '')
           )
         ), '[]'::json) AS data
       FROM menus.lists AS list
       LEFT JOIN likes ON list.idx = likes.menus_idx
+      LEFT JOIN images ON list.idx = images.menus_idx
       WHERE restaurants_idx = $2
       AND is_deleted = false
       OFFSET $3
