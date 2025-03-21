@@ -1,7 +1,7 @@
 const router = require("express").Router();
+const { updateMyInfo } = require("./controller");
 
-router.get("/", (req, res) => {
-  res.send("this is users router");
-});
+// 내 정보 수정
+router.put("/", updateMyInfo);
 
 module.exports = router;
