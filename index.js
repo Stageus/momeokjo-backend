@@ -3,6 +3,8 @@ require("dotenv").config();
 
 const app = express();
 
+app.use(express.json());
+
 const authRouter = require("./domains/auth/router");
 const restaurantsRouter = require("./domains/restaurants/router");
 const usersRouter = require("./domains/users/router");
