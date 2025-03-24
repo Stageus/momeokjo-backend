@@ -60,3 +60,19 @@ exports.deleteRestaurantLikeFromDb = async (user_idx, restaurant_idx, client) =>
     [restaurant_idx, user_idx]
   );
 };
+
+// 메뉴 추천 등록
+exports.createMenuLikeAtDb = async (user_idx, menu_idx, client) => {
+  await client.query(
+    `
+      INSERT INTO menus.likes (
+        menus_idx,
+        users_idx
+      ) VALUES (
+        $1,
+        $2
+      );
+    `,
+    [menu_idx, user_idx]
+  );
+};
