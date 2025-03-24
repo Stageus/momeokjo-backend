@@ -28,7 +28,21 @@ exports.getUserInfoByIdxFromDb = async (user_idx_from_cookie, user_idx, client) 
     [user_idx_from_cookie, user_idx]
   );
 
-  console.log(results);
-
   return results.rows[0];
+};
+
+// 음식점 즐겨찾기 등록
+exports.createRestaurantLikeAtDb = async (user_idx, restaurant_idx, client) => {
+  await client.query(
+    `
+      INSERT INTO restaurants.likes (
+        restaurants_idx,
+        users_idx
+      ) VALUES (
+        $1,
+        $2
+      );
+    `,
+    [restaurant_idx, user_idx]
+  );
 };
