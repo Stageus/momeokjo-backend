@@ -5,6 +5,7 @@ const {
   createRestaurantLikeAtDb,
   deleteRestaurantLikeFromDb,
   createMenuLikeAtDb,
+  deleteMenuLikeFromDb,
 } = require("./service");
 
 // 내 정보 수정
@@ -52,6 +53,15 @@ exports.createMenuLike = tryCatchWrapperWithDb(async (req, res, next, client) =>
   const { user_idx, menu_idx } = req.params;
 
   await createMenuLikeAtDb(user_idx, menu_idx, client);
+
+  res.status(200).json({ message: "요청 처리 성공" });
+});
+
+// 메뉴 추천 해제
+exports.deleteMenuLike = tryCatchWrapperWithDb(async (req, res, next, client) => {
+  const { user_idx, menu_idx } = req.params;
+
+  await deleteMenuLikeFromDb(user_idx, menu_idx, client);
 
   res.status(200).json({ message: "요청 처리 성공" });
 });

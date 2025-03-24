@@ -51,7 +51,7 @@ exports.createRestaurantLikeAtDb = async (user_idx, restaurant_idx, client) => {
 exports.deleteRestaurantLikeFromDb = async (user_idx, restaurant_idx, client) => {
   await client.query(
     `
-      UPDATE restaurants .likes SET
+      UPDATE restaurants.likes SET
         is_deleted = true
       WHERE restaurants_idx = $1
       AND users_idx = $2
@@ -72,6 +72,20 @@ exports.createMenuLikeAtDb = async (user_idx, menu_idx, client) => {
         $1,
         $2
       );
+    `,
+    [menu_idx, user_idx]
+  );
+};
+
+// 메뉴 추천 해제
+exports.deleteMenuLikeFromDb = async (user_idx, menu_idx, client) => {
+  await client.query(
+    `
+      UPDATE menus.likes SET
+        is_deleted = true
+      WHERE menus_idx = $1
+      AND users_idx = $2
+      AND is_deleted = false;
     `,
     [menu_idx, user_idx]
   );
