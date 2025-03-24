@@ -1,5 +1,10 @@
 const { tryCatchWrapperWithDb } = require("../../utils/customWrapper");
-const { updateMyInfoAtDb, getUserInfoByIdxFromDb, createRestaurantLikeAtDb } = require("./service");
+const {
+  updateMyInfoAtDb,
+  getUserInfoByIdxFromDb,
+  createRestaurantLikeAtDb,
+  deleteRestaurantLikeFromDb,
+} = require("./service");
 
 // 내 정보 수정
 exports.updateMyInfo = tryCatchWrapperWithDb(async (req, res, next, client) => {
@@ -28,6 +33,15 @@ exports.createRestaurantLike = tryCatchWrapperWithDb(async (req, res, next, clie
   const { user_idx, restaurant_idx } = req.params;
 
   await createRestaurantLikeAtDb(user_idx, restaurant_idx, client);
+
+  res.status(200).json({ message: "요청 처리 성공" });
+});
+
+// 음식점 즐겨찾기 해제
+exports.deleteRestaurantLike = tryCatchWrapperWithDb(async (req, res, next, client) => {
+  const { user_idx, restaurant_idx } = req.params;
+
+  await deleteRestaurantLikeFromDb(user_idx, restaurant_idx, client);
 
   res.status(200).json({ message: "요청 처리 성공" });
 });

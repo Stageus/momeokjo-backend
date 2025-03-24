@@ -46,3 +46,17 @@ exports.createRestaurantLikeAtDb = async (user_idx, restaurant_idx, client) => {
     [restaurant_idx, user_idx]
   );
 };
+
+// 음식점 즐겨찾기 해제
+exports.deleteRestaurantLikeFromDb = async (user_idx, restaurant_idx, client) => {
+  await client.query(
+    `
+      UPDATE restaurants .likes SET
+        is_deleted = true
+      WHERE restaurants_idx = $1
+      AND users_idx = $2
+      AND is_deleted = false;
+    `,
+    [restaurant_idx, user_idx]
+  );
+};
