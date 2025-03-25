@@ -106,3 +106,17 @@ exports.createReviewLikeAtDb = async (user_idx, review_idx, client) => {
     [review_idx, user_idx]
   );
 };
+
+// 후괴 좋아요 해제
+exports.deleteReviewLikeFromDb = async (user_idx, review_idx, client) => {
+  await client.query(
+    `
+      UPDATE reviews.likes SET
+        is_deleted = true
+      WHERE reviews_idx = $1
+      AND users_idx = $2
+      AND is_deleted = false;
+    `,
+    [review_idx, user_idx]
+  );
+};

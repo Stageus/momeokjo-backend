@@ -7,6 +7,7 @@ const {
   createMenuLikeAtDb,
   deleteMenuLikeFromDb,
   createReviewLikeAtDb,
+  deleteReviewLikeFromDb,
 } = require("./service");
 
 // 내 정보 수정
@@ -74,6 +75,16 @@ exports.createReviewLike = tryCatchWrapperWithDb(async (req, res, next, client) 
   const { review_idx } = req.params;
 
   await createReviewLikeAtDb(user_idx, review_idx, client);
+
+  res.status(200).json({ message: "요청 처리 성공" });
+});
+
+// 후기 좋아요 해제
+exports.deleteReviewLike = tryCatchWrapperWithDb(async (req, res, next, client) => {
+  const { user_idx } = { user_idx: 1 };
+  const { review_idx } = req.params;
+
+  await deleteReviewLikeFromDb(user_idx, review_idx, client);
 
   res.status(200).json({ message: "요청 처리 성공" });
 });
