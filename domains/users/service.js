@@ -84,14 +84,14 @@ exports.createMenuLikeAtDb = async (user_idx, menu_idx, client) => {
 // 메뉴 추천 해제
 exports.deleteMenuLikeFromDb = async (client, menu_idx, user_idx) => {
   let query = `
-      UPDATE menus.likes SET
-        is_deleted = true
-      WHERE menus_idx = ANY(STRING_TO_ARRAY($1, ',')::BIGINT[])
-      AND is_deleted = false`;
+    UPDATE menus.likes SET
+      is_deleted = true
+    WHERE menus_idx = ANY(STRING_TO_ARRAY($1, ',')::BIGINT[])
+    AND is_deleted = false`;
 
   let values = [menu_idx];
 
-  if (!user_idx) {
+  if (user_idx) {
     query += ` AND users_idx = $2`;
     values.push(user_idx);
   }
@@ -118,14 +118,14 @@ exports.createReviewLikeAtDb = async (user_idx, review_idx, client) => {
 // 후괴 좋아요 해제
 exports.deleteReviewLikeFromDb = async (client, review_idx, user_idx) => {
   let query = `
-   UPDATE reviews.likes SET
-        is_deleted = true
-      WHERE reviews_idx = ANY(STRING_TO_ARRAY($1, ',')::BIGINT[])
-      AND is_deleted = false`;
+    UPDATE reviews.likes SET
+      is_deleted = true
+    WHERE reviews_idx = ANY(STRING_TO_ARRAY($1, ',')::BIGINT[])
+    AND is_deleted = false`;
 
   let values = [review_idx];
 
-  if (!user_idx) {
+  if (user_idx) {
     query += ` AND users_idx = $2`;
     values.push(user_idx);
   }
@@ -179,18 +179,22 @@ exports.deleteRestaurantFromDb = async (client, restaurant_idx) => {
 };
 
 // 메뉴 비활성화
-exports.deleteMenuFromDb = async (client, restaurant_idx) => {
-  const results = await client.query(
-    `
+exports.deleteMenuFromDb = async (client, type, idx) => {
+  let query = `
       UPDATE menus.lists SET
         is_deleted = true
-      WHERE restaurants_idx = $1
-      AND is_deleted = false
-      RETURNING idx
-      ;
-    `,
-    [restaurant_idx]
-  );
+      WHERE is_deleted = false
+    `;
+
+  if (type === "restaurant") {
+    query += ` AND restaurants_idx = $1`;
+  } else {
+    query += ` AND idx = $1`;
+  }
+
+  query += ` RETURNING idx`;
+
+  const results = await client.query(query, [idx]);
 
   return results.rows.map(({ idx }) => idx).join(",");
 };
@@ -210,4 +214,36 @@ exports.deleteReviewFromDb = async (client, review_idx_list) => {
   );
 
   return results.rows.map(({ idx }) => idx).join(",");
+};
+
+// 메뉴 신고 등록
+exports.createMenuReportAtDb = async (client, menu_idx, user_idx) => {
+  await client.query(
+    `
+      INSERT INTO menus.reports (
+        menus_idx,
+        users_idx
+      ) VALUES (
+        $1,
+        $2
+      );
+    `,
+    [menu_idx, user_idx]
+  );
+};
+
+// 총 메뉴 신고 횟수 조회
+exports.checkTotalMenuReportByIdx = async (client, menu_idx) => {
+  const results = await client.query(
+    `
+      SELECT COUNT(report.*) AS total_count
+      FROM menus.reports AS report
+      JOIN menus.lists AS list ON report.menus_idx = list.idx
+      WHERE report.menus_idx = $1
+      AND list.is_deleted = false;
+    `,
+    [menu_idx]
+  );
+
+  return results.rows[0].total_count ?? 0;
 };

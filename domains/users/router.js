@@ -9,6 +9,7 @@ const {
   createReviewLike,
   deleteReviewLike,
   createRestaurantReport,
+  createMenuReport,
 } = require("./controller");
 
 // 내 정보 수정
@@ -37,5 +38,8 @@ router.delete("/:user_idx/likes/reviews/:review_idx", deleteReviewLike);
 
 // 음식점 신고 등록
 router.post("/:user_idx/reports/restaurants/:restaurant_idx", createRestaurantReport);
+
+// 메뉴 신고 등록
+router.post("/:user_idx/reports/menus/:menu_idx", createMenuReport);
 
 module.exports = router;
