@@ -18,6 +18,8 @@ const {
   deleteReviewFromDb,
   createMenuReportAtDb,
   checkTotalMenuReportByIdx,
+  createReviewReportAtDb,
+  checkTotalReviewReportByIdx,
 } = require("./service");
 
 // 내 정보 수정
@@ -120,6 +122,7 @@ exports.createRestaurantReport = tryCatchWrapperWithDbTransaction(
   }
 );
 
+// 메뉴 신고 등록
 exports.createMenuReport = tryCatchWrapperWithDbTransaction(async (req, res, next, client) => {
   const { user_idx, menu_idx } = req.params;
 
@@ -131,7 +134,28 @@ exports.createMenuReport = tryCatchWrapperWithDbTransaction(async (req, res, nex
     const menu_idx_list_stringify = await deleteMenuFromDb(client, "menu", menu_idx);
     await deleteMenuLikeFromDb(client, menu_idx_list_stringify);
 
-    const review_idx_list_stringify = await deleteReviewFromDb(client, menu_idx_list_stringify);
+    const review_idx_list_stringify = await deleteReviewFromDb(
+      client,
+      "menu",
+      menu_idx_list_stringify
+    );
+    await deleteReviewLikeFromDb(client, review_idx_list_stringify);
+  }
+
+  res.status(200).json({ message: "요청 처리 성공" });
+});
+
+// 후기 신고 등록
+exports.createReviewReport = tryCatchWrapperWithDbTransaction(async (req, res, next, client) => {
+  const { user_idx, review_idx } = req.params;
+
+  await createReviewReportAtDb(client, review_idx, user_idx);
+
+  const total_count = await checkTotalReviewReportByIdx(client, review_idx);
+  console.log(total_count);
+
+  if (total_count >= 1) {
+    const review_idx_list_stringify = await deleteReviewFromDb(client, "review", review_idx);
     await deleteReviewLikeFromDb(client, review_idx_list_stringify);
   }
 

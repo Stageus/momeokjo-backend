@@ -200,18 +200,22 @@ exports.deleteMenuFromDb = async (client, type, idx) => {
 };
 
 // 후기 비활성화
-exports.deleteReviewFromDb = async (client, review_idx_list) => {
-  const results = await client.query(
-    `
+exports.deleteReviewFromDb = async (client, type, index) => {
+  let query = `
       UPDATE reviews.lists SET
         is_deleted = true
-      WHERE menus_idx = ANY(STRING_TO_ARRAY($1, ',')::BIGINT[])
-      AND is_deleted = false
-      RETURNING idx
-      ;
-    `,
-    [review_idx_list]
-  );
+      WHERE is_deleted = false
+    `;
+
+  if (type === "menu") {
+    query += ` AND menus_idx = ANY(STRING_TO_ARRAY($1, ',')::BIGINT[])`;
+  } else {
+    query += ` AND idx = ANY(STRING_TO_ARRAY($1, ',')::BIGINT[])`;
+  }
+
+  query += ` RETURNING idx`;
+
+  const results = await client.query(query, [index]);
 
   return results.rows.map(({ idx }) => idx).join(",");
 };
@@ -243,6 +247,38 @@ exports.checkTotalMenuReportByIdx = async (client, menu_idx) => {
       AND list.is_deleted = false;
     `,
     [menu_idx]
+  );
+
+  return results.rows[0].total_count ?? 0;
+};
+
+// 후기 신고 등록
+exports.createReviewReportAtDb = async (client, review_idx, user_idx) => {
+  await client.query(
+    `
+      INSERT INTO reviews.reports (
+        reviews_idx,
+        users_idx
+      ) VALUES (
+        $1,
+        $2
+      );
+    `,
+    [review_idx, user_idx]
+  );
+};
+
+// 총 후기 신고 횟수 조회
+exports.checkTotalReviewReportByIdx = async (client, review_idx) => {
+  const results = await client.query(
+    `
+      SELECT COUNT(report.*) AS total_count
+      FROM reviews.reports AS report
+      JOIN reviews.lists AS list ON report.reviews_idx = list.idx
+      WHERE report.reviews_idx = $1
+      AND list.is_deleted = false;
+    `,
+    [review_idx]
   );
 
   return results.rows[0].total_count ?? 0;
