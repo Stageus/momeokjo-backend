@@ -6,6 +6,7 @@ const {
   deleteRestaurantLike,
   createMenuLike,
   deleteMenuLike,
+  createReviewLike,
 } = require("./controller");
 
 // 내 정보 수정
@@ -25,5 +26,8 @@ router.post("/:user_idx/likes/menus/:menu_idx", createMenuLike);
 
 // 메뉴 추천 해제
 router.delete("/:user_idx/likes/menus/:menu_idx", deleteMenuLike);
+
+// 후기 좋아요 등록
+router.post("/likes/reviews/:review_idx", createReviewLike);
 
 module.exports = router;

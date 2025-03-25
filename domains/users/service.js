@@ -90,3 +90,19 @@ exports.deleteMenuLikeFromDb = async (user_idx, menu_idx, client) => {
     [menu_idx, user_idx]
   );
 };
+
+// 후기 좋아요 등록
+exports.createReviewLikeAtDb = async (user_idx, review_idx, client) => {
+  await client.query(
+    `
+      INSERT INTO reviews.likes (
+        reviews_idx,
+        users_idx
+      ) VALUES (
+        $1,
+        $2
+      );
+    `,
+    [review_idx, user_idx]
+  );
+};
