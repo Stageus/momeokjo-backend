@@ -1,4 +1,7 @@
-const { tryCatchWrapperWithDb } = require("../../utils/customWrapper");
+const {
+  tryCatchWrapperWithDb,
+  tryCatchWrapperWithDbTransaction,
+} = require("../../utils/customWrapper");
 const {
   updateMyInfoAtDb,
   getUserInfoByIdxFromDb,
@@ -8,6 +11,11 @@ const {
   deleteMenuLikeFromDb,
   createReviewLikeAtDb,
   deleteReviewLikeFromDb,
+  createRestaurantReportAtDb,
+  checkTotalRestaurantReportByIdx,
+  deleteRestaurantFromDb,
+  deleteMenuFromDb,
+  deleteReviewFromDb,
 } = require("./service");
 
 // 내 정보 수정
@@ -85,3 +93,27 @@ exports.deleteReviewLike = tryCatchWrapperWithDb(async (req, res, next, client) 
 
   res.status(200).json({ message: "요청 처리 성공" });
 });
+
+// 음식점 신고 등록
+exports.createRestaurantReport = tryCatchWrapperWithDbTransaction(
+  async (req, res, next, client) => {
+    const { user_idx, restaurant_idx } = req.params;
+
+    await createRestaurantReportAtDb(client, restaurant_idx, user_idx);
+
+    const total_count = await checkTotalRestaurantReportByIdx(client, restaurant_idx);
+
+    if (total_count >= 5) {
+      await deleteRestaurantFromDb(client, restaurant_idx);
+      await deleteRestaurantLikeFromDb(client, restaurant_idx);
+
+      const menu_idx_list_stringify = await deleteMenuFromDb(client, restaurant_idx);
+      await deleteMenuLikeFromDb(client, menu_idx_list_stringify);
+
+      const review_idx_list_stringify = await deleteReviewFromDb(client, menu_idx_list_stringify);
+      await deleteReviewLikeFromDb(client, review_idx_list_stringify);
+    }
+
+    res.status(200).json({ message: "요청 처리 성공" });
+  }
+);
