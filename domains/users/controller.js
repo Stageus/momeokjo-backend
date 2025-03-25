@@ -70,9 +70,7 @@ exports.deleteMenuLike = tryCatchWrapperWithDb(async (req, res, next, client) =>
 
 // 후기 좋아요 등록
 exports.createReviewLike = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  //TODO: 추후 인증 미들웨어 추가되면 user_idx 수정해야함
-  const { user_idx } = { user_idx: 1 };
-  const { review_idx } = req.params;
+  const { user_idx, review_idx } = req.params;
 
   await createReviewLikeAtDb(user_idx, review_idx, client);
 
@@ -81,8 +79,7 @@ exports.createReviewLike = tryCatchWrapperWithDb(async (req, res, next, client) 
 
 // 후기 좋아요 해제
 exports.deleteReviewLike = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { user_idx } = { user_idx: 1 };
-  const { review_idx } = req.params;
+  const { user_idx, review_idx } = req.params;
 
   await deleteReviewLikeFromDb(user_idx, review_idx, client);
 
