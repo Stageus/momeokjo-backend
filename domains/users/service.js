@@ -31,6 +31,64 @@ exports.getUserInfoByIdxFromDb = async (user_idx_from_cookie, user_idx, client) 
   return results.rows[0];
 };
 
+// 사용자가 즐겨찾기 등록한 음식점 리스트 조회
+exports.getRestaurantLikeListFromDb = async (client, user_idx_from_cookie, user_idx, page) => {
+  const check_total = await client.query(
+    `
+      SELECT COALESCE(CEIL(COUNT(*) / 15::float), 1) AS total_pages
+      FROM restaurants.lists list
+      JOIN restaurants.likes likes ON likes.restaurants_idx = list.idx
+      WHERE likes.users_idx = $1
+      AND list.is_deleted = false
+      AND likes.is_deleted = false;
+      `,
+    [user_idx]
+  );
+
+  const results = await client.query(
+    `
+      WITH total_likes AS (
+        SELECT COUNT(*) AS likes_count,
+        restaurants_idx
+        FROM restaurants.likes
+        WHERE is_deleted = false
+        AND users_idx = $2
+        GROUP BY restaurants_idx
+      )
+
+      SELECT
+        COALESCE(json_agg(
+          json_build_object(
+            'restaurant_idx', list.idx,
+            'category_name', category.name,
+            'likes_count', COALESCE(likes_count::integer , 0),
+            'restaurant_name', list.name,
+            'longitude', longitude,
+            'latitude', latitude,
+            'address', address,
+            'address_detail', address_detail,
+            'phone', phone,
+            'start_time', start_time,
+            'end_time', end_time,
+            'is_my_like', CASE WHEN list.users_idx = $1 THEN true ELSE false END
+          )
+        ), '[]'::json) AS data
+      FROM restaurants.lists list
+      JOIN restaurants.categories category ON category.idx = list.categories_idx
+      JOIN restaurants.likes likes ON likes.restaurants_idx = list.idx
+      JOIN total_likes total ON total.restaurants_idx = list.idx
+      WHERE likes.users_idx = $2 
+      AND likes.is_deleted = false
+      AND likes.is_deleted = false
+      OFFSET $3
+      LIMIT 15;
+    `,
+    [user_idx_from_cookie, user_idx, 15 * (page - 1)]
+  );
+
+  return { data: results.rows[0].data || [], total_pages: check_total.rows[0].total_pages };
+};
+
 // 음식점 즐겨찾기 등록
 exports.createRestaurantLikeAtDb = async (user_idx, restaurant_idx, client) => {
   await client.query(

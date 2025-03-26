@@ -11,6 +11,7 @@ const {
   createRestaurantReport,
   createMenuReport,
   createReviewReport,
+  getRestaurantLikeList,
 } = require("./controller");
 
 // 내 정보 수정
@@ -18,6 +19,9 @@ router.put("/", updateMyInfo);
 
 // 사용자 정보 상세정보 조회
 router.get("/:user_idx", getUserInfoByIdx);
+
+// 사용자가 즐겨찾기 등록한 음식점 리스트 조회
+router.get("/:user_idx/restaurants/likes", getRestaurantLikeList);
 
 // 음식점 즐겨찾기 등록
 router.post("/:user_idx/likes/restaurants/:restaurant_idx", createRestaurantLike);

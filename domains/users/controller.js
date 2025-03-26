@@ -20,6 +20,7 @@ const {
   checkTotalMenuReportByIdx,
   createReviewReportAtDb,
   checkTotalReviewReportByIdx,
+  getRestaurantLikeListFromDb,
 } = require("./service");
 
 // 내 정보 수정
@@ -42,6 +43,24 @@ exports.getUserInfoByIdx = tryCatchWrapperWithDb(async (req, res, next, client) 
   const data = await getUserInfoByIdxFromDb(user_idx_from_cookie, user_idx, client);
 
   res.status(200).json({ message: "요청 처리 성공", data });
+});
+
+// 사용자가 즐겨찾기 등록한 음식점 리스트 조회
+exports.getRestaurantLikeList = tryCatchWrapperWithDb(async (req, res, next, client) => {
+  const { user_idx: user_idx_from_cookie } = { user_idx: 1 };
+  const { user_idx } = req.params;
+  const { page } = req.query;
+
+  const { data, total_pages } = await getRestaurantLikeListFromDb(
+    client,
+    user_idx_from_cookie,
+    user_idx,
+    page
+  );
+
+  res
+    .status(200)
+    .json({ message: "요청 처리 성공", total_pages, current_page: parseInt(page), data });
 });
 
 // 음식점 즐겨찾기 등록
