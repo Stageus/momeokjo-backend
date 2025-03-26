@@ -89,6 +89,67 @@ exports.getRestaurantLikeListFromDb = async (client, user_idx_from_cookie, user_
   return { data: results.rows[0].data || [], total_pages: check_total.rows[0].total_pages };
 };
 
+exports.getReviewListFromDb = async (client, user_idx_from_cookie, user_idx, page) => {
+  const check_total = await client.query(
+    `
+      SELECT COALESCE(CEIL(COUNT(reviews.*) / 15::float), 1) AS total_pages
+      FROM reviews.lists reviews
+      JOIN menus.lists menus ON reviews.menus_idx = menus.idx
+      JOIN users.lists users ON reviews.users_idx = users.idx
+      WHERE reviews.users_idx = $1
+      AND reviews.is_deleted = false
+      AND users.is_deleted = false
+      AND menus.is_deleted = false;
+      `,
+    [user_idx]
+  );
+
+  const results = await client.query(
+    `
+    WITH total_likes AS (
+        SELECT COUNT(likes.*) AS likes_count,
+        reviews_idx
+        FROM reviews.likes likes
+        JOIN reviews.lists reviews ON likes.reviews_idx = reviews.idx
+        JOIN users.lists users ON likes.users_idx = users.idx
+        WHERE likes.users_idx = $2 
+        AND likes.is_deleted = false
+        AND reviews.is_deleted = false
+        AND users.is_deleted = false
+        GROUP BY reviews_idx
+      )
+
+      SELECT
+        COALESCE(json_agg(
+          json_build_object(
+            'review_idx', reviews.idx,
+            'menu_name', menus.name,
+            'likes_count', COALESCE(likes_count::integer , 0),
+            'user_idx', reviews.users_idx,
+            'nickname', nickname,
+            'content', content,
+            'image_url', image_url,
+            'created_at', reviews.created_at,
+            'is_my_like', CASE WHEN reviews.users_idx = $1 THEN true ELSE false END
+          )
+        ), '[]'::json) AS data
+      FROM reviews.lists reviews
+      JOIN menus.lists menus ON reviews.menus_idx = menus.idx
+      JOIN users.lists users ON reviews.users_idx = users.idx
+      LEFT JOIN total_likes total ON total.reviews_idx = reviews.idx
+      WHERE reviews.users_idx = $2 
+      AND reviews.is_deleted = false
+      AND users.is_deleted = false
+      AND menus.is_deleted = false
+      OFFSET $3
+      LIMIT 15;
+      `,
+    [user_idx_from_cookie, user_idx, 15 * (page - 1)]
+  );
+
+  return { data: results.rows[0].data || [], total_pages: check_total.rows[0].total_pages };
+};
+
 // 음식점 즐겨찾기 등록
 exports.createRestaurantLikeAtDb = async (user_idx, restaurant_idx, client) => {
   await client.query(

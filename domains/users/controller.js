@@ -21,6 +21,7 @@ const {
   createReviewReportAtDb,
   checkTotalReviewReportByIdx,
   getRestaurantLikeListFromDb,
+  getReviewListFromDb,
 } = require("./service");
 
 // 내 정보 수정
@@ -52,6 +53,24 @@ exports.getRestaurantLikeList = tryCatchWrapperWithDb(async (req, res, next, cli
   const { page } = req.query;
 
   const { data, total_pages } = await getRestaurantLikeListFromDb(
+    client,
+    user_idx_from_cookie,
+    user_idx,
+    page
+  );
+
+  res
+    .status(200)
+    .json({ message: "요청 처리 성공", total_pages, current_page: parseInt(page), data });
+});
+
+// 사용자가 작성한 후기 리스트 조회
+exports.getReviewList = tryCatchWrapperWithDb(async (req, res, next, client) => {
+  const { user_idx: user_idx_from_cookie } = { user_idx: 1 };
+  const { user_idx } = req.params;
+  const { page } = req.query;
+
+  const { data, total_pages } = await getReviewListFromDb(
     client,
     user_idx_from_cookie,
     user_idx,
