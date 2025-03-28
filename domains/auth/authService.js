@@ -1,4 +1,4 @@
-const db = require("../utils/dbConnect");
+const db = require("../../database/db");
 const customError = require("../utils/customError");
 const nodemailer = require("nodemailer");
 const axios = require("axios");
