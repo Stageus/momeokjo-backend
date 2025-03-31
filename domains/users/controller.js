@@ -2,27 +2,7 @@ const {
   tryCatchWrapperWithDb,
   tryCatchWrapperWithDbTransaction,
 } = require("../../utils/customWrapper");
-const {
-  updateMyInfoAtDb,
-  getUserInfoByIdxFromDb,
-  createRestaurantLikeAtDb,
-  deleteRestaurantLikeFromDb,
-  createMenuLikeAtDb,
-  deleteMenuLikeFromDb,
-  createReviewLikeAtDb,
-  deleteReviewLikeFromDb,
-  createRestaurantReportAtDb,
-  checkTotalRestaurantReportByIdx,
-  deleteRestaurantFromDb,
-  deleteMenuFromDb,
-  deleteReviewFromDb,
-  createMenuReportAtDb,
-  checkTotalMenuReportByIdx,
-  createReviewReportAtDb,
-  checkTotalReviewReportByIdx,
-  getRestaurantLikeListFromDb,
-  getReviewListFromDb,
-} = require("./service");
+const us = require("./service");
 
 // 내 정보 수정
 exports.updateMyInfo = tryCatchWrapperWithDb(async (req, res, next, client) => {
@@ -30,7 +10,7 @@ exports.updateMyInfo = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { user_idx } = { user_idx: 1 };
   const { nickname } = req.body;
 
-  await updateMyInfoAtDb(user_idx, nickname, client);
+  await us.updateMyInfoAtDb(user_idx, nickname, client);
 
   res.status(200).json({ message: "요청 처리 성공" });
 });
@@ -41,7 +21,7 @@ exports.getUserInfoByIdx = tryCatchWrapperWithDb(async (req, res, next, client) 
   const { user_idx: user_idx_from_cookie } = { user_idx: 1 };
   const { user_idx } = req.params;
 
-  const data = await getUserInfoByIdxFromDb(user_idx_from_cookie, user_idx, client);
+  const data = await us.getUserInfoByIdxFromDb(user_idx_from_cookie, user_idx, client);
 
   res.status(200).json({ message: "요청 처리 성공", data });
 });
@@ -52,7 +32,7 @@ exports.getRestaurantLikeList = tryCatchWrapperWithDb(async (req, res, next, cli
   const { user_idx } = req.params;
   const { page } = req.query;
 
-  const { data, total_pages } = await getRestaurantLikeListFromDb(
+  const { data, total_pages } = await us.getRestaurantLikeListFromDb(
     client,
     user_idx_from_cookie,
     user_idx,
@@ -70,7 +50,7 @@ exports.getReviewList = tryCatchWrapperWithDb(async (req, res, next, client) => 
   const { user_idx } = req.params;
   const { page } = req.query;
 
-  const { data, total_pages } = await getReviewListFromDb(
+  const { data, total_pages } = await us.getReviewListFromDb(
     client,
     user_idx_from_cookie,
     user_idx,
@@ -86,7 +66,7 @@ exports.getReviewList = tryCatchWrapperWithDb(async (req, res, next, client) => 
 exports.createRestaurantLike = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { user_idx, restaurant_idx } = req.params;
 
-  await createRestaurantLikeAtDb(user_idx, restaurant_idx, client);
+  await us.createRestaurantLikeAtDb(user_idx, restaurant_idx, client);
 
   res.status(200).json({ message: "요청 처리 성공" });
 });
@@ -95,7 +75,7 @@ exports.createRestaurantLike = tryCatchWrapperWithDb(async (req, res, next, clie
 exports.deleteRestaurantLike = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { user_idx, restaurant_idx } = req.params;
 
-  await deleteRestaurantLikeFromDb(user_idx, restaurant_idx, client);
+  await us.deleteRestaurantLikeFromDb(user_idx, restaurant_idx, client);
 
   res.status(200).json({ message: "요청 처리 성공" });
 });
@@ -104,7 +84,7 @@ exports.deleteRestaurantLike = tryCatchWrapperWithDb(async (req, res, next, clie
 exports.createMenuLike = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { user_idx, menu_idx } = req.params;
 
-  await createMenuLikeAtDb(user_idx, menu_idx, client);
+  await us.createMenuLikeAtDb(user_idx, menu_idx, client);
 
   res.status(200).json({ message: "요청 처리 성공" });
 });
@@ -113,7 +93,7 @@ exports.createMenuLike = tryCatchWrapperWithDb(async (req, res, next, client) =>
 exports.deleteMenuLike = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { user_idx, menu_idx } = req.params;
 
-  await deleteMenuLikeFromDb(user_idx, menu_idx, client);
+  await us.deleteMenuLikeFromDb(user_idx, menu_idx, client);
 
   res.status(200).json({ message: "요청 처리 성공" });
 });
@@ -122,7 +102,7 @@ exports.deleteMenuLike = tryCatchWrapperWithDb(async (req, res, next, client) =>
 exports.createReviewLike = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { user_idx, review_idx } = req.params;
 
-  await createReviewLikeAtDb(user_idx, review_idx, client);
+  await us.createReviewLikeAtDb(user_idx, review_idx, client);
 
   res.status(200).json({ message: "요청 처리 성공" });
 });
@@ -131,7 +111,7 @@ exports.createReviewLike = tryCatchWrapperWithDb(async (req, res, next, client) 
 exports.deleteReviewLike = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { user_idx, review_idx } = req.params;
 
-  await deleteReviewLikeFromDb(user_idx, review_idx, client);
+  await us.deleteReviewLikeFromDb(user_idx, review_idx, client);
 
   res.status(200).json({ message: "요청 처리 성공" });
 });
@@ -141,19 +121,22 @@ exports.createRestaurantReport = tryCatchWrapperWithDbTransaction(
   async (req, res, next, client) => {
     const { user_idx, restaurant_idx } = req.params;
 
-    await createRestaurantReportAtDb(client, restaurant_idx, user_idx);
+    await us.createRestaurantReportAtDb(client, restaurant_idx, user_idx);
 
-    const total_count = await checkTotalRestaurantReportByIdx(client, restaurant_idx);
+    const total_count = await us.checkTotalRestaurantReportByIdx(client, restaurant_idx);
 
     if (total_count >= 5) {
-      await deleteRestaurantFromDb(client, restaurant_idx);
-      await deleteRestaurantLikeFromDb(client, restaurant_idx);
+      await us.deleteRestaurantFromDb(client, restaurant_idx);
+      await us.deleteRestaurantLikeFromDb(client, restaurant_idx);
 
       const menu_idx_list_stringify = await deleteMenuFromDb(client, "restaurant", restaurant_idx);
-      await deleteMenuLikeFromDb(client, menu_idx_list_stringify);
+      await us.deleteMenuLikeFromDb(client, menu_idx_list_stringify);
 
-      const review_idx_list_stringify = await deleteReviewFromDb(client, menu_idx_list_stringify);
-      await deleteReviewLikeFromDb(client, review_idx_list_stringify);
+      const review_idx_list_stringify = await us.deleteReviewFromDb(
+        client,
+        menu_idx_list_stringify
+      );
+      await us.deleteReviewLikeFromDb(client, review_idx_list_stringify);
     }
 
     res.status(200).json({ message: "요청 처리 성공" });
@@ -164,20 +147,20 @@ exports.createRestaurantReport = tryCatchWrapperWithDbTransaction(
 exports.createMenuReport = tryCatchWrapperWithDbTransaction(async (req, res, next, client) => {
   const { user_idx, menu_idx } = req.params;
 
-  await createMenuReportAtDb(client, menu_idx, user_idx);
+  await us.createMenuReportAtDb(client, menu_idx, user_idx);
 
-  const total_count = await checkTotalMenuReportByIdx(client, menu_idx);
+  const total_count = await us.checkTotalMenuReportByIdx(client, menu_idx);
 
   if (total_count >= 5) {
-    const menu_idx_list_stringify = await deleteMenuFromDb(client, "menu", menu_idx);
-    await deleteMenuLikeFromDb(client, menu_idx_list_stringify);
+    const menu_idx_list_stringify = await us.deleteMenuFromDb(client, "menu", menu_idx);
+    await us.deleteMenuLikeFromDb(client, menu_idx_list_stringify);
 
-    const review_idx_list_stringify = await deleteReviewFromDb(
+    const review_idx_list_stringify = await us.deleteReviewFromDb(
       client,
       "menu",
       menu_idx_list_stringify
     );
-    await deleteReviewLikeFromDb(client, review_idx_list_stringify);
+    await us.deleteReviewLikeFromDb(client, review_idx_list_stringify);
   }
 
   res.status(200).json({ message: "요청 처리 성공" });
@@ -187,14 +170,14 @@ exports.createMenuReport = tryCatchWrapperWithDbTransaction(async (req, res, nex
 exports.createReviewReport = tryCatchWrapperWithDbTransaction(async (req, res, next, client) => {
   const { user_idx, review_idx } = req.params;
 
-  await createReviewReportAtDb(client, review_idx, user_idx);
+  await us.createReviewReportAtDb(client, review_idx, user_idx);
 
-  const total_count = await checkTotalReviewReportByIdx(client, review_idx);
+  const total_count = await us.checkTotalReviewReportByIdx(client, review_idx);
   console.log(total_count);
 
   if (total_count >= 1) {
-    const review_idx_list_stringify = await deleteReviewFromDb(client, "review", review_idx);
-    await deleteReviewLikeFromDb(client, review_idx_list_stringify);
+    const review_idx_list_stringify = await us.deleteReviewFromDb(client, "review", review_idx);
+    await us.deleteReviewLikeFromDb(client, review_idx_list_stringify);
   }
 
   res.status(200).json({ message: "요청 처리 성공" });
