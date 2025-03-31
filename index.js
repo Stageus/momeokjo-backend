@@ -15,7 +15,7 @@ app.use(
   })
 );
 
-const authRouter = require("./domains/auth/authRouter");
+const authRouter = require("./domains/auth/router");
 const restaurantsRouter = require("./domains/restaurants/router");
 const usersRouter = require("./domains/users/router");
 const errorHandler = require("./middlewares/errorHandler");

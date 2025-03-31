@@ -1,27 +1,25 @@
 const db = require("../../database/db");
-const customError = require("../utils/customError");
+const customError = require("../../utils/customErrorResponse");
 const nodemailer = require("nodemailer");
 const axios = require("axios");
 
-const signin = async ({ id, pw }) => {
+exports.checkIsUserFromDb = async ({ id, pw }) => {
   if (!id || !pw) throw customError("입력값 확인 필요", 400);
-  const result = await db.query(
-    "SELECT idx, nickname FROM users.lists WHERE id=$1 AND pw=$2",
-    [id, pw]
-  );
+  const result = await db.query("SELECT idx, nickname FROM users.lists WHERE id=$1 AND pw=$2", [
+    id,
+    pw,
+  ]);
   if (!result.rows.length) throw customError("계정 없음", 404);
   return result.rows[0];
 };
 
-const signout = async (req) => {
+exports.clearAuthCookie = async (req) => {
   if (!req.cookies.token) throw customError("로그인 필요", 401);
 };
 
-const signup = async ({ id, pw, nickname, code, session }) => {
-  if (!id || !pw || !nickname || !code)
-    throw customError("입력값 확인 필요", 400);
-  if (!session.isEmailVerified || session.verifyCode !== code)
-    throw customError("권한 없음", 403);
+exports.createUserAtDb = async ({ id, pw, nickname, code, session }) => {
+  if (!id || !pw || !nickname || !code) throw customError("입력값 확인 필요", 400);
+  if (!session.isEmailVerified || session.verifyCode !== code) throw customError("권한 없음", 403);
   const email = session.email;
   await db.query(
     "INSERT INTO users.lists (id, pw, nickname, email, role) VALUES ($1, $2, $3, $4, $5)",
@@ -32,52 +30,53 @@ const signup = async ({ id, pw, nickname, code, session }) => {
   delete session.email;
 };
 
-const oauthSignup = async ({ nickname, code, session }) => {
+// TODO: createUserAtDb와 합치기
+exports.signUpWithOauth = async ({ nickname, code, session }) => {
   if (!nickname || !code) throw customError("입력값 확인 필요", 400);
-  if (!session.isEmailVerified || session.verifyCode !== code)
-    throw customError("권한 없음", 403);
+  if (!session.isEmailVerified || session.verifyCode !== code) throw customError("권한 없음", 403);
   const email = session.email;
-  await db.query(
-    "INSERT INTO users.lists (nickname, email, role) VALUES ($1, $2, $3)",
-    [nickname, email, "USER"]
-  );
+  await db.query("INSERT INTO users.lists (nickname, email, role) VALUES ($1, $2, $3)", [
+    nickname,
+    email,
+    "USER",
+  ]);
   delete session.verifyCode;
   delete session.isEmailVerified;
   delete session.email;
 };
 
-const findId = async ({ email }) => {
+exports.getUserIdFromDb = async ({ email }) => {
   if (!email) throw customError("입력값 확인 필요", 400);
-  const result = await db.query("SELECT id FROM users.lists WHERE email=$1", [
-    email,
-  ]);
+  const result = await db.query("SELECT id FROM users.lists WHERE email=$1", [email]);
   if (!result.rows.length) throw customError("계정 없음", 404);
   return result.rows[0].id;
 };
 
-const findPw = async ({ id, email }) => {
+// TODO: 비밀번호 초기화 요청에 사용할 쿠키 생성 메소드로 변경해야함.
+exports.createRequestPasswordReset = async ({ id, email }) => {
   if (!id || !email) throw customError("입력값 확인 필요", 400);
-  const result = await db.query(
-    "SELECT idx FROM users.lists WHERE id=$1 AND email=$2",
-    [id, email]
-  );
-  if (!result.rows.length) throw customError("계정 없음", 404);
-};
-
-const resetPw = async ({ id, email, pw }) => {
-  const result = await db.query(
-    "SELECT idx FROM users.lists WHERE id=$1 AND email=$2",
-    [id, email]
-  );
-  if (!result.rows.length) throw customError("계정 없음", 404);
-  await db.query("UPDATE users.lists SET pw=$1 WHERE id=$2 AND email=$3", [
-    pw,
+  const result = await db.query("SELECT idx FROM users.lists WHERE id=$1 AND email=$2", [
     id,
     email,
   ]);
+  if (!result.rows.length) throw customError("계정 없음", 404);
 };
 
-const verifyEmail = async ({ email, session }) => {
+exports.updatePasswordAtDb = async ({ id, email, pw }) => {
+  const result = await db.query("SELECT idx FROM users.lists WHERE id=$1 AND email=$2", [
+    id,
+    email,
+  ]);
+  if (!result.rows.length) throw customError("계정 없음", 404);
+  await db.query("UPDATE users.lists SET pw=$1 WHERE id=$2 AND email=$3", [pw, id, email]);
+};
+
+exports.checkLoginStatus = async ({ session }) => {
+  if (!session || !session.userIdx) throw customError("로그인 필요", 401);
+  return { userIdx: session.userIdx, nickname: session.nickname };
+};
+
+exports.sendEmailVerificationCode = async ({ email, session }) => {
   if (!email) throw customError("입력값 확인 필요", 400);
   const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
   session.verifyCode = verifyCode;
@@ -95,23 +94,21 @@ const verifyEmail = async ({ email, session }) => {
   });
 };
 
-const verifyEmailConfirm = async ({ code, session }) => {
+exports.checkEmailVerificationCode = async ({ code, session }) => {
   if (!code) throw customError("입력값 확인 필요", 400);
   if (!session.verifyCode) throw customError("인증번호 전송내역 없음", 404);
-  if (session.verifyCode !== code.toString())
-    throw customError("권한 없음", 403);
+  if (session.verifyCode !== code.toString()) throw customError("권한 없음", 403);
   session.isEmailVerified = true;
 };
 
-const kakaoAuth = async () => {
+exports.signInWithKakaoAuth = async () => {
   const REST_API_KEY = process.env.KAKAO_REST_API_KEY;
   const REDIRECT_URI = process.env.KAKAO_REDIRECT_URI;
-  if (!REST_API_KEY || !REDIRECT_URI)
-    throw customError("카카오 설정 정보가 없습니다.", 500);
+  if (!REST_API_KEY || !REDIRECT_URI) throw customError("카카오 설정 정보가 없습니다.", 500);
   return `https://kauth.kakao.com/oauth/authorize?client_id=${REST_API_KEY}&redirect_uri=${REDIRECT_URI}&response_type=code`;
 };
 
-const kakaoRedirect = async ({ query, session }) => {
+exports.redirectToOauthProvider = async ({ query, session }) => {
   const { code, error } = query;
   if (error || !code) throw customError("카카오 인증 실패", 400);
   const tokenResponse = await axios({
@@ -168,24 +165,4 @@ const kakaoRedirect = async ({ query, session }) => {
       throw customError("추가 회원정보 입력 필요", 403);
     }
   }
-};
-
-const status = async ({ session }) => {
-  if (!session || !session.userIdx) throw customError("로그인 필요", 401);
-  return { userIdx: session.userIdx, nickname: session.nickname };
-};
-
-module.exports = {
-  signin,
-  signout,
-  signup,
-  oauthSignup,
-  findId,
-  findPw,
-  resetPw,
-  verifyEmail,
-  verifyEmailConfirm,
-  kakaoAuth,
-  kakaoRedirect,
-  status,
 };
