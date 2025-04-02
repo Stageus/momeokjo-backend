@@ -18,7 +18,9 @@ describe("createValidateChain", () => {
   it("body, params, query가 object 타입일때 function 배열을 리턴한다.", () => {
     ["body", "params", "query"].forEach((key) => {
       expect(
-        createValidateChain({ [key]: { id: { isRequired: true, defaultValue: null } } })
+        createValidateChain({
+          [key]: { id: { isRequired: true, defaultValue: null, regexp: /^./ } },
+        })
       ).toEqual(expect.arrayContaining([expect.any(Function)]));
     });
   });
