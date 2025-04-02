@@ -7,86 +7,48 @@ jest.mock("./customErrorResponse", () => ({
 }));
 
 describe("getValidationMethod", () => {
-  it("query를 인수로 사용하면 query 함수를 반환해야한다.", () => {
-    expect(getValidationMethod("query")).toBe(query);
+  it("인수가 body인 경우 body 함수, query인 경우 query 함수, params인 경우 param 함수를 반환해야한다.", () => {
+    [{ body: body }, { query: query }, { params: param }].forEach((target) => {
+      const key = Object.keys(target)[0];
+      expect(getValidationMethod(key)).toBe(target[key]);
+    });
   });
 
-  it("body를 인수로 사용하면 body를 함수를 반환해야한다.", () => {
-    expect(getValidationMethod("body")).toBe(body);
-  });
-
-  it("params를 인수로 사용하면 param을 함수를 반환해야한다.", () => {
-    expect(getValidationMethod("params")).toBe(param);
-  });
-
-  it("null을 인수로 사용하면 null을 함수를 반환해야한다.", () => {
-    expect(getValidationMethod(null)).toBe(null);
-  });
-
-  it("undefined를 인수로 사용하면 null을 함수를 반환해야한다.", () => {
-    expect(getValidationMethod(undefined)).toBe(null);
-  });
-
-  it("숫자를 인수로 사용하면 null을 함수로 반환해야한다.", () => {
-    expect(getValidationMethod(1)).toBe(null);
+  it("인수가 body, query, params가 아니면 null을 반환해야한다.", () => {
+    [null, undefined, "", 123, true, [], {}].forEach((value) => {
+      expect(getValidationMethod(value)).toBe(null);
+    });
   });
 });
 
 describe("createChain", () => {
-  it("올바르지 않은 타입을 작성하면 commonErrorResponse가 호출된다.", () => {
-    createChain("no type", {});
+  it("타입이 body, query, params가 아니면 commonErrorResponse를 호출해야한다.", () => {
+    [null, undefined, "", 123, true, [], {}].forEach((type) => {
+      createChain(type, {});
 
-    expect(commonErrorResponse).toHaveBeenCalledWith(
-      500,
-      "validate 대상이 올바르지 않습니다. type: no type"
-    );
+      expect(commonErrorResponse).toHaveBeenCalledWith(
+        500,
+        `validate 대상이 올바르지 않습니다. type: ${type}`
+      );
+    });
   });
 
-  it("타입을 params로 작성하고 빈 객체를 사용하면 commonErrorResponse가 호출된다.", () => {
-    createChain("params", {});
+  it("타입이 body, query, params이고 빈 객체이면 commonErrorRespons를 호출해야한다.", () => {
+    ["body", "query", "params"].forEach((type) => {
+      createChain(type, {});
 
-    expect(commonErrorResponse).toHaveBeenCalledWith(500, "validate 객체가 없습니다.");
+      expect(commonErrorResponse).toHaveBeenCalledWith(500, "validate 객체가 없습니다.");
+    });
   });
 
-  it("타입을 params로 작성하고 객체에 필수값이 있으면 미들웨어 함수를 리턴한다.", () => {
-    const result = createChain("params", { id: { isRequired: true, defaultValue: null } });
+  it("타입이 body, query, params이고 객체이 필수값이 있으면 미들웨어 함수 배열을 리턴한다.", () => {
+    const testObj = { id: { isRequired: true, defaultValue: null, regexp: /^./ } };
+    [{ body: testObj }, { query: testObj }, { params: testObj }].forEach((obj) => {
+      const type = Object.keys(obj)[0];
+      const result = createChain(type, obj[type]);
 
-    expect(result).toHaveLength(1);
-    expect(result[0]).toEqual(expect.any(Function));
-  });
-
-  it("타입을 params로 작성하고 객체에 필수값이 없으면 미들웨어 함수를 리턴한다.", () => {
-    const result = createChain("params", { id: { isRequired: false, defaultValue: null } });
-
-    expect(result).toHaveLength(1);
-    expect(result[0]).toEqual(expect.any(Function));
-  });
-
-  it("타입을 body로 작성하고 객체에 필수값이 있으면 미들웨어 함수를 리턴한다.", () => {
-    const result = createChain("body", { id: { isRequired: true, defaultValue: null } });
-
-    expect(result).toHaveLength(1);
-    expect(result[0]).toEqual(expect.any(Function));
-  });
-
-  it("타입을 body로 작성하고 객체에 필수값이 없으면 미들웨어 함수를 리턴한다.", () => {
-    const result = createChain("body", { id: { isRequired: false, defaultValue: null } });
-
-    expect(result).toHaveLength(1);
-    expect(result[0]).toEqual(expect.any(Function));
-  });
-
-  it("타입을 query로 작성하고 객체에 필수값이 있으면 미들웨어 함수를 리턴한다.", () => {
-    const result = createChain("query", { id: { isRequired: true, defaultValue: null } });
-
-    expect(result).toHaveLength(1);
-    expect(result[0]).toEqual(expect.any(Function));
-  });
-
-  it("타입을 query로 작성하고 객체에 필수값이 없으면 미들웨어 함수를 리턴한다.", () => {
-    const result = createChain("query", { id: { isRequired: false, defaultValue: null } });
-
-    expect(result).toHaveLength(1);
-    expect(result[0]).toEqual(expect.any(Function));
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual(expect.any(Function));
+    });
   });
 });

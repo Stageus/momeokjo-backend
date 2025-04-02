@@ -21,7 +21,7 @@ const getValidationMethod = (type) => {
 const createChain = (type, obj) => {
   const method = getValidationMethod(type);
 
-  if (!method) {
+  if (typeof method !== "function") {
     return commonErrorResponse(500, `validate 대상이 올바르지 않습니다. type: ${type}`);
   }
 
@@ -32,16 +32,20 @@ const createChain = (type, obj) => {
   const keys = Object.keys(obj);
 
   const chainOfKeys = keys.map((key) => {
-    const { isRequired, defaultValue } = obj[key];
+    const { isRequired, defaultValue, regexp } = obj[key];
 
     if (isRequired) {
       return method(key)
         .notEmpty()
-        .customSanitizer((value) => value || defaultValue);
+        .withMessage("필수값이 누락되었습니다.")
+        .matches(regexp)
+        .withMessage("정규표현식과 일치하지 않습니다.");
     }
 
     return method(key)
       .optional()
+      .matches(regexp)
+      .withMessage("정규표현식과 일치하지 않습니다.")
       .customSanitizer((value) => value || defaultValue);
   });
 
