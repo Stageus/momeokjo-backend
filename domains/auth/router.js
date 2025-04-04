@@ -5,12 +5,7 @@ const ac = require("./controller");
 const schema = require("./schema");
 
 // 회원가입
-router.post(
-  "/signup",
-  createValidateChain(schema.sendEmailVerificationCode),
-  validateRequest,
-  ac.signUp
-);
+router.post("/signup", createValidateChain(schema.signUp), validateRequest, ac.signUp);
 
 // 이메일 인증번호 전송
 router.post(
