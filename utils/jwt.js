@@ -12,7 +12,7 @@ exports.createRefreshToken = (payload, expiresIn) => {
   return token;
 };
 
-exports.verifyToken = (token, isRefresh) => {
+exports.verifyToken = (token, isRefresh = false) => {
   try {
     const key = isRefresh ? process.env.JWT_ACCESS_SECRET : process.env.JWT_REFRESH_SECRET;
 
