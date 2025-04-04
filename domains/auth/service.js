@@ -1,5 +1,12 @@
 const { transporter } = require("../../utils/nodemailer");
 
+exports.createUserAtDb = async (client, id, pw, nickname, email) => {
+  await client.query(
+    "INSERT INTO users.lists (id, pw, nickname, email, role) VALUES ($1, $2, $3, $4, $5)",
+    [id, pw, nickname, email, "USER"]
+  );
+};
+
 exports.checkIsExistedEmailFromDb = async (client, email) => {
   const results = await client.query(
     `
