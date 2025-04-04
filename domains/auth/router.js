@@ -12,4 +12,12 @@ router.post(
   ac.sendEmailVerificationCode
 );
 
+// 이메일 인증번호 확인
+router.post(
+  "/verify-email/confirm",
+  createValidateChain(schema.sendEmailVerificationCode),
+  validateRequest,
+  ac.checkEmailVerificationCode
+);
+
 module.exports = router;

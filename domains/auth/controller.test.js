@@ -29,9 +29,8 @@ describe("sendEmailVerificationCode", () => {
 
     await controller.sendEmailVerificationCode(req, res, next, client);
 
-    expect(next).toHaveBeenCalledWith(
-      commonErrorResponse(409, "이미 회원가입에 사용된 이메일입니다.")
-    );
+    const error = commonErrorResponse(409, "이미 회원가입에 사용된 이메일입니다.");
+    expect(next).toHaveBeenCalledWith(error);
     expect(service.createVerificationCode).not.toHaveBeenCalled();
   });
 
@@ -61,5 +60,58 @@ describe("sendEmailVerificationCode", () => {
     expect(res.cookie).toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({ message: "이메일 인증 코드 전송 성공" });
+  });
+});
+
+describe("checkEmailVerificationCode", () => {
+  it("인증되지 않은 사용자일 경우 401 상태코드와 안내 메시지를 리턴해야한다.", async () => {
+    const req = { cookies: { email: null }, body: { code: null } };
+    const res = {};
+    const next = jest.fn();
+    const client = jest.fn();
+
+    jwt.verifyToken.mockReturnValue({ isValid: false, results: null });
+
+    await controller.checkEmailVerificationCode(req, res, next, client);
+
+    const error = commonErrorResponse(401, "인증되지 않은 사용자입니다.");
+    expect(next).toHaveBeenCalledWith(error);
+    expect(service.checkVerificationCodeAtDb).not.toHaveBeenCalled();
+  });
+
+  it("인증번호가 유효하지 않은 경우 400 상태코드와 안내 메시지를 리턴해야한다.", async () => {
+    const req = { cookies: { email: null }, body: { code: null } };
+    const res = {};
+    const next = jest.fn();
+    const client = jest.fn();
+
+    jwt.verifyToken.mockReturnValue({ isValid: true, results: { email: "test@test.com" } });
+
+    service.checkVerificationCodeAtDb.mockResolvedValue(false);
+
+    await controller.checkEmailVerificationCode(req, res, next, client);
+
+    const error = commonErrorResponse(400, "잘못된 인증번호입니다.");
+    expect(next).toHaveBeenCalledWith(error);
+  });
+
+  it("이메일과 인증번호가 유효한 경우 200 상태코드와 안내 메시지를 리턴해야한다.", async () => {
+    const req = { cookies: { email: null }, body: { code: "123456" } };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    const next = jest.fn();
+    const client = jest.fn();
+
+    jwt.verifyToken.mockReturnValue({ isValid: true, results: { email: "test@test.com" } });
+
+    service.checkVerificationCodeAtDb.mockResolvedValue(true);
+
+    await controller.checkEmailVerificationCode(req, res, next, client);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ message: "요청 처리 성공" });
   });
 });

@@ -43,3 +43,20 @@ exports.sendEmailVerificationCode = async (email, code) => {
     text: `인증번호: ${code}`,
   });
 };
+
+exports.checkVerificationCodeAtDb = async (client, email, code) => {
+  const results = await client.query(
+    `
+      SELECT
+        CASE 
+          WHEN code = $1 THEN true 
+          ELSE false
+        END AS isValidCode
+      FROM users.codes
+      WHERE email = $2
+    `,
+    [code, email]
+  );
+
+  return results.rows[0].isValidCode;
+};
