@@ -23,4 +23,7 @@ router.post(
   ac.checkEmailVerificationCode
 );
 
+// 카카오 로그인
+router.get("/oauth/kakao", ac.signInWithKakaoAuth);
+
 module.exports = router;

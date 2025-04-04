@@ -169,3 +169,23 @@ describe("checkEmailVerificationCode", () => {
     expect(res.json).toHaveBeenCalledWith({ message: "요청 처리 성공" });
   });
 });
+
+describe("signInWithKakaoAuth", () => {
+  it("카카오 로그인 페이지로 리다이렉트해야 한다", async () => {
+    const req = {};
+    const res = {
+      redirect: jest.fn(),
+    };
+    const next = jest.fn();
+    const client = jest.fn();
+
+    process.env.KAKAO_REST_API_KEY = "test_api_key";
+    process.env.KAKAO_REDIRECT_URI = "redirect_url";
+
+    controller.signInWithKakaoAuth(req, res, next, client);
+
+    const expectedUrl = `https://kauth.kakao.com/oauth/authorize?client_id=test_api_key&redirect_uri=redirect_url&response_type=code`;
+
+    expect(res.redirect).toHaveBeenCalledWith(expectedUrl);
+  });
+});

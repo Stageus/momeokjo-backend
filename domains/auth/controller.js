@@ -1,5 +1,5 @@
 const as = require("./service");
-const { tryCatchWrapperWithDb } = require("../../utils/customWrapper");
+const { tryCatchWrapper, tryCatchWrapperWithDb } = require("../../utils/customWrapper");
 const { commonErrorResponse } = require("../../utils/customErrorResponse");
 const { createAccessToken, verifyToken } = require("../../utils/jwt");
 
@@ -92,4 +92,14 @@ exports.checkEmailVerificationCode = tryCatchWrapperWithDb(async (req, res, next
   }
 
   res.status(200).json({ message: "요청 처리 성공" });
+});
+
+// 카카오 로그인
+exports.signInWithKakaoAuth = tryCatchWrapper((req, res, next, client) => {
+  const REST_API_KEY = process.env.KAKAO_REST_API_KEY;
+  const REDIRECT_URI = process.env.KAKAO_REDIRECT_URI;
+
+  const url = `https://kauth.kakao.com/oauth/authorize?client_id=${REST_API_KEY}&redirect_uri=${REDIRECT_URI}&response_type=code`;
+
+  res.redirect(url);
 });
