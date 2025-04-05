@@ -26,4 +26,7 @@ router.post(
 // 카카오 로그인
 router.get("/oauth/kakao", ac.signInWithKakaoAuth);
 
+// 카카오 토큰발급 요청
+router.get("/oauth/kakao/redirect", ac.checkOauthAndRedirect);
+
 module.exports = router;

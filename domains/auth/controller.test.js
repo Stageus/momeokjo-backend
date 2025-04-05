@@ -4,6 +4,7 @@ const service = require("./service");
 const { commonErrorResponse } = require("../../utils/customErrorResponse");
 const pool = require("../../database/db");
 const jwt = require("../../utils/jwt");
+const algorithm = require("../../utils/algorithm");
 
 jest.mock("../../database/db", () => ({
   connect: jest.fn().mockReturnValue({ query: jest.fn(), release: jest.fn() }),
@@ -16,6 +17,7 @@ jest.mock("../../utils/customErrorResponse", () => ({
 
 jest.mock("./service");
 jest.mock("../../utils/jwt");
+jest.mock("../../utils/algorithm");
 
 describe("signUp", () => {
   it("인증되지 않은 사용자일 경우 403 상태코드와 안내 메시지를 리턴해야한다.", async () => {
@@ -187,5 +189,110 @@ describe("signInWithKakaoAuth", () => {
     const expectedUrl = `https://kauth.kakao.com/oauth/authorize?client_id=test_api_key&redirect_uri=redirect_url&response_type=code`;
 
     expect(res.redirect).toHaveBeenCalledWith(expectedUrl);
+  });
+});
+
+describe("checkOauthAndRedirect", () => {
+  /*
+  code from query string
+  EjKVmrnoXq8AFazzTTPGvB6BRQnxad4iqZ8zSlU0Zy3Fd12YCKdcTQAAAAQKFxAvAAABlgGDXcmi-KZYUq23DA\
+  
+  getKakaoToken mockdata
+  {
+    access_token: 'lHBsWphNsVnxzvOzhCf2kjSHktTey17RAAAAAQoNFN0AAAGWASzeYKj01SImjvGc',
+    token_type: 'bearer',
+    refresh_token: '3PJtx3oXtBV7M50zPrFwveJvZPdiVIGhAAAAAgoNFN0AAAGWASzeWaj01SImjvGc',
+    expires_in: 21599,
+    refresh_token_expires_in: 5183999
+  }
+    getKakaoUserInfo mockdata
+  { id: 3932570674, connected_at: '2025-02-22T09:33:38Z' }
+  */
+  const reqQuery = [{ error: true }, { code: null }];
+  it.each(reqQuery)(
+    "Oauth Provider로부터 실패 응답을 받으면 상태코드 400과 안내 메시지로 예외를 발생시켜야 한다.",
+    async (value) => {
+      const req = {
+        query: {
+          ...value,
+        },
+      };
+      const res = {};
+      const next = jest.fn();
+      const client = jest.fn();
+
+      await controller.checkOauthAndRedirect(req, res, next, client);
+
+      const error = commonErrorResponse(400, "카카오 인증 실패");
+      expect(next).toHaveBeenCalledWith(error);
+    }
+  );
+
+  it("oauth 이력이 없는 회원이면 oauth 정보를 데이터베이스에 저장하고 쿠키와 함께 회원가입 페이지로 리다이렉트를 해야한다.", async () => {
+    const req = {
+      query: {
+        code: "some_code",
+      },
+    };
+    const res = {
+      cookie: jest.fn(),
+      redirect: jest.fn(),
+    };
+    const next = jest.fn();
+    const client = jest.fn();
+
+    service.getKakaoToken.mockResolvedValue({ accessToken: "", refreshToken: "" });
+    service.getKakaoUserInfo.mockResolvedValue({ provider_user_id: "" });
+    service.checkOauthUser.mockResolvedValue({ isExistedOauthUser: false, users_idx: undefined });
+
+    algorithm.encrypt.mockResolvedValue();
+    service.saveOauthInfoAtDb.mockResolvedValue();
+
+    jwt.createAccessToken.mockResolvedValue();
+
+    await controller.checkOauthAndRedirect(req, res, next, client);
+
+    // expect(next).toHaveBeenCalledWith(expect.any(Error));
+
+    expect(service.getKakaoToken).toHaveBeenCalledTimes(1);
+    expect(service.getKakaoUserInfo).toHaveBeenCalledTimes(1);
+    expect(service.checkOauthUser).toHaveBeenCalledTimes(1);
+    expect(algorithm.encrypt).toHaveBeenCalledTimes(2);
+    expect(service.saveOauthInfoAtDb).toHaveBeenCalledTimes(1);
+    expect(res.cookie).toHaveBeenCalled();
+    expect(res.redirect).toHaveBeenCalled();
+
+    expect(jwt.createAccessToken).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it("oauth 이력이 있는 회원이면 oauth 정보로 jwt 토큰을 생성하고 쿠키와 함께 음식점 추천 페이지로 리다이렉트를 해야한다.", async () => {
+    const req = {
+      query: {
+        code: "some_code",
+      },
+    };
+    const res = {
+      cookie: jest.fn(),
+      redirect: jest.fn(),
+    };
+    const next = jest.fn();
+    const client = jest.fn();
+
+    service.getKakaoToken.mockResolvedValue({ accessToken: "", refreshToken: "" });
+    service.getKakaoUserInfo.mockResolvedValue({ provider_user_id: "" });
+    service.checkOauthUser.mockResolvedValue({ isExistedOauthUser: true, users_idx: "1" });
+
+    jwt.createAccessToken.mockResolvedValue();
+
+    await controller.checkOauthAndRedirect(req, res, next, client);
+
+    expect(service.getKakaoToken).toHaveBeenCalledTimes(1);
+    expect(service.getKakaoUserInfo).toHaveBeenCalledTimes(1);
+    expect(service.checkOauthUser).toHaveBeenCalledTimes(1);
+    expect(jwt.createAccessToken).toHaveBeenCalledTimes(1);
+    expect(res.cookie).toHaveBeenCalled();
+    expect(res.redirect).toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
   });
 });

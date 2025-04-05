@@ -2,6 +2,7 @@ const as = require("./service");
 const { tryCatchWrapper, tryCatchWrapperWithDb } = require("../../utils/customWrapper");
 const { commonErrorResponse } = require("../../utils/customErrorResponse");
 const { createAccessToken, verifyToken } = require("../../utils/jwt");
+const { encrypt } = require("../../utils/algorithm");
 
 // 회원가입
 exports.signUp = tryCatchWrapperWithDb(async (req, res, next, client) => {
@@ -102,4 +103,50 @@ exports.signInWithKakaoAuth = tryCatchWrapper((req, res, next, client) => {
   const url = `https://kauth.kakao.com/oauth/authorize?client_id=${REST_API_KEY}&redirect_uri=${REDIRECT_URI}&response_type=code`;
 
   res.redirect(url);
+});
+
+// 카카오 토큰발급 요청
+exports.checkOauthAndRedirect = tryCatchWrapper(async (req, res, next, client) => {
+  const { code, error } = req.query;
+  if (error || !code) throw commonErrorResponse(400, "카카오 인증 실패");
+
+  const { accessToken, refreshToken } = await as.getKakaoToken(code);
+  const { provider_user_id } = await as.getKakaoUserInfo(accessToken);
+  const { isExistedOauthUser, users_idx } = await as.checkOauthUser(client, provider_user_id);
+
+  if (!isExistedOauthUser || !users_idx) {
+    const encryptedAccessToken = await encrypt(accessToken);
+    const encryptedRefreshToken = await encrypt(refreshToken);
+
+    const oauth_idx = await as.saveOauthInfoAtDb(
+      client,
+      encryptedAccessToken,
+      encryptedRefreshToken,
+      provider_user_id
+    );
+
+    // provider_user_id 쿠키에 저장
+    res.cookie("oauth_idx", oauth_idx, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      maxAge: 60 * 15 * 1000,
+    });
+
+    // oauth 회원가입 페이지로 리다이렉트
+    res.redirect("http://localhost:3000/oauth/signup");
+  } else {
+    // users_idx, provider, role로 jwt 토큰 만들기
+    const payload = { users_idx, provider: "KAKAO", role: "USER" };
+    const token = createAccessToken(payload);
+
+    res.cookie("accessToken", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      maxAge: 60 * 15 * 1000,
+    });
+
+    res.redirect("http://localhost:3000/");
+  }
 });
