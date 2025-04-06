@@ -47,6 +47,23 @@ exports.getUserId = tryCatchWrapperWithDb(async (req, res, next, client) => {
   res.status(200).json({ message: "아이디 조회 성공", id });
 });
 
+// 비밀번호 찾기
+exports.createRequestPasswordReset = tryCatchWrapperWithDb(async (req, res, next, client) => {
+  const { id, email } = req.body;
+
+  const isExistedUser = await as.checkUserWithIdAndEmailFromDb(client, id, email);
+  if (!isExistedUser) throw commonErrorResponse(404, "계정 없음");
+
+  const token = createAccessToken({ id, email }, "15m");
+  res.cookie("request_pw_reset", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "Strict",
+    maxAge: 60 * 15 * 1000,
+  });
+  res.status(200).json({ message: "요청 처리 성공" });
+});
+
 // 이메일 인증번호 전송
 exports.sendEmailVerificationCode = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { email } = req.body;

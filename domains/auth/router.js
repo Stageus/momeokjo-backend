@@ -10,6 +10,14 @@ router.post("/signup", createValidateChain(schema.signUp), validateRequest, ac.s
 // 아이디 찾기
 router.get("/findid", createValidateChain(schema.findId), validateRequest, ac.getUserId);
 
+// 비밀번호 찾기
+router.get(
+  "/findpw",
+  createValidateChain(schema.findId),
+  validateRequest,
+  ac.createRequestPasswordReset
+);
+
 // 이메일 인증번호 전송
 router.post(
   "/verify-email",

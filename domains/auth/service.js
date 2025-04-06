@@ -22,6 +22,24 @@ exports.getUserIdFromDb = async (client, email) => {
   return results.rows[0].id;
 };
 
+//
+exports.checkUserWithIdAndEmailFromDb = async (client, id, email) => {
+  const results = await client.query(
+    `
+    SELECT
+      EXISTS (
+        SELECT 1
+        FROM users.lists
+        WHERE id = $1
+        AND email = $2
+      ) AS is_existed
+  `,
+    [id, email]
+  );
+
+  return results.rows[0].is_existed;
+};
+
 exports.checkIsExistedEmailFromDb = async (client, email) => {
   const results = await client.query(
     `
