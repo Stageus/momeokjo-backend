@@ -5,4 +5,4 @@ const commonErrorResponse = (status, message) => {
   return error;
 };
 
-module.exports = { commonErrorResponse };
+module.exports = commonErrorResponse;
