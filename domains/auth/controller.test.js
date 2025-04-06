@@ -75,6 +75,55 @@ describe("signUp", () => {
   });
 });
 
+describe("findId", () => {
+  it("데이터베이스에 email을 가진 회원이 없는 경우 상태코드 404와 안내 메시지로 예외를 발생시켜야한다.", async () => {
+    const req = {
+      body: {
+        email: "",
+      },
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    const next = jest.fn();
+    const client = jest.fn();
+
+    service.getUserIdFromDb.mockResolvedValue(undefined);
+
+    await controller.getUserId(req, res, next, client);
+
+    expect(service.getUserIdFromDb).toHaveBeenCalledTimes(1);
+    const error = commonErrorResponse(400, "잘못된 인증번호입니다.");
+    expect(next).toHaveBeenCalledWith(error);
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+  });
+
+  it("데이터베이스에 email을 가진 회원이 있는경우 상태코드 200과 안내 메시지, id를 응답해야한다.", async () => {
+    const req = {
+      body: {
+        email: "test@test.com",
+      },
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    const next = jest.fn();
+    const client = jest.fn();
+
+    service.getUserIdFromDb.mockResolvedValue("some_id");
+
+    await controller.getUserId(req, res, next, client);
+
+    expect(service.getUserIdFromDb).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ message: "아이디 조회 성공", id: "some_id" });
+    expect(next).not.toHaveBeenCalled();
+  });
+});
+
 describe("sendEmailVerificationCode", () => {
   it("데이터베이스에 중복된 이메일이 있는 경우 409 상태코드와 안내 메시지를 리턴해야한다.", async () => {
     const req = { body: { email: "test@test.com" } };

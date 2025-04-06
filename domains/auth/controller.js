@@ -37,6 +37,16 @@ exports.signUp = tryCatchWrapperWithDb(async (req, res, next, client) => {
   res.status(200).json({ message: "회원가입 성공" });
 });
 
+// 아이디 찾기
+exports.getUserId = tryCatchWrapperWithDb(async (req, res, next, client) => {
+  const { email } = req.body;
+
+  const id = await as.getUserIdFromDb({ email });
+  if (!id) throw commonErrorResponse(404, "계정 없음");
+
+  res.status(200).json({ message: "아이디 조회 성공", id });
+});
+
 // 이메일 인증번호 전송
 exports.sendEmailVerificationCode = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { email } = req.body;

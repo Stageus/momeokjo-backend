@@ -8,6 +8,20 @@ exports.createUserAtDb = async (client, id, pw, nickname, email) => {
   );
 };
 
+exports.getUserIdFromDb = async (client, email) => {
+  const results = await client.query(
+    `
+      SELECT id
+      FROM users.lists
+      WHERE email = $1
+      AND is_deleted = false;
+    `,
+    [email]
+  );
+
+  return results.rows[0].id;
+};
+
 exports.checkIsExistedEmailFromDb = async (client, email) => {
   const results = await client.query(
     `

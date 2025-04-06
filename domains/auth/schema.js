@@ -25,6 +25,16 @@ exports.signUp = {
   },
 };
 
+exports.findId = {
+  body: {
+    email: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.EMAIL,
+    },
+  },
+};
+
 exports.sendEmailVerificationCode = {
   body: {
     email: {
