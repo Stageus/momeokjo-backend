@@ -20,6 +20,6 @@ exports.verifyToken = (token, isRefresh = false) => {
 
     return { isValid: true, results: decoded };
   } catch (err) {
-    return { isValid: false, results: err.message };
+    return { isValid: false, results: err.name };
   }
 };
