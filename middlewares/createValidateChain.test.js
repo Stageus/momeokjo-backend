@@ -1,27 +1,39 @@
 const { createValidateChain } = require("./createValidateChain");
+const { createChain } = require("../utils/validate");
+
+jest.mock("../utils/validate");
 
 describe("createValidateChain", () => {
-  it("body, params, query가 object 타입이 아닐때 빈 배열을 리턴한다.", () => {
-    ["body", "params", "query"].forEach((key) => {
-      [null, undefined, "", 123, true, []].forEach((value) => {
-        expect(createValidateChain({ [key]: value })).toEqual([]);
-      });
-    });
+  beforeEach(() => {
+    createChain.mockClear();
   });
 
-  it("body, params, query가 object 타입이지만 빈 객체일때 빈배열 배열을 리턴한다.", () => {
-    ["body", "params", "query"].forEach((key) => {
-      expect(createValidateChain({ [key]: {} })).toEqual([]);
-    });
-  });
+  const invalidSchema = { body: {}, params: {}, query: {} };
+  it.each(Object.keys(invalidSchema))(
+    "스키마가 유효하지 않으면 빈 배열을 리턴해야한다.",
+    (schema) => {
+      createChain.mockReturnValue([]);
 
-  it("body, params, query가 object 타입일때 function 배열을 리턴한다.", () => {
-    ["body", "params", "query"].forEach((key) => {
-      expect(
-        createValidateChain({
-          [key]: { id: { isRequired: true, defaultValue: null, regexp: /^./ } },
-        })
-      ).toEqual(expect.arrayContaining([expect.any(Function)]));
-    });
+      const result = createValidateChain({ [schema]: invalidSchema[schema] });
+
+      expect(createChain).not.toHaveBeenCalled();
+      expect(result).toEqual([]);
+    }
+  );
+
+  const validSchema = {
+    body: { isRequired: "", defaultValue: "", regexp: "" },
+    query: { isRequired: "", defaultValue: "", regexp: "" },
+    param: { isRequired: "", defaultValue: "", regexp: "" },
+  };
+  it.each(Object.keys(validSchema))("스키마가 유효하면 function 배열을 리턴한다.", (schema) => {
+    const mockFn = jest.fn();
+    createChain.mockReturnValue([mockFn]);
+
+    const result = createValidateChain({ [schema]: validSchema[schema] });
+
+    expect(createChain).toHaveBeenCalledWith(schema, validSchema[schema]);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual(expect.any(Function));
   });
 });

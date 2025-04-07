@@ -1,8 +1,7 @@
-const { validationResult } = require("express-validator");
 const { createChain } = require("../utils/validate");
 
-exports.createValidateChain = (validations) => {
-  const { body, params, query } = validations;
+exports.createValidateChain = (schema) => {
+  const { body, param, query } = schema;
 
   const validateChain = [];
   if (body && typeof body === "object" && Object.keys(body).length !== 0) {
@@ -10,8 +9,8 @@ exports.createValidateChain = (validations) => {
     validateChain.push(...bodyChain);
   }
 
-  if (params && typeof params === "object" && Object.keys(params).length !== 0) {
-    const paramChain = createChain("params", params);
+  if (param && typeof param === "object" && Object.keys(param).length !== 0) {
+    const paramChain = createChain("param", param);
     validateChain.push(...paramChain);
   }
 
