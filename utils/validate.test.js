@@ -1,54 +1,81 @@
 const { body, query, param } = require("express-validator");
 const { getValidationMethod, createChain } = require("./validate");
-const { commonErrorResponse } = require("./customErrorResponse");
+const customErrorResponse = require("./customErrorResponse");
 
-jest.mock("./customErrorResponse", () => ({
-  commonErrorResponse: jest.fn(),
+const mockChain = {
+  notEmpty: jest.fn().mockReturnThis(),
+  withMessage: jest.fn().mockReturnThis(),
+  matches: jest.fn().mockReturnThis(),
+  customSanitizer: jest.fn().mockReturnThis(),
+};
+
+jest.mock("express-validator", () => ({
+  body: jest.fn(() => mockChain),
+  query: jest.fn(() => mockChain),
+  param: jest.fn(() => mockChain),
 }));
 
 describe("getValidationMethod", () => {
-  it("인수가 body인 경우 body 함수, query인 경우 query 함수, params인 경우 param 함수를 반환해야한다.", () => {
-    [{ body: body }, { query: query }, { params: param }].forEach((target) => {
-      const key = Object.keys(target)[0];
-      expect(getValidationMethod(key)).toBe(target[key]);
-    });
+  const invalidType = [null, undefined, "", 123, true, [], {}];
+  it.each(invalidType)("type이 유효하지 않으면 null을 리턴해야한다.", (type) => {
+    expect(getValidationMethod(type)).toBe(null);
   });
 
-  it("인수가 body, query, params가 아니면 null을 반환해야한다.", () => {
-    [null, undefined, "", 123, true, [], {}].forEach((value) => {
-      expect(getValidationMethod(value)).toBe(null);
-    });
-  });
+  const validType = [{ body: body }, { query: query }, { param: param }];
+  it.each(validType)(
+    "type이 유효하면 type에 맞는 express-validator 메소드를 리턴해야한다.",
+    (type) => {
+      const key = Object.keys(type)[0];
+      expect(getValidationMethod(key)).toBe(type[key]);
+    }
+  );
 });
 
 describe("createChain", () => {
-  it("타입이 body, query, params가 아니면 commonErrorResponse를 호출해야한다.", () => {
-    [null, undefined, "", 123, true, [], {}].forEach((type) => {
+  const invalidType = [null, undefined, "", 123, true, [], {}];
+  it.each(invalidType)("타입이 유효하지 않으면 예외를 발생시켜야 한다.", (type) => {
+    try {
       createChain(type, {});
+    } catch (err) {
+      expect(err.status).toBe(500);
+      expect(err.message).toBe(`validate 대상이 올바르지 않습니다. type: ${type}`);
 
-      expect(commonErrorResponse).toHaveBeenCalledWith(
-        500,
-        `validate 대상이 올바르지 않습니다. type: ${type}`
-      );
-    });
+      expect(customErrorResponse(err.status, err.message)).toMatchObject({
+        status: 500,
+        message: `validate 대상이 올바르지 않습니다. type: ${type}`,
+      });
+    }
   });
 
-  it("타입이 body, query, params이고 빈 객체이면 commonErrorRespons를 호출해야한다.", () => {
-    ["body", "query", "params"].forEach((type) => {
+  const validType = ["body", "query", "param"];
+  it.each(validType)("타입은 유효하지만 빈 객체가 전달된 경우 예외를 발생시켜야 한다.", (type) => {
+    try {
       createChain(type, {});
+    } catch (err) {
+      expect(err.status).toBe(500);
+      expect(err.message).toBe(`validate 객체가 없습니다.`);
 
-      expect(commonErrorResponse).toHaveBeenCalledWith(500, "validate 객체가 없습니다.");
-    });
+      expect(customErrorResponse(err.status, err.message)).toMatchObject({
+        status: 500,
+        message: `validate 객체가 없습니다.`,
+      });
+    }
   });
 
-  it("타입이 body, query, params이고 객체이 필수값이 있으면 미들웨어 함수 배열을 리턴한다.", () => {
-    const testObj = { id: { isRequired: true, defaultValue: null, regexp: /^./ } };
-    [{ body: testObj }, { query: testObj }, { params: testObj }].forEach((obj) => {
-      const type = Object.keys(obj)[0];
-      const result = createChain(type, obj[type]);
+  const validObject = [
+    { body: { id: { isRequired: true, defaultValue: null, regexp: /^./ } } },
+    { query: { id: { isRequired: true, defaultValue: null, regexp: /^./ } } },
+    { param: { id: { isRequired: true, defaultValue: null, regexp: /^./ } } },
+  ];
+  it.each(validObject)("타입과 객체가 유효하면 validator chain 배열을 리턴해야한다.", (obj) => {
+    const type = Object.keys(obj)[0];
+    const result = createChain(type, obj[type]);
 
-      expect(result).toHaveLength(1);
-      expect(result[0]).toEqual(expect.any(Function));
-    });
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject(
+      expect.objectContaining({
+        ...mockChain,
+      })
+    );
   });
 });

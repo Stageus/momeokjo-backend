@@ -1,9 +1,9 @@
 const { body, query, param } = require("express-validator");
-const { commonErrorResponse } = require("./customErrorResponse");
+const customErrorResponse = require("./customErrorResponse");
 
 const getValidationMethod = (type) => {
   switch (type) {
-    case "params": {
+    case "param": {
       return param;
     }
     case "query": {
@@ -19,37 +19,38 @@ const getValidationMethod = (type) => {
 };
 
 const createChain = (type, obj) => {
-  const method = getValidationMethod(type);
+  try {
+    const method = getValidationMethod(type);
 
-  if (typeof method !== "function") {
-    return commonErrorResponse(500, `validate 대상이 올바르지 않습니다. type: ${type}`);
-  }
+    if (typeof method !== "function")
+      throw new Error(`validate 대상이 올바르지 않습니다. type: ${type}`);
 
-  if (Object.keys(obj).length === 0) {
-    return commonErrorResponse(500, `validate 객체가 없습니다.`);
-  }
+    if (Object.keys(obj).length === 0) throw new Error(`validate 객체가 없습니다.`);
 
-  const keys = Object.keys(obj);
+    const keys = Object.keys(obj);
 
-  const chainOfKeys = keys.map((key) => {
-    const { isRequired, defaultValue, regexp } = obj[key];
+    const chainOfKeys = keys.map((key) => {
+      const { isRequired, defaultValue, regexp } = obj[key];
 
-    if (isRequired) {
+      if (isRequired) {
+        return method(key)
+          .notEmpty()
+          .withMessage("필수값이 누락되었습니다.")
+          .matches(regexp)
+          .withMessage("정규표현식과 일치하지 않습니다.");
+      }
+
       return method(key)
-        .notEmpty()
-        .withMessage("필수값이 누락되었습니다.")
+        .optional()
         .matches(regexp)
-        .withMessage("정규표현식과 일치하지 않습니다.");
-    }
+        .withMessage("정규표현식과 일치하지 않습니다.")
+        .customSanitizer((value) => value || defaultValue);
+    });
 
-    return method(key)
-      .optional()
-      .matches(regexp)
-      .withMessage("정규표현식과 일치하지 않습니다.")
-      .customSanitizer((value) => value || defaultValue);
-  });
-
-  return chainOfKeys;
+    return chainOfKeys;
+  } catch (err) {
+    throw customErrorResponse(500, err.message || "validator chain 생성 중 오류 발생");
+  }
 };
 
 module.exports = { getValidationMethod, createChain };
