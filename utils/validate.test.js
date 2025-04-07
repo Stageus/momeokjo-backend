@@ -40,7 +40,9 @@ describe("createChain", () => {
       expect(err.status).toBe(500);
       expect(err.message).toBe(`validate 대상이 올바르지 않습니다. type: ${type}`);
 
-      expect(customErrorResponse(err.status, err.message)).toMatchObject({
+      const errRes = customErrorResponse(err.status, err.message);
+      expect(errRes).toBeInstanceOf(Error);
+      expect(errRes).toMatchObject({
         status: 500,
         message: `validate 대상이 올바르지 않습니다. type: ${type}`,
       });
@@ -55,7 +57,9 @@ describe("createChain", () => {
       expect(err.status).toBe(500);
       expect(err.message).toBe(`validate 객체가 없습니다.`);
 
-      expect(customErrorResponse(err.status, err.message)).toMatchObject({
+      const errRes = customErrorResponse(err.status, err.message);
+      expect(errRes).toBeInstanceOf(Error);
+      expect(errRes).toMatchObject({
         status: 500,
         message: `validate 객체가 없습니다.`,
       });

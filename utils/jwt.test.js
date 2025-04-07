@@ -16,7 +16,9 @@ describe("createAccessToken", () => {
       expect(err.status).toBe(500);
       expect(err.message).toBe("payload 확인 필요");
 
-      expect(customErrorResponse(err.status, err.message)).toMatchObject(
+      const errRes = customErrorResponse(err.status, err.message);
+      expect(errRes).toBeInstanceOf(Error);
+      expect(errRes).toMatchObject(
         expect.objectContaining({
           status: 500,
           message: "payload 확인 필요",
@@ -34,7 +36,9 @@ describe("createAccessToken", () => {
       expect(err.status).toBe(500);
       expect(err.message).toBe("expiresIn 확인 필요");
 
-      expect(customErrorResponse(err.status, err.message)).toMatchObject(
+      const errRes = customErrorResponse(err.status, err.message);
+      expect(errRes).toBeInstanceOf(Error);
+      expect(errRes).toMatchObject(
         expect.objectContaining({
           status: 500,
           message: "expiresIn 확인 필요",
@@ -53,7 +57,9 @@ describe("createAccessToken", () => {
       expect(err.status).toBe(500);
       expect(err.message).toBe("환경 변수 JWT_ACCESS_SECRET 확인 필요");
 
-      expect(customErrorResponse(err.status, err.message)).toMatchObject(
+      const errRes = customErrorResponse(err.status, err.message);
+      expect(errRes).toBeInstanceOf(Error);
+      expect(errRes).toMatchObject(
         expect.objectContaining({
           status: 500,
           message: "환경 변수 JWT_ACCESS_SECRET 확인 필요",
@@ -86,7 +92,9 @@ describe("createRefreshToken", () => {
       expect(err.status).toBe(500);
       expect(err.message).toBe("payload 확인 필요");
 
-      expect(customErrorResponse(err.status, err.message)).toMatchObject(
+      const errRes = customErrorResponse(err.status, err.message);
+      expect(errRes).toBeInstanceOf(Error);
+      expect(errRes).toMatchObject(
         expect.objectContaining({
           status: 500,
           message: "payload 확인 필요",
@@ -104,7 +112,9 @@ describe("createRefreshToken", () => {
       expect(err.status).toBe(500);
       expect(err.message).toBe("expiresIn 확인 필요");
 
-      expect(customErrorResponse(err.status, err.message)).toMatchObject(
+      const errRes = customErrorResponse(err.status, err.message);
+      expect(errRes).toBeInstanceOf(Error);
+      expect(errRes).toMatchObject(
         expect.objectContaining({
           status: 500,
           message: "expiresIn 확인 필요",
@@ -123,7 +133,9 @@ describe("createRefreshToken", () => {
       expect(err.status).toBe(500);
       expect(err.message).toBe("환경 변수 JWT_REFRESH_SECRET 확인 필요");
 
-      expect(customErrorResponse(err.status, err.message)).toMatchObject(
+      const errRes = customErrorResponse(err.status, err.message);
+      expect(errRes).toBeInstanceOf(Error);
+      expect(errRes).toMatchObject(
         expect.objectContaining({
           status: 500,
           message: "환경 변수 JWT_REFRESH_SECRET 확인 필요",
@@ -155,7 +167,9 @@ describe("verifyToken", () => {
       expect(err.status).toBe(500);
       expect(err.message).toBe("token 확인 필요");
 
-      expect(customErrorResponse(err.status, err.message)).toMatchObject(
+      const errRes = customErrorResponse(err.status, err.message);
+      expect(errRes).toBeInstanceOf(Error);
+      expect(errRes).toMatchObject(
         expect.objectContaining({
           status: 500,
           message: "token 확인 필요",
@@ -173,7 +187,9 @@ describe("verifyToken", () => {
       expect(err.status).toBe(500);
       expect(err.message).toBe("환경 변수 JWT_ACCESS_SECRET 확인 필요");
 
-      expect(customErrorResponse(err.status, err.message)).toMatchObject(
+      const errRes = customErrorResponse(err.status, err.message);
+      expect(errRes).toBeInstanceOf(Error);
+      expect(errRes).toMatchObject(
         expect.objectContaining({
           status: 500,
           message: "환경 변수 JWT_ACCESS_SECRET 확인 필요",
@@ -201,7 +217,9 @@ describe("verifyToken", () => {
       expect(err.status).toBe(500);
       expect(err.message).toBe("환경 변수 JWT_REFRESH_SECRET 확인 필요");
 
-      expect(customErrorResponse(err.status, err.message)).toMatchObject(
+      const errRes = customErrorResponse(err.status, err.message);
+      expect(errRes).toBeInstanceOf(Error);
+      expect(errRes).toMatchObject(
         expect.objectContaining({
           status: 500,
           message: "환경 변수 JWT_REFRESH_SECRET 확인 필요",
