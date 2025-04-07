@@ -1,6 +1,6 @@
 const { promisify } = require("util");
 const { scrypt, randomBytes, createCipheriv, createDecipheriv } = require("crypto");
-const { commonErrorResponse } = require("./customErrorResponse");
+const customErrorResponse = require("./customErrorResponse");
 
 const algorithm = process.env.ALGORITHM_WAY;
 const ivLength = parseInt(process.env.ALGORITHM_IV_LENGTH);
@@ -25,7 +25,7 @@ exports.encrypt = async (text) => {
 
     return [iv.toString("base64"), tag.toString("base64"), encrypted.toString("base64")].join(":");
   } catch (err) {
-    throw commonErrorResponse(500, err.message || "암호화 중 오류 발생");
+    throw customErrorResponse(500, err.message || "암호화 중 오류 발생");
   }
 };
 
@@ -48,6 +48,6 @@ exports.decrypt = async (encryptedText) => {
     const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
     return decrypted.toString("utf8");
   } catch (err) {
-    throw commonErrorResponse(500, err.message || "복호화 중 오류 발생");
+    throw customErrorResponse(500, err.message || "복호화 중 오류 발생");
   }
 };

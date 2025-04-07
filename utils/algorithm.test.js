@@ -1,6 +1,7 @@
 require("dotenv").config();
 
 const algorithm = require("./algorithm");
+const customErrorResponse = require("./customErrorResponse");
 
 describe("encrypt", () => {
   const invalidInputs = [null, undefined, 123, {}, [], true];
@@ -10,8 +11,16 @@ describe("encrypt", () => {
       try {
         await algorithm.encrypt(input);
       } catch (err) {
+        expect(err).toBeDefined();
         expect(err.status).toBe(500);
         expect(err.message).toBe("암호화할 대상의 타입이 string이 아님");
+
+        expect(customErrorResponse(err.status, err.message)).toStrictEqual(
+          expect.objectContaining({
+            status: 500,
+            message: "암호화할 대상의 타입이 string이 아님",
+          })
+        );
       }
     }
   );
@@ -39,6 +48,12 @@ describe("decrypt", () => {
       } catch (err) {
         expect(err.status).toBe(500);
         expect(err.message).toBe("복호화할 대상의 타입이 string이 아님");
+        expect(customErrorResponse(err.status, err.message)).toStrictEqual(
+          expect.objectContaining({
+            status: 500,
+            message: "복호화할 대상의 타입이 string이 아님",
+          })
+        );
       }
     }
   );
@@ -51,6 +66,13 @@ describe("decrypt", () => {
       expect(err.message).toBe(
         "The first argument must be of type string or an instance of Buffer, ArrayBuffer, or Array or an Array-like Object. Received undefined"
       );
+      expect(customErrorResponse(err.status, err.message)).toStrictEqual(
+        expect.objectContaining({
+          status: 500,
+          message:
+            "The first argument must be of type string or an instance of Buffer, ArrayBuffer, or Array or an Array-like Object. Received undefined",
+        })
+      );
     }
   });
 
@@ -60,6 +82,12 @@ describe("decrypt", () => {
     } catch (err) {
       expect(err.status).toBe(500);
       expect(err.message).toBe("Invalid initialization vector");
+      expect(customErrorResponse(err.status, err.message)).toStrictEqual(
+        expect.objectContaining({
+          status: 500,
+          message: "Invalid initialization vector",
+        })
+      );
     }
   });
 
