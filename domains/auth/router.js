@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const { createValidateChain } = require("../../middlewares/createValidateChain");
 const { validateRequest } = require("../../middlewares/validateRequest");
+const verifyAccessToken = require("../../middlewares/verifyAccessToken");
 const ac = require("./controller");
 const schema = require("./schema");
 
@@ -8,7 +9,13 @@ const schema = require("./schema");
 router.post("/signin", createValidateChain(schema.signIn), validateRequest, ac.signIn);
 
 // 회원가입
-router.post("/signup", createValidateChain(schema.signUp), validateRequest, ac.signUp);
+router.post(
+  "/signup",
+  verifyAccessToken("email_verified"),
+  createValidateChain(schema.signUp),
+  validateRequest,
+  ac.signUp
+);
 
 // 아이디 찾기
 router.get("/findid", createValidateChain(schema.findId), validateRequest, ac.getUserId);

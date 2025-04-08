@@ -1,6 +1,10 @@
 require("dotenv").config();
 
-const { accessTokenOptions, refreshTokenOptions } = require("../../config/cookies");
+const {
+  accessTokenOptions,
+  refreshTokenOptions,
+  baseCookieOptions,
+} = require("../../config/cookies");
 const customErrorResponse = require("../../utils/customErrorResponse");
 const pool = require("../../database/db");
 const algorithm = require("../../utils/algorithm");
@@ -214,59 +218,80 @@ describe("signIn", () => {
 });
 
 describe("signUp", () => {
-  it("인증되지 않은 사용자일 경우 403 상태코드와 안내 메시지를 리턴해야한다.", async () => {
-    const req = { cookies: { email: null }, body: { id: null, pw: null, nick: null, code: null } };
-    const res = {};
-    const next = jest.fn();
-    const client = jest.fn();
-
-    const verifyTokenSpy = jest.spyOn(jwt, "verifyToken");
-    verifyTokenSpy.mockReturnValue({ isValid: false, results: null });
-
-    await controller.signUp(req, res, next, client);
-
-    expect(jwt.verifyToken).toHaveBeenCalledTimes(1);
-    const error = customErrorResponse(403, "인증되지 않은 사용자입니다.");
-    expect(next).toHaveBeenCalledWith(error);
-    expect(service.checkVerificationCodeAtDb).not.toHaveBeenCalled();
-  });
-
   it("인증번호가 유효하지 않은 경우 400 상태코드와 안내 메시지를 리턴해야한다.", async () => {
-    const req = { cookies: { email: null }, body: { code: null } };
+    const req = {
+      emailVerified: {
+        email: "test@test.com",
+      },
+      body: {
+        id: "some_id",
+        pw: "some_pw",
+        nickname: "some_nickname",
+        code: 123456,
+      },
+    };
     const res = {};
     const next = jest.fn();
-    const client = jest.fn();
+    const client = pool.connect();
 
-    jwt.verifyToken.mockReturnValue({ isValid: true, results: { email: "test@test.com" } });
-    service.checkVerificationCodeAtDb.mockResolvedValue(false);
+    const verifiyCodeSpy = jest.spyOn(service, "checkVerificationCodeAtDb");
+    verifiyCodeSpy.mockResolvedValue(false);
 
     await controller.signUp(req, res, next, client);
+
+    expect(verifiyCodeSpy).toHaveBeenCalledTimes(1);
+    expect(verifiyCodeSpy).toHaveBeenCalledWith(client, req.emailVerified.email, req.body.code);
 
     const error = customErrorResponse(400, "잘못된 인증번호입니다.");
     expect(next).toHaveBeenCalledWith(error);
   });
 
   it("회원가입에 성공한 경우 200 상태코드와 쿠키를 삭제하고 안내 메시지를 리턴해야한다.", async () => {
-    const req = { cookies: { email: null }, body: { code: null } };
+    const req = {
+      emailVerified: {
+        email: "test@test.com",
+      },
+      body: {
+        id: "some_id",
+        pw: "some_pw",
+        nickname: "some_nickname",
+        code: 123456,
+      },
+    };
     const res = {
       clearCookie: jest.fn(),
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),
     };
     const next = jest.fn();
-    const client = jest.fn();
+    const client = pool.connect();
 
-    jwt.verifyToken.mockReturnValue({ isValid: true, results: { email: "test@test.com" } });
-    service.checkVerificationCodeAtDb.mockResolvedValue(true);
+    const verifiyCodeSpy = jest.spyOn(service, "checkVerificationCodeAtDb");
+    verifiyCodeSpy.mockResolvedValue(true);
+
+    const createUserSpy = jest.spyOn(service, "createUserAtDb");
+    createUserSpy.mockResolvedValue();
 
     await controller.signUp(req, res, next, client);
 
-    expect(jwt.verifyToken).toHaveBeenCalled();
-    expect(service.checkVerificationCodeAtDb).toHaveBeenCalled();
-    expect(service.createUserAtDb).toHaveBeenCalled();
-    expect(res.clearCookie).toHaveBeenCalled();
+    expect(verifiyCodeSpy).toHaveBeenCalledTimes(1);
+    expect(verifiyCodeSpy).toHaveBeenCalledWith(client, req.emailVerified.email, req.body.code);
+
+    expect(createUserSpy).toHaveBeenCalledTimes(1);
+    expect(createUserSpy).toHaveBeenCalledWith(
+      client,
+      req.body.id,
+      req.body.pw,
+      req.body.nickname,
+      req.emailVerified.email
+    );
+
+    expect(res.clearCookie).toHaveBeenCalledTimes(1);
+    expect(res.clearCookie).toHaveBeenCalledWith("emailVerified", baseCookieOptions);
+
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({ message: "회원가입 성공" });
+
     expect(next).not.toHaveBeenCalled();
   });
 });

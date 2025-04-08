@@ -50,7 +50,7 @@ exports.signUp = tryCatchWrapperWithDb(async (req, res, next, client) => {
     throw customErrorResponse(400, "잘못된 인증번호입니다.");
   }
 
-  await as.createUserAtDb(client, id, pw, nickname, results.email);
+  await as.createUserAtDb(client, id, pw, nickname, email);
 
   // 쿠키 삭제
   res.clearCookie("emailVerified", baseCookieOptions);
