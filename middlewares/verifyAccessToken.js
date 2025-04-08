@@ -18,7 +18,7 @@ const verifyAccessToken = (tokenKey) =>
         throw customErrorResponse(500, "토큰 디코딩 중 오류 발생");
       }
     }
-    console.log(req);
+
     req[tokenKey] = results;
 
     next();
