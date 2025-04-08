@@ -1,16 +1,14 @@
 require("dotenv").config();
-const controller = require("./controller");
-const service = require("./service");
+
+const { accessTokenOptions, refreshTokenOptions } = require("../../config/cookies");
 const customErrorResponse = require("../../utils/customErrorResponse");
 const pool = require("../../database/db");
-const jwt = require("../../utils/jwt");
 const algorithm = require("../../utils/algorithm");
-const { accessTokenOptions, refreshTokenOptions } = require("../../config/cookies");
+const jwt = require("../../utils/jwt");
+const service = require("./service");
+const controller = require("./controller");
 
 jest.mock("../../database/db");
-jest.mock("./service");
-jest.mock("../../utils/jwt");
-jest.mock("../../utils/algorithm");
 
 describe("signIn", () => {
   it("회원이 아닌 경우 예외를 발생시켜야 한다.", async () => {
@@ -133,6 +131,8 @@ describe("signIn", () => {
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({ message: "요청 처리 성공" });
     expect(next).not.toHaveBeenCalled();
+
+    checkIsUserFromDbSpy.mockRestore();
   });
 
   it("회원이고 refresh token 만료되지 않았으면 해당 토큰으로 응답해야한다.", async () => {
@@ -220,7 +220,8 @@ describe("signUp", () => {
     const next = jest.fn();
     const client = jest.fn();
 
-    jwt.verifyToken.mockReturnValue({ isValid: false, results: null });
+    const verifyTokenSpy = jest.spyOn(jwt, "verifyToken");
+    verifyTokenSpy.mockReturnValue({ isValid: false, results: null });
 
     await controller.signUp(req, res, next, client);
 
