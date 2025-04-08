@@ -48,7 +48,8 @@ router.post(
 // 이메일 인증번호 확인
 router.post(
   "/verify-email/confirm",
-  createValidateChain(schema.sendEmailVerificationCode),
+  verifyAccessToken("email"),
+  createValidateChain(schema.checkEmailVerificationCode),
   validateRequest,
   ac.checkEmailVerificationCode
 );

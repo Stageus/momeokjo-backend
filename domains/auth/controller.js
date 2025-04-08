@@ -120,28 +120,17 @@ exports.sendEmailVerificationCode = tryCatchWrapperWithDb(async (req, res, next,
 });
 
 exports.checkEmailVerificationCode = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const token = req.cookies.email;
+  const { email } = req.email;
   const { code } = req.body;
 
-  // 토큰 검증
-  const { isValid, results } = verifyToken(token);
-  if (
-    !isValid ||
-    (typeof results === "object" && Object.keys(results).length === 0) ||
-    !results.email ||
-    !results
-  ) {
-    throw customErrorResponse(403, "인증되지 않은 사용자입니다.");
-  }
-
   // 인증번호 확인
-  const isValidCode = await as.checkVerificationCodeAtDb(client, results.email, code);
+  const isValidCode = await as.checkVerificationCodeAtDb(client, email, code);
   if (!isValidCode) {
     throw customErrorResponse(400, "잘못된 인증번호입니다.");
   }
 
   res.clearCookie("email", baseCookieOptions);
-  res.cookie("emailVerified", results, accessTokenOptions);
+  res.cookie("emailVerified", { email }, accessTokenOptions);
   res.status(200).json({ message: "요청 처리 성공" });
 });
 

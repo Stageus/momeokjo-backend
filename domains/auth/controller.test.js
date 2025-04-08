@@ -588,53 +588,62 @@ describe("sendEmailVerificationCode", () => {
 });
 
 describe("checkEmailVerificationCode", () => {
-  it("인증되지 않은 사용자일 경우 403 상태코드와 안내 메시지를 리턴해야한다.", async () => {
-    const req = { cookies: { email: null }, body: { code: null } };
-    const res = {};
-    const next = jest.fn();
-    const client = jest.fn();
-
-    jwt.verifyToken.mockReturnValue({ isValid: false, results: null });
-
-    await controller.checkEmailVerificationCode(req, res, next, client);
-
-    const error = customErrorResponse(403, "인증되지 않은 사용자입니다.");
-    expect(next).toHaveBeenCalledWith(error);
-    expect(service.checkVerificationCodeAtDb).not.toHaveBeenCalled();
-  });
-
   it("인증번호가 유효하지 않은 경우 400 상태코드와 안내 메시지를 리턴해야한다.", async () => {
-    const req = { cookies: { email: null }, body: { code: null } };
-    const res = {};
-    const next = jest.fn();
-    const client = jest.fn();
-
-    jwt.verifyToken.mockReturnValue({ isValid: true, results: { email: "test@test.com" } });
-    service.checkVerificationCodeAtDb.mockResolvedValue(false);
-
-    await controller.checkEmailVerificationCode(req, res, next, client);
-
-    const error = customErrorResponse(400, "잘못된 인증번호입니다.");
-    expect(next).toHaveBeenCalledWith(error);
-  });
-
-  it("이메일과 인증번호가 유효한 경우 200 상태코드와 안내 메시지를 리턴해야한다.", async () => {
-    const req = { cookies: { email: null }, body: { code: "123456" } };
+    const req = { email: { email: "test@test.com" }, body: { code: "123456" } };
     const res = {
+      cookie: jest.fn(),
+      clearCookie: jest.fn(),
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),
     };
     const next = jest.fn();
-    const client = jest.fn();
+    const client = pool.connect();
 
-    jwt.verifyToken.mockReturnValue({ isValid: true, results: { email: "test@test.com" } });
-    service.checkVerificationCodeAtDb.mockResolvedValue(true);
+    const checkSpy = jest.spyOn(service, "checkVerificationCodeAtDb");
+    checkSpy.mockResolvedValue(false);
 
     await controller.checkEmailVerificationCode(req, res, next, client);
 
-    expect(next).not.toHaveBeenCalled();
+    expect(checkSpy).toHaveBeenCalledTimes(1);
+    expect(checkSpy).toHaveBeenCalledWith(client, req.email.email, req.body.code);
+
+    const error = customErrorResponse(400, "잘못된 인증번호입니다.");
+    expect(next).toHaveBeenCalledWith(error);
+
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+  });
+
+  it("이메일과 인증번호가 유효한 경우 200 상태코드와 안내 메시지를 리턴해야한다.", async () => {
+    const req = { email: { email: "test@test.com" }, body: { code: "123456" } };
+    const res = {
+      cookie: jest.fn(),
+      clearCookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    const next = jest.fn();
+    const client = pool.connect();
+
+    const checkSpy = jest.spyOn(service, "checkVerificationCodeAtDb");
+    checkSpy.mockResolvedValue(true);
+
+    await controller.checkEmailVerificationCode(req, res, next, client);
+
+    expect(res.clearCookie).toHaveBeenCalledTimes(1);
+    expect(res.clearCookie).toHaveBeenCalledWith("email", baseCookieOptions);
+
+    expect(res.cookie).toHaveBeenCalledTimes(1);
+    expect(res.cookie).toHaveBeenCalledWith(
+      "emailVerified",
+      { email: req.email.email },
+      accessTokenOptions
+    );
+
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({ message: "요청 처리 성공" });
+
+    expect(next).not.toHaveBeenCalled();
   });
 });
 
