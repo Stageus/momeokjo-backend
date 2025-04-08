@@ -81,7 +81,7 @@ exports.getUserIdFromDb = async (client, email) => {
     [email]
   );
 
-  return results.rows[0].id;
+  return { isUser: results.rowCount > 0, id: results.rows[0].id };
 };
 
 //

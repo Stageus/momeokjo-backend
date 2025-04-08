@@ -61,8 +61,8 @@ exports.signUp = tryCatchWrapperWithDb(async (req, res, next, client) => {
 exports.getUserId = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { email } = req.body;
 
-  const id = await as.getUserIdFromDb({ email });
-  if (!id) throw customErrorResponse(404, "계정 없음");
+  const { isUser, id } = await as.getUserIdFromDb(client, email);
+  if (!isUser) throw customErrorResponse(404, "계정 없음");
 
   res.status(200).json({ message: "아이디 조회 성공", id });
 });
