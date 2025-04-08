@@ -1,10 +1,23 @@
 jest.mock("../utils/jwt");
 
 const jwt = require("../utils/jwt");
-const commonErrorResponse = require("../utils/customErrorResponse");
+const customErrorResponse = require("../utils/customErrorResponse");
 const verifyAccessToken = require("./verifyAccessToken");
 
 describe("verifyAccessToken", () => {
+  it("토큰이 없는 경우 상태코드 401과 안내 메시지로 예외를 발생시켜야한다.", async () => {
+    const req = {
+      cookies: {},
+    };
+    const res = {};
+    const next = jest.fn();
+
+    await verifyAccessToken("token")(req, res, next);
+
+    const error = customErrorResponse(400, "토큰 없음");
+    expect(next).toHaveBeenCalledWith(error);
+  });
+
   it("토큰이 만료된 경우 상태코드 401과 안내 메시지로 예외를 발생시켜야한다.", async () => {
     const req = {
       cookies: { token: "expired-token" },
@@ -12,13 +25,18 @@ describe("verifyAccessToken", () => {
     const res = {};
     const next = jest.fn();
 
-    jwt.verifyToken.mockReturnValue({ isValid: false, results: "TokenExpiredError" });
+    const jwtSpy = jest.spyOn(jwt, "verifyToken");
+    jwtSpy.mockReturnValue({ isValid: false, results: "TokenExpiredError" });
 
-    await verifyAccessToken(req, res, next);
+    await verifyAccessToken("token")(req, res, next);
 
-    expect(jwt.verifyToken).toHaveBeenCalled();
-    const error = commonErrorResponse(401, "토큰 만료");
+    expect(jwtSpy).toHaveBeenCalledTimes(1);
+    expect(jwtSpy).toHaveBeenCalledWith(req.cookies.token);
+
+    const error = customErrorResponse(401, "토큰 만료");
     expect(next).toHaveBeenCalledWith(error);
+
+    expect(req.token).toBe(undefined);
   });
 
   it("토큰이 유효하지 않은 경우 상태코드 401과 안내 메시지로 예외를 발생시켜야한다.", async () => {
@@ -28,13 +46,17 @@ describe("verifyAccessToken", () => {
     const res = {};
     const next = jest.fn();
 
-    jwt.verifyToken.mockReturnValue({ isValid: false, results: "JsonWebTokenError" });
+    const jwtSpy = jest.spyOn(jwt, "verifyToken");
+    jwtSpy.mockReturnValue({ isValid: false, results: "JsonWebTokenError" });
 
-    await verifyAccessToken(req, res, next);
+    await verifyAccessToken("token")(req, res, next);
 
-    expect(jwt.verifyToken).toHaveBeenCalled();
-    const error = commonErrorResponse(401, "유효하지 않은 토큰");
+    expect(jwtSpy).toHaveBeenCalledTimes(1);
+    expect(jwtSpy).toHaveBeenCalledWith(req.cookies.token);
+
+    const error = customErrorResponse(401, "유효하지 않은 토큰");
     expect(next).toHaveBeenCalledWith(error);
+
     expect(req.token).toBe(undefined);
   });
 
@@ -45,13 +67,17 @@ describe("verifyAccessToken", () => {
     const res = {};
     const next = jest.fn();
 
-    jwt.verifyToken.mockReturnValue({ isValid: false, results: null });
+    const jwtSpy = jest.spyOn(jwt, "verifyToken");
+    jwtSpy.mockReturnValue({ isValid: false, results: null });
 
-    await verifyAccessToken(req, res, next);
+    await verifyAccessToken("token")(req, res, next);
 
-    expect(jwt.verifyToken).toHaveBeenCalled();
-    const error = commonErrorResponse(500, "토큰 디코딩 중 오류 발생");
+    expect(jwtSpy).toHaveBeenCalledTimes(1);
+    expect(jwtSpy).toHaveBeenCalledWith(req.cookies.token);
+
+    const error = customErrorResponse(500, "토큰 디코딩 중 오류 발생");
     expect(next).toHaveBeenCalledWith(error);
+
     expect(req.token).toBe(undefined);
   });
 
@@ -62,12 +88,16 @@ describe("verifyAccessToken", () => {
     const res = {};
     const next = jest.fn();
 
-    jwt.verifyToken.mockReturnValue({ isValid: true, results: "decoded-token" });
+    const jwtSpy = jest.spyOn(jwt, "verifyToken");
+    const decoded = { users_idx: 1, provider: "LOCAL" };
+    jwtSpy.mockReturnValue({ isValid: true, results: decoded });
 
-    await verifyAccessToken(req, res, next);
+    await verifyAccessToken("token")(req, res, next);
 
-    expect(jwt.verifyToken).toHaveBeenCalled();
-    expect(req.token).toBe("decoded-token");
+    expect(jwtSpy).toHaveBeenCalledTimes(1);
+    expect(jwtSpy).toHaveBeenCalledWith(req.cookies.token);
+
+    expect(req.token).toStrictEqual(decoded);
     expect(next).toHaveBeenCalled();
   });
 });
