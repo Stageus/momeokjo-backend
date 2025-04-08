@@ -102,6 +102,18 @@ exports.checkUserWithIdAndEmailFromDb = async (client, id, email) => {
   return results.rows[0].is_existed;
 };
 
+exports.updatePasswordAtDb = async (client, id, pw, email) => {
+  await client.query(
+    `
+      UPDATE users.lists SET pw = $2
+      WHERE id = $1
+      AND email = $3
+      AND is_deleted = false;
+    `,
+    [id, pw, email]
+  );
+};
+
 exports.checkIsExistedEmailFromDb = async (client, email) => {
   const results = await client.query(
     `

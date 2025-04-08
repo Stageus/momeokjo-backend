@@ -427,6 +427,82 @@ describe("createRequestPasswordReset", () => {
   });
 });
 
+describe("resetPassword", () => {
+  it("유효하지 않은 이메일과 아이디인 경우 상태코드 404와 안내 메시지로 예외를 발생시켜야한다.", async () => {
+    const req = {
+      resetPw: {
+        id: "invalid_id",
+        email: "invalid_email",
+      },
+      body: {
+        pw: "some pw",
+      },
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    const next = jest.fn();
+    const client = pool.connect();
+
+    const checkUserSpy = jest.spyOn(service, "checkUserWithIdAndEmailFromDb");
+    checkUserSpy.mockResolvedValue(false);
+
+    await controller.resetPassword(req, res, next, client);
+
+    expect(checkUserSpy).toHaveBeenCalledTimes(1);
+    expect(checkUserSpy).toHaveBeenCalledWith(client, req.resetPw.id, req.resetPw.email);
+
+    const error = customErrorResponse(404, "계정 없음");
+    expect(next).toHaveBeenCalledWith(error);
+
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+  });
+
+  it("유효한 이메일과 아이디인 경우 비밀번호를 변경하고 상태코드 200과 안내 메시지를 응답해야한다.", async () => {
+    const req = {
+      resetPw: {
+        id: "some_id",
+        email: "some_email",
+      },
+      body: {
+        pw: "some pw",
+      },
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    const next = jest.fn();
+    const client = pool.connect();
+
+    const checkUserSpy = jest.spyOn(service, "checkUserWithIdAndEmailFromDb");
+    checkUserSpy.mockResolvedValue(true);
+
+    const updatePasswordSpy = jest.spyOn(service, "updatePasswordAtDb");
+    updatePasswordSpy.mockResolvedValue();
+
+    await controller.resetPassword(req, res, next, client);
+
+    expect(checkUserSpy).toHaveBeenCalledTimes(1);
+    expect(checkUserSpy).toHaveBeenCalledWith(client, req.resetPw.id, req.resetPw.email);
+
+    expect(updatePasswordSpy).toHaveBeenCalledTimes(1);
+    expect(updatePasswordSpy).toHaveBeenCalledWith(
+      client,
+      req.resetPw.id,
+      req.body.pw,
+      req.resetPw.email
+    );
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ message: "비밀번호 변경 성공" });
+
+    expect(next).not.toHaveBeenCalled();
+  });
+});
+
 describe("sendEmailVerificationCode", () => {
   it("데이터베이스에 중복된 이메일이 있는 경우 409 상태코드와 안내 메시지를 리턴해야한다.", async () => {
     const req = { body: { email: "test@test.com" } };

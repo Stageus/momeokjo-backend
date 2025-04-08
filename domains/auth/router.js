@@ -23,9 +23,18 @@ router.get("/findid", createValidateChain(schema.findId), validateRequest, ac.ge
 // 비밀번호 찾기
 router.get(
   "/findpw",
-  createValidateChain(schema.findId),
+  createValidateChain(schema.findPw),
   validateRequest,
   ac.createRequestPasswordReset
+);
+
+// 비밀번호 초기화
+router.post(
+  "/resetpw",
+  verifyAccessToken("resetPw"),
+  createValidateChain(schema.resetPw),
+  validateRequest,
+  ac.resetPassword
 );
 
 // 이메일 인증번호 전송

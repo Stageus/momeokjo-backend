@@ -75,8 +75,21 @@ exports.createRequestPasswordReset = tryCatchWrapperWithDb(async (req, res, next
   if (!isExistedUser) throw customErrorResponse(404, "계정 없음");
 
   const token = jwt.createAccessToken({ id, email }, process.env.JWT_ACCESS_EXPIRES_IN);
-  res.cookie("pwReset", token, accessTokenOptions);
+  res.cookie("resetPw", token, accessTokenOptions);
   res.status(200).json({ message: "요청 처리 성공" });
+});
+
+// 비밀번호 변경
+exports.resetPassword = tryCatchWrapperWithDb(async (req, res, next, client) => {
+  const { id, email } = req.resetPw;
+  const { pw } = req.body;
+
+  const isExistedUser = await as.checkUserWithIdAndEmailFromDb(client, id, email);
+  if (!isExistedUser) throw customErrorResponse(404, "계정 없음");
+
+  await as.updatePasswordAtDb(client, id, pw, email);
+
+  res.status(200).json({ message: "비밀번호 변경 성공" });
 });
 
 // 이메일 인증번호 전송

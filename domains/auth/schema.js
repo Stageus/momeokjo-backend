@@ -50,6 +50,31 @@ exports.findId = {
   },
 };
 
+exports.findPw = {
+  body: {
+    id: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.ID,
+    },
+    email: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.EMAIL,
+    },
+  },
+};
+
+exports.resetPw = {
+  body: {
+    pw: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.PW,
+    },
+  },
+};
+
 exports.sendEmailVerificationCode = {
   body: {
     email: {
