@@ -74,13 +74,8 @@ exports.createRequestPasswordReset = tryCatchWrapperWithDb(async (req, res, next
   const isExistedUser = await as.checkUserWithIdAndEmailFromDb(client, id, email);
   if (!isExistedUser) throw customErrorResponse(404, "계정 없음");
 
-  const token = createAccessToken({ id, email }, "15m");
-  res.cookie("request_pw_reset", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "Strict",
-    maxAge: 60 * 15 * 1000,
-  });
+  const token = jwt.createAccessToken({ id, email }, process.env.JWT_ACCESS_EXPIRES_IN);
+  res.cookie("pwReset", token, accessTokenOptions);
   res.status(200).json({ message: "요청 처리 성공" });
 });
 

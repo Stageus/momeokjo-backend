@@ -355,7 +355,7 @@ describe("findId", () => {
 });
 
 describe("createRequestPasswordReset", () => {
-  it("데이터베이스에 id와 email을 가진 회원이 없는 경우 상태코드 404와 안내 메시지로 예외를 발생시켜야한다.", async () => {
+  it("회원이 없는 경우 상태코드 404와 안내 메시지로 예외를 발생시켜야한다.", async () => {
     const req = {
       body: {
         id: "some_id",
@@ -367,20 +367,24 @@ describe("createRequestPasswordReset", () => {
       json: jest.fn(),
     };
     const next = jest.fn();
-    const client = jest.fn();
+    const client = pool.connect();
 
-    service.checkUserWithIdAndEmailFromDb.mockResolvedValue(false);
+    const checkUserSpy = jest.spyOn(service, "checkUserWithIdAndEmailFromDb");
+    checkUserSpy.mockResolvedValue(false);
 
     await controller.createRequestPasswordReset(req, res, next, client);
 
-    expect(service.checkUserWithIdAndEmailFromDb).toHaveBeenCalledTimes(1);
+    expect(checkUserSpy).toHaveBeenCalledTimes(1);
+    expect(checkUserSpy).toHaveBeenCalledWith(client, req.body.id, req.body.email);
+
     const error = customErrorResponse(400, "계정 없음");
     expect(next).toHaveBeenCalledWith(error);
+
     expect(res.status).not.toHaveBeenCalled();
     expect(res.json).not.toHaveBeenCalled();
   });
 
-  it("데이터베이스에 id와 email을 가진 회원이 있는 경우 상태코드 200와 쿠키, 안내 메시지를 응답해야한다. ", async () => {
+  it("회원이 있는 경우 상태코드 200와 쿠키, 안내 메시지를 응답해야한다. ", async () => {
     const req = {
       body: {
         id: "some_id",
@@ -393,18 +397,33 @@ describe("createRequestPasswordReset", () => {
       json: jest.fn(),
     };
     const next = jest.fn();
-    const client = jest.fn();
+    const client = pool.connect();
 
-    service.checkUserWithIdAndEmailFromDb.mockResolvedValue(true);
-    jwt.createAccessToken.mockReturnValue();
+    const checkUserSpy = jest.spyOn(service, "checkUserWithIdAndEmailFromDb");
+    checkUserSpy.mockResolvedValue(true);
+
+    const createAccessTokenSpy = jest.spyOn(jwt, "createAccessToken");
+    const mockAccessToken = "new_access_token";
+    createAccessTokenSpy.mockReturnValue(mockAccessToken);
 
     await controller.createRequestPasswordReset(req, res, next, client);
 
-    expect(service.checkUserWithIdAndEmailFromDb).toHaveBeenCalledTimes(1);
-    expect(jwt.createAccessToken).toHaveBeenCalledTimes(1);
+    expect(checkUserSpy).toHaveBeenCalledTimes(1);
+    expect(checkUserSpy).toHaveBeenCalledWith(client, req.body.id, req.body.email);
+
+    expect(createAccessTokenSpy).toHaveBeenCalledTimes(1);
+    expect(createAccessTokenSpy).toHaveBeenCalledWith(
+      { id: req.body.id, email: req.body.email },
+      process.env.JWT_ACCESS_EXPIRES_IN
+    );
+
     expect(res.cookie).toHaveBeenCalledTimes(1);
+    expect(res.cookie).toHaveBeenCalledWith("pwReset", mockAccessToken, accessTokenOptions);
+
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({ message: "요청 처리 성공" });
+
+    expect(next).not.toHaveBeenCalled();
   });
 });
 
