@@ -98,7 +98,6 @@ exports.sendEmailVerificationCode = tryCatchWrapperWithDb(async (req, res, next,
 
   // 이메일 확인
   const isExistedEmail = await as.checkIsExistedEmailFromDb(client, email);
-
   if (isExistedEmail) {
     throw customErrorResponse(409, "이미 회원가입에 사용된 이메일입니다.");
   }
@@ -113,16 +112,10 @@ exports.sendEmailVerificationCode = tryCatchWrapperWithDb(async (req, res, next,
   await as.sendEmailVerificationCode(email, code);
 
   // 토큰 생성
-  const token = createAccessToken({ email }, "15min");
+  const token = jwt.createAccessToken({ email }, process.env.JWT_ACCESS_EXPIRES_IN);
 
   // 쿠키 생성
-  res.cookie("email", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "Strict",
-    maxAge: 60 * 15 * 1000,
-  });
-
+  res.cookie("email", token, accessTokenOptions);
   res.status(200).json({ message: "이메일 인증 코드 전송 성공" });
 });
 

@@ -11,6 +11,7 @@ const algorithm = require("../../utils/algorithm");
 const jwt = require("../../utils/jwt");
 const service = require("./service");
 const controller = require("./controller");
+const { contextsKey } = require("express-validator/lib/base");
 
 jest.mock("../../database/db");
 
@@ -506,18 +507,29 @@ describe("resetPassword", () => {
 describe("sendEmailVerificationCode", () => {
   it("데이터베이스에 중복된 이메일이 있는 경우 409 상태코드와 안내 메시지를 리턴해야한다.", async () => {
     const req = { body: { email: "test@test.com" } };
-    const res = {};
+    const res = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
     const next = jest.fn();
-    const client = jest.fn();
+    const client = pool.connect();
 
-    service.checkIsExistedEmailFromDb.mockResolvedValue(true);
-    service.createVerificationCode.mockImplementation();
+    const checkSpy = jest.spyOn(service, "checkIsExistedEmailFromDb");
+    checkSpy.mockResolvedValue(true);
+
+    const createVerificationCodeSpy = jest.spyOn(service, "createVerificationCode");
+    createVerificationCodeSpy.mockImplementation(() => {});
 
     await controller.sendEmailVerificationCode(req, res, next, client);
 
+    expect(checkSpy).toHaveBeenCalledTimes(1);
+    expect(checkSpy).toHaveBeenCalledWith(client, req.body.email);
+
     const error = customErrorResponse(409, "이미 회원가입에 사용된 이메일입니다.");
     expect(next).toHaveBeenCalledWith(error);
-    expect(service.createVerificationCode).not.toHaveBeenCalled();
+
+    expect(createVerificationCodeSpy).not.toHaveBeenCalled();
   });
 
   it("데이터베이스에 중복된 이메일이 없는 경우 인증코드가 생성되고 이메일이 전송되어야한다.", async () => {
@@ -528,24 +540,50 @@ describe("sendEmailVerificationCode", () => {
       json: jest.fn(),
     };
     const next = jest.fn();
-    const client = jest.fn();
+    const client = pool.connect();
 
-    service.checkIsExistedEmailFromDb.mockResolvedValue(false);
-    service.createVerificationCode.mockReturnValue();
-    service.saveVerificationCodeAtDb.mockResolvedValue();
-    service.sendEmailVerificationCode.mockResolvedValue();
-    jwt.createAccessToken.mockResolvedValue();
+    const checkSpy = jest.spyOn(service, "checkIsExistedEmailFromDb");
+    checkSpy.mockResolvedValue(false);
+
+    const createVerificationCodeSpy = jest.spyOn(service, "createVerificationCode");
+    const mockCode = 123456;
+    createVerificationCodeSpy.mockReturnValue(mockCode);
+
+    const saveVerificationCodeSpy = jest.spyOn(service, "saveVerificationCodeAtDb");
+    saveVerificationCodeSpy.mockResolvedValue();
+
+    const sendEmailSpy = jest.spyOn(service, "sendEmailVerificationCode");
+    sendEmailSpy.mockResolvedValue();
+
+    const createAccessTokenSpy = jest.spyOn(jwt, "createAccessToken");
+    const mockAccessToken = "new_access_token";
+    createAccessTokenSpy.mockReturnValue(mockAccessToken);
 
     await controller.sendEmailVerificationCode(req, res, next, client);
 
-    expect(next).not.toHaveBeenCalled();
-    expect(service.createVerificationCode).toHaveBeenCalled();
-    expect(service.saveVerificationCodeAtDb).toHaveBeenCalled();
-    expect(service.sendEmailVerificationCode).toHaveBeenCalled();
-    expect(jwt.createAccessToken).toHaveBeenCalled();
-    expect(res.cookie).toHaveBeenCalled();
+    expect(checkSpy).toHaveBeenCalledTimes(1);
+    expect(checkSpy).toHaveBeenCalledWith(client, req.body.email);
+
+    expect(createVerificationCodeSpy).toHaveBeenCalledTimes(1);
+
+    expect(saveVerificationCodeSpy).toHaveBeenCalledTimes(1);
+    expect(saveVerificationCodeSpy).toHaveBeenCalledWith(client, req.body.email, mockCode);
+
+    expect(sendEmailSpy).toHaveBeenCalledTimes(1);
+    expect(sendEmailSpy).toHaveBeenCalledWith(req.body.email, mockCode);
+
+    expect(createAccessTokenSpy).toHaveBeenCalledTimes(1);
+    expect(createAccessTokenSpy).toHaveBeenCalledWith(
+      { email: req.body.email },
+      process.env.JWT_ACCESS_EXPIRES_IN
+    );
+
+    expect(res.cookie).toHaveBeenCalledTimes(1);
+    expect(res.cookie).toHaveBeenCalledWith("email", mockAccessToken, accessTokenOptions);
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({ message: "이메일 인증 코드 전송 성공" });
+
+    expect(next).not.toHaveBeenCalled();
   });
 });
 
