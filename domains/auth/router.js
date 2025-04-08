@@ -4,6 +4,9 @@ const { validateRequest } = require("../../middlewares/validateRequest");
 const ac = require("./controller");
 const schema = require("./schema");
 
+// 로그인
+router.post("/signin", createValidateChain(schema.signIn), validateRequest, ac.signIn);
+
 // 회원가입
 router.post("/signup", createValidateChain(schema.signUp), validateRequest, ac.signUp);
 

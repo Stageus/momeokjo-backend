@@ -1,27 +1,221 @@
 require("dotenv").config();
 const controller = require("./controller");
 const service = require("./service");
-const { commonErrorResponse } = require("../../utils/customErrorResponse");
+const customErrorResponse = require("../../utils/customErrorResponse");
 const pool = require("../../database/db");
 const jwt = require("../../utils/jwt");
 const algorithm = require("../../utils/algorithm");
+const { accessTokenOptions, refreshTokenOptions } = require("../../config/cookies");
 
-jest.mock("../../database/db", () => ({
-  connect: jest.fn().mockReturnValue({ query: jest.fn(), release: jest.fn() }),
-  release: jest.fn(),
-}));
-
-jest.mock("../../utils/customErrorResponse", () => ({
-  commonErrorResponse: jest.fn(),
-}));
-
+jest.mock("../../database/db");
 jest.mock("./service");
 jest.mock("../../utils/jwt");
 jest.mock("../../utils/algorithm");
 
+describe("signIn", () => {
+  it("회원이 아닌 경우 예외를 발생시켜야 한다.", async () => {
+    const req = {
+      body: {
+        id: "some_id",
+        pw: "some_pw",
+      },
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    const next = jest.fn();
+    const client = pool.connect();
+
+    const checkIsUserFromDbSpy = jest.spyOn(service, "checkIsUserFromDb");
+    checkIsUserFromDbSpy.mockResolvedValue({ isUser: false, users_idx: 1 });
+
+    await controller.signIn(req, res, next, client);
+
+    expect(checkIsUserFromDbSpy).toHaveBeenCalledTimes(1);
+    expect(checkIsUserFromDbSpy).toHaveBeenCalledWith(client, req.body.id, req.body.pw);
+
+    const error = customErrorResponse(404, "계정 없음");
+    expect(error).toBeInstanceOf(Error);
+    expect(next).toHaveBeenCalledWith(error);
+
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+  });
+
+  it("회원이지만 refresh token 만료되었으면 새 토큰 발급하고 응답해야한다.", async () => {
+    const req = {
+      body: {
+        id: "some_id",
+        pw: "some_pw",
+      },
+    };
+    const res = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    const next = jest.fn();
+    const client = pool.connect();
+
+    const checkIsUserFromDbSpy = jest.spyOn(service, "checkIsUserFromDb");
+    const mockCheckUser = { isUser: true, users_idx: 1 };
+    checkIsUserFromDbSpy.mockResolvedValue(mockCheckUser);
+
+    const checkLocalRefreshTokenFromDbSpy = jest.spyOn(service, "checkLocalRefreshTokenFromDb");
+    const mockCheckRefreshToken = {
+      isExpired: true,
+      refreshToken: "some_token",
+    };
+    checkLocalRefreshTokenFromDbSpy.mockResolvedValue(mockCheckRefreshToken);
+
+    const createRefreshTokenSpy = jest.spyOn(jwt, "createRefreshToken");
+    const mockCreateRefreshToken = "new_refresh_token";
+    createRefreshTokenSpy.mockReturnValue(mockCreateRefreshToken);
+
+    const encryptSpy = jest.spyOn(algorithm, "encrypt");
+    const mockEncrypt = "some_encrypted_token";
+    encryptSpy.mockReturnValue(mockEncrypt);
+
+    const saveNewRefreshTokenAtDbSpy = jest.spyOn(service, "saveNewRefreshTokenAtDb");
+    saveNewRefreshTokenAtDbSpy.mockResolvedValue();
+
+    const createAccessTokenSpy = jest.spyOn(jwt, "createAccessToken");
+    const mockAccessToken = "new_access_token";
+    createAccessTokenSpy.mockReturnValue("new_access_token");
+
+    await controller.signIn(req, res, next, client);
+
+    expect(checkIsUserFromDbSpy).toHaveBeenCalledTimes(1);
+    expect(checkIsUserFromDbSpy).toHaveBeenCalledWith(client, req.body.id, req.body.pw);
+
+    expect(checkLocalRefreshTokenFromDbSpy).toHaveBeenCalledTimes(1);
+    expect(checkLocalRefreshTokenFromDbSpy).toHaveBeenCalledWith(client, mockCheckUser.users_idx);
+
+    expect(createRefreshTokenSpy).toHaveBeenCalledTimes(1);
+    expect(createRefreshTokenSpy).toHaveBeenCalledWith(
+      {
+        users_idx: mockCheckUser.users_idx,
+        provider: "LOCAL",
+      },
+      process.env.JWT_REFRESH_EXPIRES_IN
+    );
+
+    expect(encryptSpy).toHaveBeenCalledTimes(1);
+    expect(encryptSpy).toHaveBeenCalledWith(mockCreateRefreshToken);
+
+    expect(saveNewRefreshTokenAtDbSpy).toHaveBeenCalledTimes(1);
+    expect(saveNewRefreshTokenAtDbSpy).toHaveBeenCalledWith(
+      client,
+      mockCheckUser.users_idx,
+      mockEncrypt,
+      expect.any(Date)
+    );
+
+    expect(createAccessTokenSpy).toHaveBeenCalledTimes(1);
+    expect(createAccessTokenSpy).toHaveBeenCalledWith(
+      {
+        users_idx: mockCheckUser.users_idx,
+        provider: "LOCAL",
+      },
+      process.env.JWT_ACCESS_EXPIRES_IN
+    );
+
+    expect(res.cookie).toHaveBeenCalledTimes(2);
+    expect(res.cookie).toHaveBeenNthCalledWith(
+      1,
+      "accessToken",
+      mockAccessToken,
+      accessTokenOptions
+    );
+    expect(res.cookie).toHaveBeenNthCalledWith(2, "refreshToken", mockEncrypt, refreshTokenOptions);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ message: "요청 처리 성공" });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it("회원이고 refresh token 만료되지 않았으면 해당 토큰으로 응답해야한다.", async () => {
+    const req = {
+      body: {
+        id: "some_id",
+        pw: "some_pw",
+      },
+    };
+    const res = {
+      cookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    const next = jest.fn();
+    const client = pool.connect();
+
+    const checkIsUserFromDbSpy = jest.spyOn(service, "checkIsUserFromDb");
+    const mockCheckUser = { isUser: true, users_idx: 1 };
+    checkIsUserFromDbSpy.mockResolvedValue(mockCheckUser);
+
+    const checkLocalRefreshTokenFromDbSpy = jest.spyOn(service, "checkLocalRefreshTokenFromDb");
+    const mockCheckRefreshToken = {
+      isExpired: false,
+      refreshToken: "some_token",
+    };
+    checkLocalRefreshTokenFromDbSpy.mockResolvedValue(mockCheckRefreshToken);
+
+    const createRefreshTokenSpy = jest.spyOn(jwt, "createRefreshToken");
+    const mockCreateRefreshToken = "new_refresh_token";
+    createRefreshTokenSpy.mockReturnValue(mockCreateRefreshToken);
+
+    const encryptSpy = jest.spyOn(algorithm, "encrypt");
+    const mockEncrypt = "some_encrypted_token";
+    encryptSpy.mockReturnValue(mockEncrypt);
+
+    const saveNewRefreshTokenAtDbSpy = jest.spyOn(service, "saveNewRefreshTokenAtDb");
+    saveNewRefreshTokenAtDbSpy.mockResolvedValue();
+
+    const createAccessTokenSpy = jest.spyOn(jwt, "createAccessToken");
+    const mockAccessToken = "new_access_token";
+    createAccessTokenSpy.mockReturnValue("new_access_token");
+
+    await controller.signIn(req, res, next, client);
+
+    expect(checkIsUserFromDbSpy).toHaveBeenCalledTimes(1);
+    expect(checkIsUserFromDbSpy).toHaveBeenCalledWith(client, req.body.id, req.body.pw);
+
+    expect(checkLocalRefreshTokenFromDbSpy).toHaveBeenCalledTimes(1);
+    expect(checkLocalRefreshTokenFromDbSpy).toHaveBeenCalledWith(client, mockCheckUser.users_idx);
+
+    expect(createAccessTokenSpy).toHaveBeenCalledTimes(1);
+    expect(createAccessTokenSpy).toHaveBeenCalledWith(
+      {
+        users_idx: mockCheckUser.users_idx,
+        provider: "LOCAL",
+      },
+      process.env.JWT_ACCESS_EXPIRES_IN
+    );
+
+    expect(res.cookie).toHaveBeenCalledTimes(2);
+    expect(res.cookie).toHaveBeenNthCalledWith(
+      1,
+      "accessToken",
+      mockAccessToken,
+      accessTokenOptions
+    );
+    expect(res.cookie).toHaveBeenNthCalledWith(
+      2,
+      "refreshToken",
+      mockCheckRefreshToken.refreshToken,
+      refreshTokenOptions
+    );
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ message: "요청 처리 성공" });
+    expect(next).not.toHaveBeenCalled();
+  });
+});
+
 describe("signUp", () => {
   it("인증되지 않은 사용자일 경우 403 상태코드와 안내 메시지를 리턴해야한다.", async () => {
-    const req = { cookies: { email: null }, body: { code: null } };
+    const req = { cookies: { email: null }, body: { id: null, pw: null, nick: null, code: null } };
     const res = {};
     const next = jest.fn();
     const client = jest.fn();
@@ -30,7 +224,8 @@ describe("signUp", () => {
 
     await controller.signUp(req, res, next, client);
 
-    const error = commonErrorResponse(403, "인증되지 않은 사용자입니다.");
+    expect(jwt.verifyToken).toHaveBeenCalledTimes(1);
+    const error = customErrorResponse(403, "인증되지 않은 사용자입니다.");
     expect(next).toHaveBeenCalledWith(error);
     expect(service.checkVerificationCodeAtDb).not.toHaveBeenCalled();
   });
@@ -46,7 +241,7 @@ describe("signUp", () => {
 
     await controller.signUp(req, res, next, client);
 
-    const error = commonErrorResponse(400, "잘못된 인증번호입니다.");
+    const error = customErrorResponse(400, "잘못된 인증번호입니다.");
     expect(next).toHaveBeenCalledWith(error);
   });
 
@@ -94,7 +289,7 @@ describe("findId", () => {
     await controller.getUserId(req, res, next, client);
 
     expect(service.getUserIdFromDb).toHaveBeenCalledTimes(1);
-    const error = commonErrorResponse(400, "잘못된 인증번호입니다.");
+    const error = customErrorResponse(400, "계정 없음");
     expect(next).toHaveBeenCalledWith(error);
     expect(res.status).not.toHaveBeenCalled();
     expect(res.json).not.toHaveBeenCalled();
@@ -144,7 +339,7 @@ describe("createRequestPasswordReset", () => {
     await controller.createRequestPasswordReset(req, res, next, client);
 
     expect(service.checkUserWithIdAndEmailFromDb).toHaveBeenCalledTimes(1);
-    const error = commonErrorResponse(400, "잘못된 인증번호입니다.");
+    const error = customErrorResponse(400, "계정 없음");
     expect(next).toHaveBeenCalledWith(error);
     expect(res.status).not.toHaveBeenCalled();
     expect(res.json).not.toHaveBeenCalled();
@@ -190,7 +385,7 @@ describe("sendEmailVerificationCode", () => {
 
     await controller.sendEmailVerificationCode(req, res, next, client);
 
-    const error = commonErrorResponse(409, "이미 회원가입에 사용된 이메일입니다.");
+    const error = customErrorResponse(409, "이미 회원가입에 사용된 이메일입니다.");
     expect(next).toHaveBeenCalledWith(error);
     expect(service.createVerificationCode).not.toHaveBeenCalled();
   });
@@ -235,7 +430,7 @@ describe("checkEmailVerificationCode", () => {
 
     await controller.checkEmailVerificationCode(req, res, next, client);
 
-    const error = commonErrorResponse(403, "인증되지 않은 사용자입니다.");
+    const error = customErrorResponse(403, "인증되지 않은 사용자입니다.");
     expect(next).toHaveBeenCalledWith(error);
     expect(service.checkVerificationCodeAtDb).not.toHaveBeenCalled();
   });
@@ -251,7 +446,7 @@ describe("checkEmailVerificationCode", () => {
 
     await controller.checkEmailVerificationCode(req, res, next, client);
 
-    const error = commonErrorResponse(400, "잘못된 인증번호입니다.");
+    const error = customErrorResponse(400, "잘못된 인증번호입니다.");
     expect(next).toHaveBeenCalledWith(error);
   });
 
@@ -326,7 +521,7 @@ describe("checkOauthAndRedirect", () => {
 
       await controller.checkOauthAndRedirect(req, res, next, client);
 
-      const error = commonErrorResponse(400, "카카오 인증 실패");
+      const error = customErrorResponse(400, "카카오 인증 실패");
       expect(next).toHaveBeenCalledWith(error);
     }
   );

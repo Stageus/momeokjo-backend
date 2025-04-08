@@ -1,8 +1,39 @@
 const as = require("./service");
 const { tryCatchWrapper, tryCatchWrapperWithDb } = require("../../utils/customWrapper");
-const { commonErrorResponse } = require("../../utils/customErrorResponse");
-const { createAccessToken, verifyToken } = require("../../utils/jwt");
+const customErrorResponse = require("../../utils/customErrorResponse");
+const { createAccessToken, verifyToken, createRefreshToken } = require("../../utils/jwt");
 const { encrypt } = require("../../utils/algorithm");
+const { accessTokenOptions, refreshTokenOptions } = require("../../config/cookies");
+
+// 로그인
+exports.signIn = tryCatchWrapperWithDb(async (req, res, next, client) => {
+  const { id, pw } = req.body;
+
+  const { isUser, users_idx } = await as.checkIsUserFromDb(client, id, pw);
+  if (!isUser) throw customErrorResponse(404, "계정 없음");
+
+  const { isExpired, refreshToken } = await as.checkLocalRefreshTokenFromDb(client, users_idx);
+
+  let newRefreshToken = "";
+  const payload = { users_idx, provider: "LOCAL" };
+  if (isExpired) {
+    const refreshToken = createRefreshToken(payload, process.env.JWT_REFRESH_EXPIRES_IN);
+    newRefreshToken = encrypt(refreshToken);
+
+    // 날짜 계산 오늘 + 30일;
+    const now = new Date();
+    const expiresIn = new Date(now.getTime() + 1000 * 60 * 60 * 24 * 30);
+
+    await as.saveNewRefreshTokenAtDb(client, users_idx, newRefreshToken, expiresIn);
+  }
+
+  const accessToken = createAccessToken(payload, process.env.JWT_ACCESS_EXPIRES_IN);
+
+  res.cookie("accessToken", accessToken, accessTokenOptions);
+  res.cookie("refreshToken", isExpired ? newRefreshToken : refreshToken, refreshTokenOptions);
+
+  res.status(200).json({ message: "요청 처리 성공" });
+});
 
 // 회원가입
 exports.signUp = tryCatchWrapperWithDb(async (req, res, next, client) => {
@@ -17,13 +48,13 @@ exports.signUp = tryCatchWrapperWithDb(async (req, res, next, client) => {
     !results.email ||
     !results
   ) {
-    throw commonErrorResponse(403, "인증되지 않은 사용자입니다.");
+    throw customErrorResponse(403, "인증되지 않은 사용자입니다.");
   }
 
   // 인증번호 확인
   const isValidCode = await as.checkVerificationCodeAtDb(client, results.email, code);
   if (!isValidCode) {
-    throw commonErrorResponse(400, "잘못된 인증번호입니다.");
+    throw customErrorResponse(400, "잘못된 인증번호입니다.");
   }
 
   await as.createUserAtDb(client, id, pw, nickname, results.email);
@@ -42,7 +73,7 @@ exports.getUserId = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { email } = req.body;
 
   const id = await as.getUserIdFromDb({ email });
-  if (!id) throw commonErrorResponse(404, "계정 없음");
+  if (!id) throw customErrorResponse(404, "계정 없음");
 
   res.status(200).json({ message: "아이디 조회 성공", id });
 });
@@ -52,7 +83,7 @@ exports.createRequestPasswordReset = tryCatchWrapperWithDb(async (req, res, next
   const { id, email } = req.body;
 
   const isExistedUser = await as.checkUserWithIdAndEmailFromDb(client, id, email);
-  if (!isExistedUser) throw commonErrorResponse(404, "계정 없음");
+  if (!isExistedUser) throw customErrorResponse(404, "계정 없음");
 
   const token = createAccessToken({ id, email }, "15m");
   res.cookie("request_pw_reset", token, {
@@ -72,7 +103,7 @@ exports.sendEmailVerificationCode = tryCatchWrapperWithDb(async (req, res, next,
   const isExistedEmail = await as.checkIsExistedEmailFromDb(client, email);
 
   if (isExistedEmail) {
-    throw commonErrorResponse(409, "이미 회원가입에 사용된 이메일입니다.");
+    throw customErrorResponse(409, "이미 회원가입에 사용된 이메일입니다.");
   }
 
   // 이메일 인증번호 생성
@@ -110,13 +141,13 @@ exports.checkEmailVerificationCode = tryCatchWrapperWithDb(async (req, res, next
     !results.email ||
     !results
   ) {
-    throw commonErrorResponse(403, "인증되지 않은 사용자입니다.");
+    throw customErrorResponse(403, "인증되지 않은 사용자입니다.");
   }
 
   // 인증번호 확인
   const isValidCode = await as.checkVerificationCodeAtDb(client, results.email, code);
   if (!isValidCode) {
-    throw commonErrorResponse(400, "잘못된 인증번호입니다.");
+    throw customErrorResponse(400, "잘못된 인증번호입니다.");
   }
 
   res.status(200).json({ message: "요청 처리 성공" });
@@ -135,7 +166,7 @@ exports.signInWithKakaoAuth = tryCatchWrapper((req, res, next, client) => {
 // 카카오 토큰발급 요청
 exports.checkOauthAndRedirect = tryCatchWrapper(async (req, res, next, client) => {
   const { code, error } = req.query;
-  if (error || !code) throw commonErrorResponse(400, "카카오 인증 실패");
+  if (error || !code) throw customErrorResponse(400, "카카오 인증 실패");
 
   const { accessToken, refreshToken } = await as.getKakaoToken(code);
   const { provider_user_id } = await as.getKakaoUserInfo(accessToken);
