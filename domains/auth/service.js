@@ -290,3 +290,62 @@ exports.redirectToOauthProvider = async () => {
     }
   }
 };
+
+exports.invalidateLocalRefreshTokenAtDb = async (client, users_idx) => {
+  await client.query(
+    `
+      UPDATE users.local_tokens SET
+        is_deleted = true
+      WHERE users_id = $1
+      AND is_deleted = false
+    `,
+    [users_idx]
+  );
+};
+
+exports.getOauthIdxFromDb = async (client, users_idx) => {
+  const results = await client.query(
+    `
+      SELECT oauth_idx
+      FROM users.lists
+      WHERE idx = $1
+      AND is_deleted = false;
+    `,
+    [users_idx]
+  );
+
+  return results.rows[0].oauth_idx;
+};
+
+exports.invalidateOauthRefreshTokenAtDb = async (client, oauth_idx) => {
+  const results = await client.query(
+    `
+      SELECT
+        access_token,
+        provider_user_id
+      FROM users.oauth
+      WHERE idx = $1
+      AND is_deleted = false;
+    `,
+    [oauth_idx]
+  );
+
+  return {
+    accessToken: results.rows[0].access_token,
+    provider_user_id: results.rows[0].provider_user_id,
+  };
+};
+
+exports.requestKakaoLogout = async (accessToken, provider_user_id) => {
+  await axios({
+    method: "POST",
+    url: "https://kapi.kakao.com/v1/user/logout",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    data: {
+      target_id_type: "user_id",
+      target_id: provider_user_id,
+    },
+  });
+};

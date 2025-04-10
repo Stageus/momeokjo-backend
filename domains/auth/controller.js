@@ -39,6 +39,28 @@ exports.signIn = tryCatchWrapperWithDb(async (req, res, next, client) => {
   res.status(200).json({ message: "요청 처리 성공" });
 });
 
+// 로그아웃
+exports.signOut = tryCatchWrapperWithDb(async (req, res, next, client) => {
+  const { users_idx, provider } = req.accessToken;
+
+  if (provider === "LOCAL") {
+    await as.invalidateLocalRefreshTokenAtDb(client, users_idx);
+  } else {
+    const oauth_idx = await as.getOauthIdxFromDb(client, users_idx);
+    const { accessToken, provider_user_id } = await as.invalidateOauthRefreshTokenAtDb(
+      client,
+      oauth_idx
+    );
+
+    const decryptedAccessToken = algorithm.decrypt(accessToken);
+
+    as.requestKakaoLogout(decryptedAccessToken, provider_user_id);
+  }
+
+  res.clearCookie("accessToken", accessTokenOptions);
+  res.status(200).json({ message: "요청 처리 성공" });
+});
+
 // 회원가입
 exports.signUp = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { email } = req.emailVerified;

@@ -218,6 +218,85 @@ describe("signIn", () => {
   });
 });
 
+describe("signOut", () => {
+  it("provider가 LOCAL인 경우 데이터베이스에 저장된 로컬 refresh 토큰을 비활성화한다.", async () => {
+    const req = {
+      accessToken: {
+        users_idx: 1,
+        provider: "LOCAL",
+      },
+    };
+    const res = {
+      clearCookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    const next = jest.fn();
+    const client = pool.connect();
+
+    const invalidateSpy = jest.spyOn(service, "invalidateLocalRefreshTokenAtDb");
+    invalidateSpy.mockResolvedValue();
+
+    await controller.signOut(req, res, next, client);
+
+    expect(invalidateSpy).toHaveBeenCalledTimes(1);
+    expect(invalidateSpy).toHaveBeenCalledWith(client, req.accessToken.users_idx);
+
+    expect(res.clearCookie).toHaveBeenCalledWith("accessToken", accessTokenOptions);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ message: "요청 처리 성공" });
+  });
+
+  it("provider가 KAKAO인 경우 테이터베이스에 저장된 oauth refresh 토큰을 비활성화하고 카카오 로그아웃을 요청한다.", async () => {
+    const req = {
+      accessToken: {
+        users_idx: 1,
+        provider: "KAKAO",
+      },
+    };
+    const res = {
+      clearCookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    const next = jest.fn();
+    const client = pool.connect();
+
+    const getOauthIdxSpy = jest.spyOn(service, "getOauthIdxFromDb");
+    const mockOauthIdx = 1;
+    getOauthIdxSpy.mockResolvedValue(mockOauthIdx);
+
+    const invalidateSpy = jest.spyOn(service, "invalidateOauthRefreshTokenAtDb");
+    const mockOauthInfo = { accessToken: "encrypted_access_token", provider_user_id: 1 };
+    invalidateSpy.mockResolvedValue(mockOauthInfo);
+
+    const decryptSpy = jest.spyOn(algorithm, "decrypt");
+    const mockDecrypted = "decrypted_access_token";
+    decryptSpy.mockReturnValue(mockDecrypted);
+
+    const reqKakaoLogoutSpy = jest.spyOn(service, "requestKakaoLogout");
+    reqKakaoLogoutSpy.mockResolvedValue();
+
+    await controller.signOut(req, res, next, client);
+
+    expect(getOauthIdxSpy).toHaveBeenCalledTimes(1);
+    expect(getOauthIdxSpy).toHaveBeenCalledWith(client, req.accessToken.users_idx);
+
+    expect(invalidateSpy).toHaveBeenCalledTimes(1);
+    expect(invalidateSpy).toHaveBeenCalledWith(client, mockOauthIdx);
+
+    expect(decryptSpy).toHaveBeenCalledTimes(1);
+    expect(decryptSpy).toHaveBeenCalledWith(mockOauthInfo.accessToken);
+
+    expect(reqKakaoLogoutSpy).toHaveBeenCalledTimes(1);
+    expect(reqKakaoLogoutSpy).toHaveBeenCalledWith(mockDecrypted, mockOauthInfo.provider_user_id);
+
+    expect(res.clearCookie).toHaveBeenCalledWith("accessToken", accessTokenOptions);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ message: "요청 처리 성공" });
+  });
+});
+
 describe("signUp", () => {
   it("인증번호가 유효하지 않은 경우 400 상태코드와 안내 메시지를 리턴해야한다.", async () => {
     const req = {
@@ -419,7 +498,7 @@ describe("createRequestPasswordReset", () => {
     );
 
     expect(res.cookie).toHaveBeenCalledTimes(1);
-    expect(res.cookie).toHaveBeenCalledWith("pwReset", mockAccessToken, accessTokenOptions);
+    expect(res.cookie).toHaveBeenCalledWith("resetPw", mockAccessToken, accessTokenOptions);
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({ message: "요청 처리 성공" });

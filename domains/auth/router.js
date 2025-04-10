@@ -8,6 +8,9 @@ const schema = require("./schema");
 // 로그인
 router.post("/signin", createValidateChain(schema.signIn), validateRequest, ac.signIn);
 
+// 로그아웃
+router.delete("/signout", verifyAccessToken("accessToken"), ac.signOut);
+
 // 회원가입
 router.post(
   "/signup",
