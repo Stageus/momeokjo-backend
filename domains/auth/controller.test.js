@@ -727,18 +727,34 @@ describe("checkEmailVerificationCode", () => {
 });
 
 describe("signInWithKakaoAuth", () => {
+  it("환경변수가 유효하지 않은 경우 예외를 발생시켜야한다.", async () => {
+    const req = {};
+    const res = {
+      redirect: jest.fn(),
+    };
+    const next = jest.fn();
+
+    process.env.KAKAO_REDIRECT_URI = "";
+    process.env.KAKAO_REST_API_KEY = "";
+
+    await controller.signInWithKakaoAuth(req, res, next);
+
+    const error = customErrorResponse(500, "환경변수 REST_API_KEY, REDIRECT_URI 확인 필요");
+    expect(next).toHaveBeenCalledWith(error);
+
+    expect(res.redirect).not.toHaveBeenCalled();
+  });
   it("카카오 로그인 페이지로 리다이렉트해야 한다", async () => {
     const req = {};
     const res = {
       redirect: jest.fn(),
     };
     const next = jest.fn();
-    const client = jest.fn();
 
     process.env.KAKAO_REST_API_KEY = "test_api_key";
     process.env.KAKAO_REDIRECT_URI = "redirect_url";
 
-    controller.signInWithKakaoAuth(req, res, next, client);
+    await controller.signInWithKakaoAuth(req, res, next);
 
     const expectedUrl = `https://kauth.kakao.com/oauth/authorize?client_id=test_api_key&redirect_uri=redirect_url&response_type=code`;
 

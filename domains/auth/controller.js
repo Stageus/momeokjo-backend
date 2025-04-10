@@ -157,9 +157,12 @@ exports.checkEmailVerificationCode = tryCatchWrapperWithDb(async (req, res, next
 });
 
 // 카카오 로그인
-exports.signInWithKakaoAuth = tryCatchWrapper((req, res, next, client) => {
+exports.signInWithKakaoAuth = tryCatchWrapper((req, res, next) => {
   const REST_API_KEY = process.env.KAKAO_REST_API_KEY;
   const REDIRECT_URI = process.env.KAKAO_REDIRECT_URI;
+
+  if (!REST_API_KEY || !REDIRECT_URI)
+    throw customErrorResponse(500, "환경변수 REST_API_KEY, REDIRECT_URI 확인 필요");
 
   const url = `https://kauth.kakao.com/oauth/authorize?client_id=${REST_API_KEY}&redirect_uri=${REDIRECT_URI}&response_type=code`;
 
@@ -175,7 +178,7 @@ exports.checkOauthAndRedirect = tryCatchWrapper(async (req, res, next, client) =
   const { provider_user_id } = await as.getKakaoUserInfo(accessToken);
   const { isExistedOauthUser, users_idx } = await as.checkOauthUser(client, provider_user_id);
 
-  if (!isExistedOauthUser || !users_idx) {
+  if (!isExistedOauthUser) {
     const encryptedAccessToken = await encrypt(accessToken);
     const encryptedRefreshToken = await encrypt(refreshToken);
 
