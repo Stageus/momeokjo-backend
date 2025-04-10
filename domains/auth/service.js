@@ -176,7 +176,7 @@ exports.checkVerificationCodeAtDb = async (client, email, code) => {
 };
 
 // 카카오에 토큰 발급 요청
-exports.getKakaoToken = async (code) => {
+exports.getTokenFromKakao = async (code) => {
   const tokenResponse = await axios({
     method: "POST",
     url: "https://kauth.kakao.com/oauth/token",
@@ -192,28 +192,29 @@ exports.getKakaoToken = async (code) => {
   return {
     accessToken: tokenResponse.data.access_token,
     refreshToken: tokenResponse.data.refresh_token,
+    refreshTokenExpiresIn: tokenResponse.data.refresh_token_expires_in,
   };
 };
 
 // 카카오에 사용자 정보 요청
-exports.getKakaoUserInfo = async (accessToken) => {
+exports.getProviderIdFromKakao = async (accessToken) => {
   const response = await axios("https://kapi.kakao.com/v2/user/me", {
     method: "GET",
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 
-  return { provider_user_id: response.data.id };
+  return response.data.id;
 };
 
 // 사용자 회원가입 이력 확인
-exports.checkOauthUser = async (client, provider_user_id) => {
+exports.checkOauthUserAtDb = async (client, provider_user_id) => {
   const results = await client.query(
     `
       SELECT
         CASE
-          WHEN COUNT(*) > 0 THEN true
+          WHEN TO_TIMESTAMP(refresh_expires_in) > NOW() THEN true
           ELSE false
-        END AS isExistedOauthUser,
+        END AS is_existed,
         user_idx
       FROM users.oauth
       WHERE provider_user_id = $1
@@ -225,7 +226,7 @@ exports.checkOauthUser = async (client, provider_user_id) => {
   );
 
   return {
-    isExistedOauthUser: results.rows[0].isExistedOauthUser,
+    isExisted: results.rows[0].is_existed,
     users_idx: results.rows[0].users_idx,
   };
 };

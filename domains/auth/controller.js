@@ -170,47 +170,34 @@ exports.signInWithKakaoAuth = tryCatchWrapper((req, res, next) => {
 });
 
 // 카카오 토큰발급 요청
-exports.checkOauthAndRedirect = tryCatchWrapper(async (req, res, next, client) => {
+exports.checkOauthAndRedirect = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { code, error } = req.query;
   if (error || !code) throw customErrorResponse(400, "카카오 인증 실패");
 
-  const { accessToken, refreshToken } = await as.getKakaoToken(code);
-  const { provider_user_id } = await as.getKakaoUserInfo(accessToken);
-  const { isExistedOauthUser, users_idx } = await as.checkOauthUser(client, provider_user_id);
+  const { accessToken, refreshToken, refreshTokenExpiresIn } = await as.getTokenFromKakao(code);
+  const provider_user_id = await as.getProviderIdFromKakao(accessToken);
+  const { isExisted, users_idx } = await as.checkOauthUserAtDb(client, provider_user_id);
 
-  if (!isExistedOauthUser) {
-    const encryptedAccessToken = await encrypt(accessToken);
-    const encryptedRefreshToken = await encrypt(refreshToken);
+  if (!isExisted) {
+    const encryptedAccessToken = await algorithm.encrypt(accessToken);
+    const encryptedRefreshToken = await algorithm.encrypt(refreshToken);
 
     const oauth_idx = await as.saveOauthInfoAtDb(
       client,
       encryptedAccessToken,
       encryptedRefreshToken,
+      refreshTokenExpiresIn,
       provider_user_id
     );
 
-    // provider_user_id 쿠키에 저장
-    res.cookie("oauth_idx", oauth_idx, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Strict",
-      maxAge: 60 * 15 * 1000,
-    });
-
-    // oauth 회원가입 페이지로 리다이렉트
+    const token = jwt.createAccessToken({ oauth_idx });
+    res.cookie("oauthIdx", token, accessTokenOptions);
     res.redirect("http://localhost:3000/oauth/signup");
   } else {
-    // users_idx, provider, role로 jwt 토큰 만들기
     const payload = { users_idx, provider: "KAKAO", role: "USER" };
-    const token = createAccessToken(payload);
+    const token = jwt.createAccessToken(payload);
 
-    res.cookie("accessToken", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Strict",
-      maxAge: 60 * 15 * 1000,
-    });
-
+    res.cookie("accessToken", token, accessTokenOptions);
     res.redirect("http://localhost:3000/");
   }
 });

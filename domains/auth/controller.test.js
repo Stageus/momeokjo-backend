@@ -783,18 +783,24 @@ describe("checkOauthAndRedirect", () => {
     "Oauth Provider로부터 실패 응답을 받으면 상태코드 400과 안내 메시지로 예외를 발생시켜야 한다.",
     async (value) => {
       const req = {
-        query: {
-          ...value,
-        },
+        query: value,
       };
-      const res = {};
+      const res = {
+        cookie: jest.fn(),
+        redirect: jest.fn(),
+      };
       const next = jest.fn();
-      const client = jest.fn();
+      const client = pool.connect();
+
+      const getTokenSpy = jest.spyOn(service, "getTokenFromKakao");
+      getTokenSpy.mockResolvedValue();
 
       await controller.checkOauthAndRedirect(req, res, next, client);
 
       const error = customErrorResponse(400, "카카오 인증 실패");
       expect(next).toHaveBeenCalledWith(error);
+
+      expect(getTokenSpy).not.toHaveBeenCalled();
     }
   );
 
@@ -809,30 +815,69 @@ describe("checkOauthAndRedirect", () => {
       redirect: jest.fn(),
     };
     const next = jest.fn();
-    const client = jest.fn();
+    const client = pool.connect();
 
-    service.getKakaoToken.mockResolvedValue({ accessToken: "", refreshToken: "" });
-    service.getKakaoUserInfo.mockResolvedValue({ provider_user_id: "" });
-    service.checkOauthUser.mockResolvedValue({ isExistedOauthUser: false, users_idx: undefined });
+    const getTokenSpy = jest.spyOn(service, "getTokenFromKakao");
+    const mockGetToken = {
+      accessToken: "access_token",
+      refreshToken: "refresh_token",
+      refreshTokenExpiresIn: new Date(),
+    };
+    getTokenSpy.mockResolvedValue(mockGetToken);
 
-    algorithm.encrypt.mockResolvedValue();
-    service.saveOauthInfoAtDb.mockResolvedValue();
+    const getProviderIdSpy = jest.spyOn(service, "getProviderIdFromKakao");
+    const mockProviderId = 1;
+    getProviderIdSpy.mockResolvedValue(mockProviderId);
 
-    jwt.createAccessToken.mockResolvedValue();
+    const checkOauthSpy = jest.spyOn(service, "checkOauthUserAtDb");
+    const mockOauth = { isExisted: false, users_idx: undefined };
+    checkOauthSpy.mockResolvedValue(mockOauth);
+
+    const mockEncryptAccessToken = "encrypted_access_token";
+    const mockEncryptRefreshToken = "encrypted_refresh_token";
+    const encryptTokenSpy = jest
+      .spyOn(algorithm, "encrypt")
+      .mockReturnValueOnce(mockEncryptAccessToken)
+      .mockReturnValueOnce(mockEncryptRefreshToken);
+
+    const saveOauthSpy = jest.spyOn(service, "saveOauthInfoAtDb");
+    const mockOauthIdx = 1;
+    saveOauthSpy.mockResolvedValue(mockOauthIdx);
+
+    const createAccessTokenSpy = jest.spyOn(jwt, "createAccessToken");
+    const mockAccessToken = "some_access_token";
+    createAccessTokenSpy.mockReturnValue(mockAccessToken);
 
     await controller.checkOauthAndRedirect(req, res, next, client);
 
-    // expect(next).toHaveBeenCalledWith(expect.any(Error));
+    expect(getTokenSpy).toHaveBeenCalledTimes(1);
+    expect(getTokenSpy).toHaveBeenCalledWith(req.query.code);
 
-    expect(service.getKakaoToken).toHaveBeenCalledTimes(1);
-    expect(service.getKakaoUserInfo).toHaveBeenCalledTimes(1);
-    expect(service.checkOauthUser).toHaveBeenCalledTimes(1);
-    expect(algorithm.encrypt).toHaveBeenCalledTimes(2);
-    expect(service.saveOauthInfoAtDb).toHaveBeenCalledTimes(1);
-    expect(res.cookie).toHaveBeenCalled();
-    expect(res.redirect).toHaveBeenCalled();
+    expect(getProviderIdSpy).toHaveBeenCalledTimes(1);
+    expect(getProviderIdSpy).toHaveBeenCalledWith(mockGetToken.accessToken);
 
-    expect(jwt.createAccessToken).not.toHaveBeenCalled();
+    expect(checkOauthSpy).toHaveBeenCalledTimes(1);
+    expect(checkOauthSpy).toHaveBeenCalledWith(client, mockProviderId);
+
+    expect(encryptTokenSpy).toHaveBeenCalledTimes(2);
+    expect(encryptTokenSpy).toHaveBeenNthCalledWith(1, mockGetToken.accessToken);
+    expect(encryptTokenSpy).toHaveBeenNthCalledWith(2, mockGetToken.refreshToken);
+
+    expect(saveOauthSpy).toHaveBeenCalledTimes(1);
+    expect(saveOauthSpy).toHaveBeenCalledWith(
+      client,
+      mockEncryptAccessToken,
+      mockEncryptRefreshToken,
+      mockGetToken.refreshTokenExpiresIn,
+      mockProviderId
+    );
+
+    expect(createAccessTokenSpy).toHaveBeenCalledTimes(1);
+    expect(createAccessTokenSpy).toHaveBeenCalledWith({ oauth_idx: mockOauthIdx });
+
+    expect(res.cookie).toHaveBeenCalledWith("oauthIdx", mockAccessToken, accessTokenOptions);
+    expect(res.redirect).toHaveBeenCalledWith("http://localhost:3000/oauth/signup");
+
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -847,22 +892,49 @@ describe("checkOauthAndRedirect", () => {
       redirect: jest.fn(),
     };
     const next = jest.fn();
-    const client = jest.fn();
+    const client = pool.connect();
 
-    service.getKakaoToken.mockResolvedValue({ accessToken: "", refreshToken: "" });
-    service.getKakaoUserInfo.mockResolvedValue({ provider_user_id: "" });
-    service.checkOauthUser.mockResolvedValue({ isExistedOauthUser: true, users_idx: "1" });
+    const getTokenSpy = jest.spyOn(service, "getTokenFromKakao");
+    const mockGetToken = {
+      accessToken: "access_token",
+      refreshToken: "refresh_token",
+      refreshTokenExpiresIn: new Date(),
+    };
+    getTokenSpy.mockResolvedValue(mockGetToken);
 
-    jwt.createAccessToken.mockResolvedValue();
+    const getProviderIdSpy = jest.spyOn(service, "getProviderIdFromKakao");
+    const mockProviderId = 1;
+    getProviderIdSpy.mockResolvedValue(mockProviderId);
+
+    const checkOauthSpy = jest.spyOn(service, "checkOauthUserAtDb");
+    const mockOauth = { isExisted: true, users_idx: 1 };
+    checkOauthSpy.mockResolvedValue(mockOauth);
+
+    const createAccessTokenSpy = jest.spyOn(jwt, "createAccessToken");
+    const mockAccessToken = "some_access_token";
+    createAccessTokenSpy.mockReturnValue(mockAccessToken);
 
     await controller.checkOauthAndRedirect(req, res, next, client);
 
-    expect(service.getKakaoToken).toHaveBeenCalledTimes(1);
-    expect(service.getKakaoUserInfo).toHaveBeenCalledTimes(1);
-    expect(service.checkOauthUser).toHaveBeenCalledTimes(1);
-    expect(jwt.createAccessToken).toHaveBeenCalledTimes(1);
-    expect(res.cookie).toHaveBeenCalled();
-    expect(res.redirect).toHaveBeenCalled();
+    expect(getTokenSpy).toHaveBeenCalledTimes(1);
+    expect(getTokenSpy).toHaveBeenCalledWith(req.query.code);
+
+    expect(getProviderIdSpy).toHaveBeenCalledTimes(1);
+    expect(getProviderIdSpy).toHaveBeenCalledWith(mockGetToken.accessToken);
+
+    expect(checkOauthSpy).toHaveBeenCalledTimes(1);
+    expect(checkOauthSpy).toHaveBeenCalledWith(client, mockProviderId);
+
+    expect(createAccessTokenSpy).toHaveBeenCalledTimes(1);
+    expect(createAccessTokenSpy).toHaveBeenCalledWith({
+      users_idx: mockOauth.users_idx,
+      provider: "KAKAO",
+      role: "USER",
+    });
+
+    expect(res.cookie).toHaveBeenCalledWith("accessToken", mockAccessToken, accessTokenOptions);
+    expect(res.redirect).toHaveBeenCalledWith("http://localhost:3000/");
+
     expect(next).not.toHaveBeenCalled();
   });
 });
