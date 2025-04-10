@@ -1,40 +1,76 @@
 const router = require("express").Router();
+const { createValidateChain } = require("../../middlewares/createValidateChain");
+const { validateRequest } = require("../../middlewares/validateRequest");
+const verifyAccessToken = require("../../middlewares/verifyAccessToken");
 const ac = require("./controller");
+const schema = require("./schema");
 
 // 로그인
-router.post("signin", ac.signIn);
+router.post("/signin", createValidateChain(schema.signIn), validateRequest, ac.signIn);
 
 // 로그아웃
-router.delete("/signout", ac.signOut);
+router.delete("/signout", verifyAccessToken("accessToken"), ac.signOut);
 
 // 회원가입
-router.post("/signup", ac.signUp);
+router.post(
+  "/signup",
+  verifyAccessToken("emailVerified"),
+  createValidateChain(schema.signUp),
+  validateRequest,
+  ac.signUp
+);
 
 // oauth 회원가입
-router.post("/oauth/signup", ac.signUpWithOauth);
+router.post(
+  "/oauth/signup",
+  verifyAccessToken("oauthIdx"),
+  verifyAccessToken("emailVerified"),
+  createValidateChain(schema.signUpWithOauth),
+  validateRequest,
+  ac.signUpWithOauth
+);
 
 // 아이디 찾기
-router.get("/findid", ac.getUserId);
+router.get("/findid", createValidateChain(schema.findId), validateRequest, ac.getUserId);
 
 // 비밀번호 찾기
-router.get("/findpw", ac.createRequestPasswordReset);
+router.get(
+  "/findpw",
+  createValidateChain(schema.findPw),
+  validateRequest,
+  ac.createRequestPasswordReset
+);
 
 // 비밀번호 초기화
-router.post("/resetpw", ac.resetPassword);
-
-// 로그인 상태 조회
-router.get("/status", ac.checkLoginStatus);
+router.post(
+  "/resetpw",
+  verifyAccessToken("resetPw"),
+  createValidateChain(schema.resetPw),
+  validateRequest,
+  ac.resetPassword
+);
 
 // 이메일 인증번호 전송
-router.post("/verify-email", ac.sendEmailVerificationCode);
+router.post(
+  "/verify-email",
+  createValidateChain(schema.sendEmailVerificationCode),
+  validateRequest,
+  ac.sendEmailVerificationCode
+);
 
 // 이메일 인증번호 확인
-router.post("/verify-email/confirm", ac.checkEmailVerificationCode);
+router.post(
+  "/verify-email/confirm",
+  verifyAccessToken("email"),
+  createValidateChain(schema.checkEmailVerificationCode),
+  validateRequest,
+  ac.checkEmailVerificationCode
+);
 
 // 카카오 로그인
 router.get("/oauth/kakao", ac.signInWithKakaoAuth);
 
 // 카카오 토큰발급 요청
-router.get("/oauth/kakao/redirect", ac.redirectToOauthProvider);
+router.get("/oauth/kakao/redirect", ac.checkOauthAndRedirect);
 
 module.exports = router;

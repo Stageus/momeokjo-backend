@@ -1,116 +1,182 @@
-const db = require("../../database/db");
-const customError = require("../../utils/customErrorResponse");
-const nodemailer = require("nodemailer");
+const { transporter } = require("../../utils/nodemailer");
 const axios = require("axios");
 
-exports.checkIsUserFromDb = async ({ id, pw }) => {
-  if (!id || !pw) throw customError("입력값 확인 필요", 400);
-  const result = await db.query("SELECT idx, nickname FROM users.lists WHERE id=$1 AND pw=$2", [
-    id,
-    pw,
-  ]);
-  if (!result.rows.length) throw customError("계정 없음", 404);
-  return result.rows[0];
-};
-
-exports.clearAuthCookie = async (req) => {
-  if (!req.cookies.token) throw customError("로그인 필요", 401);
-};
-
-exports.createUserAtDb = async ({ id, pw, nickname, code, session }) => {
-  if (!id || !pw || !nickname || !code) throw customError("입력값 확인 필요", 400);
-  if (!session.isEmailVerified || session.verifyCode !== code) throw customError("권한 없음", 403);
-  const email = session.email;
-  await db.query(
-    "INSERT INTO users.lists (id, pw, nickname, email, role) VALUES ($1, $2, $3, $4, $5)",
-    [id, pw, nickname, email, "USER"]
+exports.checkIsUserFromDb = async (client, id, pw) => {
+  const results = await client.query(
+    `
+      SELECT
+        EXISTS (
+          SELECT 1
+          FROM users.lists
+          WHERE id = $1
+          AND pw = $2
+          AND is_deleted = false;
+        ) AS is_user,
+        idx
+      FROM users.lists
+      WHERE id = $1
+      AND pw = $2
+      AND is_deleted = false;
+    `,
+    [id, pw]
   );
-  delete session.verifyCode;
-  delete session.isEmailVerified;
-  delete session.email;
+
+  return { isUser: results.rows[0].is_user, users_idx: results.rows[0].idx };
 };
 
-// TODO: createUserAtDb와 합치기
-exports.signUpWithOauth = async ({ nickname, code, session }) => {
-  if (!nickname || !code) throw customError("입력값 확인 필요", 400);
-  if (!session.isEmailVerified || session.verifyCode !== code) throw customError("권한 없음", 403);
-  const email = session.email;
-  await db.query("INSERT INTO users.lists (nickname, email, role) VALUES ($1, $2, $3)", [
-    nickname,
-    email,
-    "USER",
-  ]);
-  delete session.verifyCode;
-  delete session.isEmailVerified;
-  delete session.email;
+exports.checkLocalRefreshTokenFromDb = async (client, users_idx) => {
+  const results = await client.query(
+    `
+      SELECT
+        CASE
+          WHEN refresh_expired_at < NOW() THEN true
+          ELSE false
+        END AS is_expired,
+        refresh_token
+      FROM users.local_tokens
+      WHERE users_idx = $1
+      AND is_deleted = false
+      ORDER BY created_at DESC
+      LIMIT 1;
+    `,
+    [users_idx]
+  );
+
+  return { isExpired: results.rows[0].is_expired, refreshToken: results.rows[0].refresh_token };
 };
 
-exports.getUserIdFromDb = async ({ email }) => {
-  if (!email) throw customError("입력값 확인 필요", 400);
-  const result = await db.query("SELECT id FROM users.lists WHERE email=$1", [email]);
-  if (!result.rows.length) throw customError("계정 없음", 404);
-  return result.rows[0].id;
+exports.saveNewRefreshTokenAtDb = async (client, users_idx, refreshToken, expiresIn) => {
+  await client.query(
+    `
+    INSERT INTO users.local_token (
+      users_idx,
+      refresh_token,
+      expires_in
+   ) VALUES (
+      $1,
+      $2,
+      $3
+   )
+      
+    `,
+    [users_idx, refreshToken, expiresIn]
+  );
 };
 
-// TODO: 비밀번호 초기화 요청에 사용할 쿠키 생성 메소드로 변경해야함.
-exports.createRequestPasswordReset = async ({ id, email }) => {
-  if (!id || !email) throw customError("입력값 확인 필요", 400);
-  const result = await db.query("SELECT idx FROM users.lists WHERE id=$1 AND email=$2", [
-    id,
-    email,
-  ]);
-  if (!result.rows.length) throw customError("계정 없음", 404);
+exports.createUserAtDb = async (client, id, pw, nickname, email, oauth_idx) => {
+  await client.query(
+    "INSERT INTO users.lists (id, pw, nickname, email, role, oauth_idx) VALUES ($1, $2, $3, $4, $5, $6)",
+    [id, pw, nickname, email, "USER", oauth_idx]
+  );
 };
 
-exports.updatePasswordAtDb = async ({ id, email, pw }) => {
-  const result = await db.query("SELECT idx FROM users.lists WHERE id=$1 AND email=$2", [
-    id,
-    email,
-  ]);
-  if (!result.rows.length) throw customError("계정 없음", 404);
-  await db.query("UPDATE users.lists SET pw=$1 WHERE id=$2 AND email=$3", [pw, id, email]);
+exports.getUserIdFromDb = async (client, email) => {
+  const results = await client.query(
+    `
+      SELECT id
+      FROM users.lists
+      WHERE email = $1
+      AND is_deleted = false;
+    `,
+    [email]
+  );
+
+  return { isUser: results.rowCount > 0, id: results.rows[0].id };
 };
 
-exports.checkLoginStatus = async ({ session }) => {
-  if (!session || !session.userIdx) throw customError("로그인 필요", 401);
-  return { userIdx: session.userIdx, nickname: session.nickname };
+//
+exports.checkUserWithIdAndEmailFromDb = async (client, id, email) => {
+  const results = await client.query(
+    `
+    SELECT
+      EXISTS (
+        SELECT 1
+        FROM users.lists
+        WHERE id = $1
+        AND email = $2
+      ) AS is_existed
+  `,
+    [id, email]
+  );
+
+  return results.rows[0].is_existed;
 };
 
-exports.sendEmailVerificationCode = async ({ email, session }) => {
-  if (!email) throw customError("입력값 확인 필요", 400);
-  const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
-  session.verifyCode = verifyCode;
-  session.email = email;
-  session.isEmailVerified = false;
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-  });
+exports.updatePasswordAtDb = async (client, id, pw, email) => {
+  await client.query(
+    `
+      UPDATE users.lists SET pw = $2
+      WHERE id = $1
+      AND email = $3
+      AND is_deleted = false;
+    `,
+    [id, pw, email]
+  );
+};
+
+exports.checkIsExistedEmailFromDb = async (client, email) => {
+  const results = await client.query(
+    `
+      SELECT
+        CASE 
+          WHEN email = $1 THEN true 
+          ELSE false
+        END AS isExistedEmail
+      FROM users.lists
+      WHERE email = $1
+    `,
+    [email]
+  );
+
+  return results.rows[0].isExistedEmail;
+};
+
+exports.createVerificationCode = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+exports.saveVerificationCodeAtDb = async (client, email, code) => {
+  await client.query(
+    `
+        INSERT INTO users.codes(
+        email,
+        code
+      ) VALUES (
+       $1, $2
+      )
+    `,
+    [email, code]
+  );
+};
+
+exports.sendEmailVerificationCode = async (email, code) => {
   await transporter.sendMail({
     from: process.env.EMAIL_USER,
     to: email,
     subject: "이메일 인증 코드",
-    text: `인증번호: ${verifyCode}`,
+    text: `인증번호: ${code}`,
   });
 };
 
-exports.checkEmailVerificationCode = async ({ code, session }) => {
-  if (!code) throw customError("입력값 확인 필요", 400);
-  if (!session.verifyCode) throw customError("인증번호 전송내역 없음", 404);
-  if (session.verifyCode !== code.toString()) throw customError("권한 없음", 403);
-  session.isEmailVerified = true;
+exports.checkVerificationCodeAtDb = async (client, email, code) => {
+  const results = await client.query(
+    `
+      SELECT
+        CASE 
+          WHEN code = $1 THEN true 
+          ELSE false
+        END AS isValidCode
+      FROM users.codes
+      WHERE email = $2
+    `,
+    [code, email]
+  );
+
+  return results.rows[0].isValidCode;
 };
 
-exports.signInWithKakaoAuth = async () => {
-  const REST_API_KEY = process.env.KAKAO_REST_API_KEY;
-  const REDIRECT_URI = process.env.KAKAO_REDIRECT_URI;
-  if (!REST_API_KEY || !REDIRECT_URI) throw customError("카카오 설정 정보가 없습니다.", 500);
-  return `https://kauth.kakao.com/oauth/authorize?client_id=${REST_API_KEY}&redirect_uri=${REDIRECT_URI}&response_type=code`;
-};
-
-exports.redirectToOauthProvider = async ({ query, session }) => {
-  const { code, error } = query;
-  if (error || !code) throw customError("카카오 인증 실패", 400);
+// 카카오에 토큰 발급 요청
+exports.getTokenFromKakao = async (code) => {
   const tokenResponse = await axios({
     method: "POST",
     url: "https://kauth.kakao.com/oauth/token",
@@ -123,19 +189,78 @@ exports.redirectToOauthProvider = async ({ query, session }) => {
     }).toString(),
   });
 
-  const accessToken = tokenResponse.data.access_token;
-  const refreshToken = tokenResponse.data.refresh_token;
-  const profileRes = await axios.get("https://kapi.kakao.com/v2/user/me", {
+  return {
+    accessToken: tokenResponse.data.access_token,
+    refreshToken: tokenResponse.data.refresh_token,
+    refreshTokenExpiresIn: tokenResponse.data.refresh_token_expires_in,
+  };
+};
+
+// 카카오에 사용자 정보 요청
+exports.getProviderIdFromKakao = async (accessToken) => {
+  const response = await axios("https://kapi.kakao.com/v2/user/me", {
+    method: "GET",
     headers: { Authorization: `Bearer ${accessToken}` },
   });
-  const { id: provider_user_id, kakao_account } = profileRes.data;
-  if (!kakao_account || !kakao_account.email)
-    throw customError("카카오에서 이메일 정보를 제공하지 않았습니다.", 403);
-  const email = kakao_account.email;
-  const oauthUserResult = await db.query(
-    "SELECT u.idx, u.nickname FROM users.oauth o JOIN users.lists u ON o.users_idx = u.idx WHERE provider=$1 AND provider_user_id=$2 AND o.is_deleted = false",
-    ["kakao", provider_user_id]
+
+  return response.data.id;
+};
+
+// 사용자 회원가입 이력 확인
+exports.checkOauthUserAtDb = async (client, provider_user_id) => {
+  const results = await client.query(
+    `
+      SELECT
+        CASE
+          WHEN TO_TIMESTAMP(refresh_expires_in) > NOW() THEN true
+          ELSE false
+        END AS is_existed,
+        user_idx
+      FROM users.oauth
+      WHERE provider_user_id = $1
+      AND is_deleted = false
+      ORDER BY created_at DESC
+      LIMIT 1;
+    `,
+    [provider_user_id]
   );
+
+  return {
+    isExisted: results.rows[0].is_existed,
+    users_idx: results.rows[0].users_idx,
+  };
+};
+
+// oauth 인증정보 데이터베이스에 저장
+exports.saveOauthInfoAtDb = async (
+  client,
+  encryptedAccessToken,
+  encryptedRefreshToken,
+  provider_user_id
+) => {
+  const results = client.query(
+    `
+        INSERT INTO users.oauth (
+          provider,
+          provider_user_id,
+          refresh_token,
+          access_token
+        ) VALUES (
+          'KAKAO',
+          $1,
+          $2,
+          $3
+        )
+        RETURNING idx AS oauth_idx;
+      `,
+    [provider_user_id, encryptedRefreshToken, encryptedAccessToken]
+  );
+
+  return results.rows[0].oauth_idx;
+};
+
+// 카카오 로그인 - 대기
+exports.redirectToOauthProvider = async () => {
   if (oauthUserResult.rows.length) {
     const user = oauthUserResult.rows[0];
     session.userIdx = user.idx;
@@ -165,4 +290,63 @@ exports.redirectToOauthProvider = async ({ query, session }) => {
       throw customError("추가 회원정보 입력 필요", 403);
     }
   }
+};
+
+exports.invalidateLocalRefreshTokenAtDb = async (client, users_idx) => {
+  await client.query(
+    `
+      UPDATE users.local_tokens SET
+        is_deleted = true
+      WHERE users_id = $1
+      AND is_deleted = false
+    `,
+    [users_idx]
+  );
+};
+
+exports.getOauthIdxFromDb = async (client, users_idx) => {
+  const results = await client.query(
+    `
+      SELECT oauth_idx
+      FROM users.lists
+      WHERE idx = $1
+      AND is_deleted = false;
+    `,
+    [users_idx]
+  );
+
+  return results.rows[0].oauth_idx;
+};
+
+exports.invalidateOauthRefreshTokenAtDb = async (client, oauth_idx) => {
+  const results = await client.query(
+    `
+      SELECT
+        access_token,
+        provider_user_id
+      FROM users.oauth
+      WHERE idx = $1
+      AND is_deleted = false;
+    `,
+    [oauth_idx]
+  );
+
+  return {
+    accessToken: results.rows[0].access_token,
+    provider_user_id: results.rows[0].provider_user_id,
+  };
+};
+
+exports.requestKakaoLogout = async (accessToken, provider_user_id) => {
+  await axios({
+    method: "POST",
+    url: "https://kapi.kakao.com/v1/user/logout",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    data: {
+      target_id_type: "user_id",
+      target_id: provider_user_id,
+    },
+  });
 };

@@ -1,19 +1,11 @@
 const express = require("express");
-const session = require("express-session");
+const cookieParser = require("cookie-parser");
 require("dotenv").config();
 
 const app = express();
 
+app.use(cookieParser());
 app.use(express.json());
-
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false },
-  })
-);
 
 const authRouter = require("./domains/auth/router");
 const restaurantsRouter = require("./domains/restaurants/router");
