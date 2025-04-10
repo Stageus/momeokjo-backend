@@ -14,10 +14,20 @@ router.delete("/signout", verifyAccessToken("accessToken"), ac.signOut);
 // 회원가입
 router.post(
   "/signup",
-  verifyAccessToken("email_verified"),
+  verifyAccessToken("emailVerified"),
   createValidateChain(schema.signUp),
   validateRequest,
   ac.signUp
+);
+
+// oauth 회원가입
+router.post(
+  "/oauth/signup",
+  verifyAccessToken("oauthIdx"),
+  verifyAccessToken("emailVerified"),
+  createValidateChain(schema.signUpWithOauth),
+  validateRequest,
+  ac.signUpWithOauth
 );
 
 // 아이디 찾기

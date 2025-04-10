@@ -242,7 +242,7 @@ describe("signOut", () => {
     expect(invalidateSpy).toHaveBeenCalledTimes(1);
     expect(invalidateSpy).toHaveBeenCalledWith(client, req.accessToken.users_idx);
 
-    expect(res.clearCookie).toHaveBeenCalledWith("accessToken", accessTokenOptions);
+    expect(res.clearCookie).toHaveBeenCalledWith("accessToken", baseCookieOptions);
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({ message: "요청 처리 성공" });
   });
@@ -291,7 +291,7 @@ describe("signOut", () => {
     expect(reqKakaoLogoutSpy).toHaveBeenCalledTimes(1);
     expect(reqKakaoLogoutSpy).toHaveBeenCalledWith(mockDecrypted, mockOauthInfo.provider_user_id);
 
-    expect(res.clearCookie).toHaveBeenCalledWith("accessToken", accessTokenOptions);
+    expect(res.clearCookie).toHaveBeenCalledWith("accessToken", baseCookieOptions);
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({ message: "요청 처리 성공" });
   });
@@ -317,6 +317,9 @@ describe("signUp", () => {
     const verifiyCodeSpy = jest.spyOn(service, "checkVerificationCodeAtDb");
     verifiyCodeSpy.mockResolvedValue(false);
 
+    const createUserSpy = jest.spyOn(service, "createUserAtDb");
+    createUserSpy.mockResolvedValue();
+
     await controller.signUp(req, res, next, client);
 
     expect(verifiyCodeSpy).toHaveBeenCalledTimes(1);
@@ -324,6 +327,8 @@ describe("signUp", () => {
 
     const error = customErrorResponse(400, "잘못된 인증번호입니다.");
     expect(next).toHaveBeenCalledWith(error);
+
+    expect(createUserSpy).not.toHaveBeenCalled();
   });
 
   it("회원가입에 성공한 경우 200 상태코드와 쿠키를 삭제하고 안내 메시지를 리턴해야한다.", async () => {
@@ -363,10 +368,102 @@ describe("signUp", () => {
       req.body.id,
       req.body.pw,
       req.body.nickname,
-      req.emailVerified.email
+      req.emailVerified.email,
+      null
     );
 
     expect(res.clearCookie).toHaveBeenCalledTimes(1);
+    expect(res.clearCookie).toHaveBeenCalledWith("emailVerified", baseCookieOptions);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ message: "회원가입 성공" });
+
+    expect(next).not.toHaveBeenCalled();
+  });
+});
+
+describe("signUpWithOauth", () => {
+  it("인증 번호가 유효하지 않은 경우 상태코드 400과 안내 메시지로 예외를 발생시켜야한다.", async () => {
+    const req = {
+      emailVerified: {
+        email: "test@test.com",
+      },
+      oauthIdx: {
+        oauth_idx: 1,
+      },
+      body: {
+        nickname: "some_nickname",
+        code: 123456,
+      },
+    };
+    const res = {
+      clearCookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    const next = jest.fn();
+    const client = pool.connect();
+
+    const verifiyCodeSpy = jest.spyOn(service, "checkVerificationCodeAtDb");
+    verifiyCodeSpy.mockResolvedValue(false);
+
+    const createUserSpy = jest.spyOn(service, "createUserAtDb");
+    createUserSpy.mockResolvedValue();
+
+    await controller.signUpWithOauth(req, res, next, client);
+
+    expect(verifiyCodeSpy).toHaveBeenCalledTimes(1);
+    expect(verifiyCodeSpy).toHaveBeenCalledWith(client, req.emailVerified.email, req.body.code);
+
+    const error = customErrorResponse(400, "잘못된 인증번호입니다.");
+    expect(next).toHaveBeenCalledWith(error);
+
+    expect(createUserSpy).not.toHaveBeenCalled();
+  });
+
+  it("회원가입에 성공한 경우 상태코드 200과 안내 메시지를 응답해야한다.", async () => {
+    const req = {
+      emailVerified: {
+        email: "test@test.com",
+      },
+      oauthIdx: {
+        oauth_idx: 1,
+      },
+      body: {
+        nickname: "some_nickname",
+        code: 123456,
+      },
+    };
+    const res = {
+      clearCookie: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    const next = jest.fn();
+    const client = pool.connect();
+
+    const verifiyCodeSpy = jest.spyOn(service, "checkVerificationCodeAtDb");
+    verifiyCodeSpy.mockResolvedValue(true);
+
+    const createUserSpy = jest.spyOn(service, "createUserAtDb");
+    createUserSpy.mockResolvedValue();
+
+    await controller.signUpWithOauth(req, res, next, client);
+
+    expect(verifiyCodeSpy).toHaveBeenCalledTimes(1);
+    expect(verifiyCodeSpy).toHaveBeenCalledWith(client, req.emailVerified.email, req.body.code);
+
+    expect(createUserSpy).toHaveBeenCalledTimes(1);
+    expect(createUserSpy).toHaveBeenCalledWith(
+      client,
+      null,
+      null,
+      req.body.nickname,
+      req.emailVerified.email,
+      req.oauthIdx.oauth_idx
+    );
+
+    expect(res.clearCookie).toHaveBeenCalledTimes(2);
     expect(res.clearCookie).toHaveBeenCalledWith("emailVerified", baseCookieOptions);
 
     expect(res.status).toHaveBeenCalledWith(200);

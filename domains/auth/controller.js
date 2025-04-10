@@ -8,6 +8,7 @@ const {
   accessTokenOptions,
   refreshTokenOptions,
 } = require("../../config/cookies");
+const { NoSuchBucket } = require("@aws-sdk/client-s3");
 
 // 로그인
 exports.signIn = tryCatchWrapperWithDb(async (req, res, next, client) => {
@@ -57,7 +58,7 @@ exports.signOut = tryCatchWrapperWithDb(async (req, res, next, client) => {
     as.requestKakaoLogout(decryptedAccessToken, provider_user_id);
   }
 
-  res.clearCookie("accessToken", accessTokenOptions);
+  res.clearCookie("accessToken", baseCookieOptions);
   res.status(200).json({ message: "요청 처리 성공" });
 });
 
@@ -72,10 +73,30 @@ exports.signUp = tryCatchWrapperWithDb(async (req, res, next, client) => {
     throw customErrorResponse(400, "잘못된 인증번호입니다.");
   }
 
-  await as.createUserAtDb(client, id, pw, nickname, email);
+  await as.createUserAtDb(client, id, pw, nickname, email, null);
 
   // 쿠키 삭제
   res.clearCookie("emailVerified", baseCookieOptions);
+  res.status(200).json({ message: "회원가입 성공" });
+});
+
+// oauth 회원가입
+exports.signUpWithOauth = tryCatchWrapperWithDb(async (req, res, next, client) => {
+  const { oauth_idx } = req.oauthIdx;
+  const { email } = req.emailVerified;
+  const { nickname, code } = req.body;
+
+  // 인증번호 확인
+  const isValidCode = await as.checkVerificationCodeAtDb(client, email, code);
+  if (!isValidCode) {
+    throw customErrorResponse(400, "잘못된 인증번호입니다.");
+  }
+
+  await as.createUserAtDb(client, null, null, nickname, email, oauth_idx);
+
+  // 쿠키 삭제
+  res.clearCookie("emailVerified", baseCookieOptions);
+  res.clearCookie("oauthIdx", baseCookieOptions);
   res.status(200).json({ message: "회원가입 성공" });
 });
 

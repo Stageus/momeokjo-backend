@@ -63,10 +63,10 @@ exports.saveNewRefreshTokenAtDb = async (client, users_idx, refreshToken, expire
   );
 };
 
-exports.createUserAtDb = async (client, id, pw, nickname, email) => {
+exports.createUserAtDb = async (client, id, pw, nickname, email, oauth_idx) => {
   await client.query(
-    "INSERT INTO users.lists (id, pw, nickname, email, role) VALUES ($1, $2, $3, $4, $5)",
-    [id, pw, nickname, email, "USER"]
+    "INSERT INTO users.lists (id, pw, nickname, email, role, oauth_idx) VALUES ($1, $2, $3, $4, $5, $6)",
+    [id, pw, nickname, email, "USER", oauth_idx]
   );
 };
 
