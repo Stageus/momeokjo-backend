@@ -6,19 +6,17 @@ const us = require("./service");
 
 // 내 정보 수정
 exports.updateMyInfo = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  //TODO: 추후 인증 미들웨어 추가되면 user_idx 수정해야함
-  const { user_idx } = { user_idx: 1 };
+  const { users_idx } = req.accessToken;
   const { nickname } = req.body;
 
-  await us.updateMyInfoAtDb(user_idx, nickname, client);
+  await us.updateMyInfoAtDb(users_idx, nickname, client);
 
   res.status(200).json({ message: "요청 처리 성공" });
 });
 
 // 사용자 정보 상세정보 조회
 exports.getUserInfoByIdx = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  //TODO: 추후 인증 미들웨어 추가되면 user_idx 수정해야함
-  const { user_idx: user_idx_from_cookie } = { user_idx: 1 };
+  const { users_idx: user_idx_from_cookie } = req.accessToken;
   const { user_idx } = req.params;
 
   const data = await us.getUserInfoByIdxFromDb(user_idx_from_cookie, user_idx, client);
@@ -28,7 +26,7 @@ exports.getUserInfoByIdx = tryCatchWrapperWithDb(async (req, res, next, client) 
 
 // 사용자가 즐겨찾기 등록한 음식점 리스트 조회
 exports.getRestaurantLikeList = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { user_idx: user_idx_from_cookie } = { user_idx: 1 };
+  const { users_idx: user_idx_from_cookie } = req.accessToken;
   const { user_idx } = req.params;
   const { page } = req.query;
 
@@ -46,7 +44,7 @@ exports.getRestaurantLikeList = tryCatchWrapperWithDb(async (req, res, next, cli
 
 // 사용자가 작성한 후기 리스트 조회
 exports.getReviewList = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { user_idx: user_idx_from_cookie } = { user_idx: 1 };
+  const { users_idx: user_idx_from_cookie } = req.accessToken;
   const { user_idx } = req.params;
   const { page } = req.query;
 
