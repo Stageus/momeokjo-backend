@@ -1,0 +1,309 @@
+exports.getRestaurantInfoList = {
+  query: {
+    category_idx: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.INDEX,
+    },
+    range: {
+      isRequired: true,
+      defaultValue: 100,
+      regexp: REGEXP.RANGE,
+    },
+    page: {
+      isRequired: false,
+      defaultValue: 1,
+      regexp: REGEXP.PAGE,
+    },
+  },
+  body: {
+    user_longitude: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.COORDINATE,
+    },
+    user_latitude: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.COORDINATE,
+    },
+  },
+};
+
+exports.createRestaurantInfo = {
+  body: {
+    category_idx: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.INDEX,
+    },
+    restaurant_name: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.RESTAURANT_NAME,
+    },
+    latitude: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.COORDINATE,
+    },
+    longitude: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.COORDINATE,
+    },
+    address: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.ADDRESS,
+    },
+    address_detail: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.ADDRESS_DETAIL,
+    },
+    phone: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.RESTAURANT_PHONE,
+    },
+    start_time: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.RESTAURANT_RUN_TIME,
+    },
+    end_time: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.RESTAURANT_RUN_TIME,
+    },
+  },
+};
+
+exports.getRestaurantCategoryList = {
+  query: {
+    include_deleted: {
+      isRequired: false,
+      defaultValue: false,
+      regexp: REGEXP.RESTAURANT_RUN_TIME,
+    },
+  },
+};
+
+exports.createRestaurantCategory = {
+  body: {
+    category_name: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.CATEGORY_NAME,
+    },
+  },
+};
+
+exports.updateRestaurantCategoryByIdx = {
+  param: {
+    category_idx: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.INDEX,
+    },
+  },
+  body: {
+    category_name: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.CATEGORY_NAME,
+    },
+  },
+};
+
+exports.getRecommendRestaurant = {
+  query: {
+    category_idx: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.INDEX,
+    },
+    range: {
+      isRequired: true,
+      defaultValue: 100,
+      regexp: REGEXP.RANGE,
+    },
+  },
+  body: {
+    user_longitude: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.COORDINATE,
+    },
+    user_latitude: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.COORDINATE,
+    },
+  },
+};
+
+exports.getMenuReviewInfoList = {
+  param: {
+    menu_idx: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.INDEX,
+    },
+  },
+  query: {
+    page: {
+      isRequired: false,
+      defaultValue: 1,
+      regexp: REGEXP.PAGE,
+    },
+  },
+};
+
+exports.createMenuReview = {
+  param: {
+    menu_idx: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.INDEX,
+    },
+  },
+  body: {
+    content: {
+      isRequired: false,
+      defaultValue: null,
+      regexp: REGEXP.REVIEW,
+    },
+  },
+};
+
+exports.updateMenuReviewByIdx = {
+  param: {
+    review_idx: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.INDEX,
+    },
+  },
+  body: {
+    content: {
+      isRequired: false,
+      defaultValue: null,
+      regexp: REGEXP.REVIEW,
+    },
+  },
+};
+
+exports.getRestaurantMenuInfoList = {
+  param: {
+    restaurant_idx: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.INDEX,
+    },
+  },
+  query: {
+    page: {
+      isRequired: false,
+      defaultValue: 1,
+      regexp: REGEXP.PAGE,
+    },
+  },
+};
+
+exports.createRestaurantMenu = {
+  param: {
+    restaurant_idx: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.INDEX,
+    },
+  },
+  body: {
+    menu_name: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.MENU_NAME,
+    },
+    price: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.MENU_PRICE,
+    },
+  },
+};
+
+exports.updateRestaurantMenuByIdx = {
+  param: {
+    menu_idx: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.INDEX,
+    },
+  },
+  body: {
+    menu_name: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.MENU_NAME,
+    },
+    price: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.MENU_PRICE,
+    },
+  },
+};
+
+exports.getRestaurantInfoByIdx = {
+  param: {
+    restaurant_idx: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.INDEX,
+    },
+  },
+};
+
+exports.updateRestaurantInfoByIdx = {
+  param: {
+    restaurant_idx: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.INDEX,
+    },
+  },
+  body: {
+    category_idx: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.INDEX,
+    },
+    restaurant_name: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.RESTAURANT_NAME,
+    },
+    address_detail: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.ADDRESS_DETAIL,
+    },
+    phone: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.RESTAURANT_PHONE,
+    },
+    start_time: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.RESTAURANT_RUN_TIME,
+    },
+    end_time: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.RESTAURANT_RUN_TIME,
+    },
+  },
+};
