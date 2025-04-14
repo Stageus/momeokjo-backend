@@ -1,5 +1,5 @@
 // 내 정보 수정
-exports.updateMyInfoAtDb = async (user_idx, nickname, client) => {
+exports.updateMyInfoAtDb = async (users_idx, nickname, client) => {
   await client.query(
     `
       UPDATE users.lists SET 
@@ -7,7 +7,7 @@ exports.updateMyInfoAtDb = async (user_idx, nickname, client) => {
       WHERE idx = $2
       AND is_deleted = false;
     `,
-    [nickname, user_idx]
+    [nickname, users_idx]
   );
 };
 
