@@ -171,8 +171,10 @@ exports.checkEmailVerificationCode = tryCatchWrapperWithDb(async (req, res, next
     throw customErrorResponse(404, "인증번호 전송내역 없음");
   }
 
+  const token = jwt.createAccessToken({ email }, process.env.JWT_ACCESS_EXPIRES_IN);
+
   res.clearCookie("email", baseCookieOptions);
-  res.cookie("emailVerified", { email }, accessTokenOptions);
+  res.cookie("emailVerified", token, accessTokenOptions);
   res.status(200).json({ message: "요청 처리 성공" });
 });
 
