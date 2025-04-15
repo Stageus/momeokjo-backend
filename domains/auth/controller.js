@@ -67,7 +67,7 @@ exports.signUp = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { id, pw, nickname, code } = req.body;
 
   // 인증번호 확인
-  const codeFromDB = await as.checkVerificationCodeAtDb(client, email);
+  const codeFromDB = await as.getVerifyCodeFromDb(client, email);
   if (code !== codeFromDB) {
     throw customErrorResponse(404, "인증번호 전송내역 없음");
   }
@@ -86,7 +86,7 @@ exports.signUpWithOauth = tryCatchWrapperWithDb(async (req, res, next, client) =
   const { nickname, code } = req.body;
 
   // 인증번호 확인
-  const codeFromDB = await as.checkVerificationCodeAtDb(client, email);
+  const codeFromDB = await as.getVerifyCodeFromDb(client, email);
   if (code !== codeFromDB) {
     throw customErrorResponse(404, "인증번호 전송내역 없음");
   }
@@ -166,7 +166,7 @@ exports.checkEmailVerificationCode = tryCatchWrapperWithDb(async (req, res, next
   const { code } = req.body;
 
   // 인증번호 확인
-  const codeFromDB = await as.checkVerificationCodeAtDb(client, email);
+  const codeFromDB = await as.getVerifyCodeFromDb(client, email);
   if (code !== codeFromDB) {
     throw customErrorResponse(404, "인증번호 전송내역 없음");
   }

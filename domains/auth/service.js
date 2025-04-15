@@ -158,7 +158,7 @@ exports.sendEmailVerificationCode = async (email, code) => {
   });
 };
 
-exports.checkVerificationCodeAtDb = async (client, email) => {
+exports.getVerifyCodeFromDb = async (client, email) => {
   const results = await client.query(
     `
       SELECT
