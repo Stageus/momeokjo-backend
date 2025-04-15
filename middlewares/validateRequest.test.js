@@ -36,7 +36,7 @@ describe("validateRequest", () => {
       isEmpty: () => false,
       array: () => [
         {
-          param: "email",
+          path: "email",
           msg: "이메일은 필수입니다.",
           value: "",
           location: "body",
