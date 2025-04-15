@@ -8,7 +8,6 @@ const {
   accessTokenOptions,
   refreshTokenOptions,
 } = require("../../config/cookies");
-const { NoSuchBucket } = require("@aws-sdk/client-s3");
 
 // 로그인
 exports.signIn = tryCatchWrapperWithDb(async (req, res, next, client) => {

@@ -4,7 +4,7 @@ const { createValidateChain } = require("../../middlewares/createValidateChain")
 const { validateRequest } = require("../../middlewares/validateRequest");
 const rc = require("./controller");
 const schema = require("./schema");
-const verifyAccessToken = require("../../middlewares");
+const verifyAccessToken = require("../../middlewares/verifyAccessToken");
 
 // 음식점 리스트 조회
 router.get(

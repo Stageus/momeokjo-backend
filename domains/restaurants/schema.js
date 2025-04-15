@@ -1,3 +1,5 @@
+const REGEXP = require("../../utils/regexp");
+
 exports.getRestaurantInfoList = {
   query: {
     category_idx: {
