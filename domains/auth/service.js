@@ -118,17 +118,17 @@ exports.checkIsExistedEmailFromDb = async (client, email) => {
   const results = await client.query(
     `
       SELECT
-        CASE 
-          WHEN email = $1 THEN true 
-          ELSE false
-        END AS isExistedEmail
-      FROM users.lists
-      WHERE email = $1
+        EXISTS(
+          SELECT 1
+          FROM users.lists
+          WHERE email = $1
+          AND is_deleted = false
+      ) AS is_exist_email;
     `,
     [email]
   );
 
-  return results.rows[0].isExistedEmail;
+  return results.rows[0].is_exist_email;
 };
 
 exports.createVerificationCode = () => {
@@ -158,21 +158,20 @@ exports.sendEmailVerificationCode = async (email, code) => {
   });
 };
 
-exports.checkVerificationCodeAtDb = async (client, email, code) => {
+exports.checkVerificationCodeAtDb = async (client, email) => {
   const results = await client.query(
     `
       SELECT
-        CASE 
-          WHEN code = $1 THEN true 
-          ELSE false
-        END AS isValidCode
+        code
       FROM users.codes
-      WHERE email = $2
+      WHERE email = $1
+      ORDER BY created_at DESC
+      LIMIT 1
     `,
-    [code, email]
+    [email]
   );
 
-  return results.rows[0].isValidCode;
+  return results.rows[0].code;
 };
 
 // 카카오에 토큰 발급 요청

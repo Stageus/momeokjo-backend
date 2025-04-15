@@ -67,9 +67,9 @@ exports.signUp = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { id, pw, nickname, code } = req.body;
 
   // 인증번호 확인
-  const isValidCode = await as.checkVerificationCodeAtDb(client, email, code);
-  if (!isValidCode) {
-    throw customErrorResponse(400, "잘못된 인증번호입니다.");
+  const codeFromDB = await as.checkVerificationCodeAtDb(client, email);
+  if (code !== codeFromDB) {
+    throw customErrorResponse(404, "인증번호 전송내역 없음");
   }
 
   await as.createUserAtDb(client, id, pw, nickname, email, null);
@@ -86,9 +86,9 @@ exports.signUpWithOauth = tryCatchWrapperWithDb(async (req, res, next, client) =
   const { nickname, code } = req.body;
 
   // 인증번호 확인
-  const isValidCode = await as.checkVerificationCodeAtDb(client, email, code);
-  if (!isValidCode) {
-    throw customErrorResponse(400, "잘못된 인증번호입니다.");
+  const codeFromDB = await as.checkVerificationCodeAtDb(client, email);
+  if (code !== codeFromDB) {
+    throw customErrorResponse(404, "인증번호 전송내역 없음");
   }
 
   await as.createUserAtDb(client, null, null, nickname, email, oauth_idx);
@@ -166,9 +166,9 @@ exports.checkEmailVerificationCode = tryCatchWrapperWithDb(async (req, res, next
   const { code } = req.body;
 
   // 인증번호 확인
-  const isValidCode = await as.checkVerificationCodeAtDb(client, email, code);
-  if (!isValidCode) {
-    throw customErrorResponse(400, "잘못된 인증번호입니다.");
+  const codeFromDB = await as.checkVerificationCodeAtDb(client, email);
+  if (code !== codeFromDB) {
+    throw customErrorResponse(404, "인증번호 전송내역 없음");
   }
 
   res.clearCookie("email", baseCookieOptions);
