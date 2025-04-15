@@ -5,13 +5,7 @@ exports.checkIsUserFromDb = async (client, id, pw) => {
   const results = await client.query(
     `
       SELECT
-        EXISTS (
-          SELECT 1
-          FROM users.lists
-          WHERE id = $1
-          AND pw = $2
-          AND is_deleted = false;
-        ) AS is_user,
+        TRUE AS is_user,
         idx
       FROM users.lists
       WHERE id = $1
@@ -21,51 +15,50 @@ exports.checkIsUserFromDb = async (client, id, pw) => {
     [id, pw]
   );
 
-  return { isUser: results.rows[0].is_user, users_idx: results.rows[0].idx };
+  return { isUser: results.rows[0]?.is_user || false, users_idx: results.rows[0]?.idx };
 };
 
 exports.checkLocalRefreshTokenFromDb = async (client, users_idx) => {
   const results = await client.query(
     `
       SELECT
-        CASE
-          WHEN refresh_expired_at < NOW() THEN true
-          ELSE false
-        END AS is_expired,
+        refresh_expired_at < NOW() AS is_expired,
         refresh_token
       FROM users.local_tokens
       WHERE users_idx = $1
-      AND is_deleted = false
+        AND is_deleted = false
       ORDER BY created_at DESC
       LIMIT 1;
     `,
     [users_idx]
   );
 
-  return { isExpired: results.rows[0].is_expired, refreshToken: results.rows[0].refresh_token };
+  return {
+    isExpired: results.rows[0]?.is_expired || true,
+    refreshToken: results.rows[0]?.refresh_token || "",
+  };
 };
 
-exports.saveNewRefreshTokenAtDb = async (client, users_idx, refreshToken, expiresIn) => {
+exports.saveNewRefreshTokenAtDb = async (client, users_idx, refreshToken, refresh_expired_at) => {
   await client.query(
     `
-    INSERT INTO users.local_token (
+    INSERT INTO users.local_tokens (
       users_idx,
       refresh_token,
-      expires_in
+      refresh_expired_at
    ) VALUES (
       $1,
       $2,
       $3
-   )
-      
+   );
     `,
-    [users_idx, refreshToken, expiresIn]
+    [users_idx, refreshToken, refresh_expired_at]
   );
 };
 
 exports.createUserAtDb = async (client, id, pw, nickname, email, oauth_idx) => {
   await client.query(
-    "INSERT INTO users.lists (id, pw, nickname, email, role, oauth_idx) VALUES ($1, $2, $3, $4, $5, $6)",
+    "INSERT INTO users.lists (id, pw, nickname, email, role, oauth_idx) VALUES ($1, $2, $3, $4, $5, $6);",
     [id, pw, nickname, email, "USER", oauth_idx]
   );
 };

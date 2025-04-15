@@ -26,9 +26,9 @@ exports.signIn = tryCatchWrapperWithDb(async (req, res, next, client) => {
 
     // 날짜 계산 오늘 + 30일;
     const now = new Date();
-    const expiresIn = new Date(now.getTime() + 1000 * 60 * 60 * 24 * 30);
+    const refresh_expired_at = new Date(now.getTime() + 1000 * 60 * 60 * 24 * 30);
 
-    await as.saveNewRefreshTokenAtDb(client, users_idx, newRefreshToken, expiresIn);
+    await as.saveNewRefreshTokenAtDb(client, users_idx, newRefreshToken, refresh_expired_at);
   }
 
   const accessToken = jwt.createAccessToken(payload, process.env.JWT_ACCESS_EXPIRES_IN);
