@@ -1,4 +1,5 @@
 const request = require("supertest");
+require("dotenv").config();
 const app = require("../server");
 const pool = require("../database/db");
 const service = require("../domains/auth/service");
@@ -477,5 +478,16 @@ describe("PUT /resetpw", () => {
 
     expect(res.status).toBe(404);
     expect(res.body.message).toBe("계정 없음");
+  });
+});
+
+describe("GET /auth/oauth/kakao", () => {
+  it("카카오 로그인 페이지로 리다이렉트를 해야한다.", (done) => {
+    process.env.KAKAO_REST_API_KEY = "some_key";
+    process.env.KAKAO_REDIRECT_URI = "some_uri";
+
+    const url = `https://kauth.kakao.com/oauth/authorize?client_id=${process.env.KAKAO_REST_API_KEY}&redirect_uri=${process.env.KAKAO_REDIRECT_URI}&response_type=code`;
+
+    request(app).get("/auth/oauth/kakao").expect("Location", url).expect(302, done);
   });
 });
