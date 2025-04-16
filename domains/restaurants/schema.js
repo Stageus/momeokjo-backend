@@ -87,7 +87,7 @@ exports.getRestaurantCategoryList = {
     include_deleted: {
       isRequired: false,
       defaultValue: false,
-      regexp: REGEXP.RESTAURANT_RUN_TIME,
+      regexp: REGEXP.BOOLEAN,
     },
   },
 };

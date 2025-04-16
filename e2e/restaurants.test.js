@@ -83,3 +83,50 @@ describe("POST /categories", () => {
     expect(res.body.message).toBe("권한 없음");
   });
 });
+
+describe("GET /categories", () => {
+  const agent = request(app);
+  it("조회 성공한 경우 상태코드 200과 카테고리 리스트를 응답해야한다.", async () => {
+    const client = await pool.connect();
+    authService.createUserAtDb(client, "test", "Test!1@2", "test", "test@test.com", "ADMIN", null);
+    client.release();
+
+    const responseSignin = await agent.post("/auth/signin").send({ id: "test", pw: "Test!1@2" });
+    const accessTokenCookie = responseSignin.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith("accessToken=")
+    );
+
+    await agent
+      .post("/restaurants/categories")
+      .set("Cookie", accessTokenCookie)
+      .send({ category_name: "테스트" });
+
+    const res = await agent.get("/restaurants/categories");
+    // console.log(res);
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("요청 처리 성공");
+    expect(res.body.data).toStrictEqual(expect.any(Array));
+  });
+
+  it("include_deleted가 true인 경우 상태코드 200과 비활성화된 카테고리를 포함한 리스트를 응답해야한다.", async () => {
+    const client = await pool.connect();
+    authService.createUserAtDb(client, "test", "Test!1@2", "test", "test@test.com", "ADMIN", null);
+    client.release();
+
+    const responseSignin = await agent.post("/auth/signin").send({ id: "test", pw: "Test!1@2" });
+    const accessTokenCookie = responseSignin.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith("accessToken=")
+    );
+
+    await agent
+      .post("/restaurants/categories")
+      .set("Cookie", accessTokenCookie)
+      .send({ category_name: "테스트" });
+
+    const res = await agent.get("/restaurants/categories?include_deleted=true");
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("요청 처리 성공");
+    expect(res.body.data).toStrictEqual(expect.any(Array));
+  });
+});
