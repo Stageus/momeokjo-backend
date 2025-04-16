@@ -5,9 +5,10 @@ exports.validateRequest = (req, res, next) => {
 
   if (!errors.isEmpty()) {
     const error = errors.array()[0];
+
     return res.status(400).json({
       message: "입력값 확인 필요",
-      target: error.param,
+      target: error.path,
     });
   }
 

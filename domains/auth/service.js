@@ -5,13 +5,7 @@ exports.checkIsUserFromDb = async (client, id, pw) => {
   const results = await client.query(
     `
       SELECT
-        EXISTS (
-          SELECT 1
-          FROM users.lists
-          WHERE id = $1
-          AND pw = $2
-          AND is_deleted = false;
-        ) AS is_user,
+        TRUE AS is_user,
         idx
       FROM users.lists
       WHERE id = $1
@@ -21,51 +15,50 @@ exports.checkIsUserFromDb = async (client, id, pw) => {
     [id, pw]
   );
 
-  return { isUser: results.rows[0].is_user, users_idx: results.rows[0].idx };
+  return { isUser: results.rows[0]?.is_user || false, users_idx: results.rows[0]?.idx };
 };
 
 exports.checkLocalRefreshTokenFromDb = async (client, users_idx) => {
   const results = await client.query(
     `
       SELECT
-        CASE
-          WHEN refresh_expired_at < NOW() THEN true
-          ELSE false
-        END AS is_expired,
+        refresh_expired_at < NOW() AS is_expired,
         refresh_token
       FROM users.local_tokens
       WHERE users_idx = $1
-      AND is_deleted = false
+        AND is_deleted = false
       ORDER BY created_at DESC
       LIMIT 1;
     `,
     [users_idx]
   );
 
-  return { isExpired: results.rows[0].is_expired, refreshToken: results.rows[0].refresh_token };
+  return {
+    isExpired: results.rows[0]?.is_expired || true,
+    refreshToken: results.rows[0]?.refresh_token || "",
+  };
 };
 
-exports.saveNewRefreshTokenAtDb = async (client, users_idx, refreshToken, expiresIn) => {
+exports.saveNewRefreshTokenAtDb = async (client, users_idx, refreshToken, refresh_expired_at) => {
   await client.query(
     `
-    INSERT INTO users.local_token (
+    INSERT INTO users.local_tokens (
       users_idx,
       refresh_token,
-      expires_in
+      refresh_expired_at
    ) VALUES (
       $1,
       $2,
       $3
-   )
-      
+   );
     `,
-    [users_idx, refreshToken, expiresIn]
+    [users_idx, refreshToken, refresh_expired_at]
   );
 };
 
 exports.createUserAtDb = async (client, id, pw, nickname, email, oauth_idx) => {
   await client.query(
-    "INSERT INTO users.lists (id, pw, nickname, email, role, oauth_idx) VALUES ($1, $2, $3, $4, $5, $6)",
+    "INSERT INTO users.lists (id, pw, nickname, email, role, oauth_idx) VALUES ($1, $2, $3, $4, $5, $6);",
     [id, pw, nickname, email, "USER", oauth_idx]
   );
 };
@@ -81,7 +74,7 @@ exports.getUserIdFromDb = async (client, email) => {
     [email]
   );
 
-  return { isUser: results.rowCount > 0, id: results.rows[0].id };
+  return { isUser: results.rowCount > 0, id: results.rows[0]?.id };
 };
 
 //
@@ -118,17 +111,17 @@ exports.checkIsExistedEmailFromDb = async (client, email) => {
   const results = await client.query(
     `
       SELECT
-        CASE 
-          WHEN email = $1 THEN true 
-          ELSE false
-        END AS isExistedEmail
-      FROM users.lists
-      WHERE email = $1
+        EXISTS(
+          SELECT 1
+          FROM users.lists
+          WHERE email = $1
+          AND is_deleted = false
+      ) AS is_exist_email;
     `,
     [email]
   );
 
-  return results.rows[0].isExistedEmail;
+  return results.rows[0].is_exist_email;
 };
 
 exports.createVerificationCode = () => {
@@ -158,21 +151,20 @@ exports.sendEmailVerificationCode = async (email, code) => {
   });
 };
 
-exports.checkVerificationCodeAtDb = async (client, email, code) => {
+exports.getVerifyCodeFromDb = async (client, email) => {
   const results = await client.query(
     `
       SELECT
-        CASE 
-          WHEN code = $1 THEN true 
-          ELSE false
-        END AS isValidCode
+        code
       FROM users.codes
-      WHERE email = $2
+      WHERE email = $1
+      ORDER BY created_at DESC
+      LIMIT 1
     `,
-    [code, email]
+    [email]
   );
 
-  return results.rows[0].isValidCode;
+  return results.rows[0].code;
 };
 
 // 카카오에 토큰 발급 요청
@@ -207,27 +199,27 @@ exports.getProviderIdFromKakao = async (accessToken) => {
 };
 
 // 사용자 회원가입 이력 확인
-exports.checkOauthUserAtDb = async (client, provider_user_id) => {
+exports.checkOauthUserAtDb = async (client, provider_user_id, provider) => {
   const results = await client.query(
     `
       SELECT
-        CASE
-          WHEN TO_TIMESTAMP(refresh_expires_in) > NOW() THEN true
-          ELSE false
-        END AS is_existed,
-        user_idx
-      FROM users.oauth
-      WHERE provider_user_id = $1
-      AND is_deleted = false
-      ORDER BY created_at DESC
+        TO_TIMESTAMP(oauth.refresh_expires_in) > NOW() AS is_existed,
+        users.idx AS users_idx
+      FROM users.oauth oauth
+      JOIN users.lists users ON users.oauth_idx = oauth.idx
+      WHERE oauth.provider_user_id = $1
+      AND oauth.provider = $2
+      AND oauth.is_deleted = false
+      AND users.is_deleted = false
+      ORDER BY oauth.created_at DESC
       LIMIT 1;
     `,
-    [provider_user_id]
+    [provider_user_id, provider]
   );
 
   return {
-    isExisted: results.rows[0].is_existed,
-    users_idx: results.rows[0].users_idx,
+    isExisted: results.rows[0]?.is_existed || false,
+    users_idx: results.rows[0]?.users_idx || undefined,
   };
 };
 
@@ -236,24 +228,28 @@ exports.saveOauthInfoAtDb = async (
   client,
   encryptedAccessToken,
   encryptedRefreshToken,
-  provider_user_id
+  refreshTokenExpiresIn,
+  provider_user_id,
+  provider
 ) => {
-  const results = client.query(
+  const results = await client.query(
     `
         INSERT INTO users.oauth (
           provider,
           provider_user_id,
           refresh_token,
-          access_token
+          access_token,
+          refresh_expires_in
         ) VALUES (
-          'KAKAO',
           $1,
           $2,
-          $3
+          $3,
+          $4,
+          $5
         )
         RETURNING idx AS oauth_idx;
       `,
-    [provider_user_id, encryptedRefreshToken, encryptedAccessToken]
+    [provider, provider_user_id, encryptedRefreshToken, encryptedAccessToken, refreshTokenExpiresIn]
   );
 
   return results.rows[0].oauth_idx;
@@ -297,7 +293,7 @@ exports.invalidateLocalRefreshTokenAtDb = async (client, users_idx) => {
     `
       UPDATE users.local_tokens SET
         is_deleted = true
-      WHERE users_id = $1
+      WHERE users_idx = $1
       AND is_deleted = false
     `,
     [users_idx]
@@ -349,4 +345,19 @@ exports.requestKakaoLogout = async (accessToken, provider_user_id) => {
       target_id: provider_user_id,
     },
   });
+};
+
+exports.getUserNicknameFromDb = async (client, users_idx) => {
+  const results = await client.query(
+    `
+      SELECT
+        nickname
+      FROM users.lists
+      WHERE idx = $1
+        AND is_deleted = false;
+    `,
+    [users_idx]
+  );
+
+  return results.rows[0].nickname;
 };

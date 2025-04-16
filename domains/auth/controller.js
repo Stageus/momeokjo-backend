@@ -8,7 +8,6 @@ const {
   accessTokenOptions,
   refreshTokenOptions,
 } = require("../../config/cookies");
-const { NoSuchBucket } = require("@aws-sdk/client-s3");
 
 // 로그인
 exports.signIn = tryCatchWrapperWithDb(async (req, res, next, client) => {
@@ -27,9 +26,9 @@ exports.signIn = tryCatchWrapperWithDb(async (req, res, next, client) => {
 
     // 날짜 계산 오늘 + 30일;
     const now = new Date();
-    const expiresIn = new Date(now.getTime() + 1000 * 60 * 60 * 24 * 30);
+    const refresh_expired_at = new Date(now.getTime() + 1000 * 60 * 60 * 24 * 30);
 
-    await as.saveNewRefreshTokenAtDb(client, users_idx, newRefreshToken, expiresIn);
+    await as.saveNewRefreshTokenAtDb(client, users_idx, newRefreshToken, refresh_expired_at);
   }
 
   const accessToken = jwt.createAccessToken(payload, process.env.JWT_ACCESS_EXPIRES_IN);
@@ -53,9 +52,8 @@ exports.signOut = tryCatchWrapperWithDb(async (req, res, next, client) => {
       oauth_idx
     );
 
-    const decryptedAccessToken = algorithm.decrypt(accessToken);
-
-    as.requestKakaoLogout(decryptedAccessToken, provider_user_id);
+    const decryptedAccessToken = await algorithm.decrypt(accessToken);
+    await as.requestKakaoLogout(decryptedAccessToken, provider_user_id);
   }
 
   res.clearCookie("accessToken", baseCookieOptions);
@@ -68,9 +66,9 @@ exports.signUp = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { id, pw, nickname, code } = req.body;
 
   // 인증번호 확인
-  const isValidCode = await as.checkVerificationCodeAtDb(client, email, code);
-  if (!isValidCode) {
-    throw customErrorResponse(400, "잘못된 인증번호입니다.");
+  const codeFromDB = await as.getVerifyCodeFromDb(client, email);
+  if (code !== codeFromDB) {
+    throw customErrorResponse(404, "인증번호 전송내역 없음");
   }
 
   await as.createUserAtDb(client, id, pw, nickname, email, null);
@@ -87,9 +85,9 @@ exports.signUpWithOauth = tryCatchWrapperWithDb(async (req, res, next, client) =
   const { nickname, code } = req.body;
 
   // 인증번호 확인
-  const isValidCode = await as.checkVerificationCodeAtDb(client, email, code);
-  if (!isValidCode) {
-    throw customErrorResponse(400, "잘못된 인증번호입니다.");
+  const codeFromDB = await as.getVerifyCodeFromDb(client, email);
+  if (code !== codeFromDB) {
+    throw customErrorResponse(404, "인증번호 전송내역 없음");
   }
 
   await as.createUserAtDb(client, null, null, nickname, email, oauth_idx);
@@ -97,7 +95,7 @@ exports.signUpWithOauth = tryCatchWrapperWithDb(async (req, res, next, client) =
   // 쿠키 삭제
   res.clearCookie("emailVerified", baseCookieOptions);
   res.clearCookie("oauthIdx", baseCookieOptions);
-  res.status(200).json({ message: "회원가입 성공" });
+  res.status(200).json({ message: "요청 처리 성공" });
 });
 
 // 아이디 찾기
@@ -132,7 +130,8 @@ exports.resetPassword = tryCatchWrapperWithDb(async (req, res, next, client) => 
 
   await as.updatePasswordAtDb(client, id, pw, email);
 
-  res.status(200).json({ message: "비밀번호 변경 성공" });
+  res.clearCookie("resetPw", accessTokenOptions);
+  res.status(200).json({ message: "요청 처리 성공" });
 });
 
 // 이메일 인증번호 전송
@@ -167,13 +166,15 @@ exports.checkEmailVerificationCode = tryCatchWrapperWithDb(async (req, res, next
   const { code } = req.body;
 
   // 인증번호 확인
-  const isValidCode = await as.checkVerificationCodeAtDb(client, email, code);
-  if (!isValidCode) {
-    throw customErrorResponse(400, "잘못된 인증번호입니다.");
+  const codeFromDB = await as.getVerifyCodeFromDb(client, email);
+  if (code !== codeFromDB) {
+    throw customErrorResponse(404, "인증번호 전송내역 없음");
   }
 
+  const token = jwt.createAccessToken({ email }, process.env.JWT_ACCESS_EXPIRES_IN);
+
   res.clearCookie("email", baseCookieOptions);
-  res.cookie("emailVerified", { email }, accessTokenOptions);
+  res.cookie("emailVerified", token, accessTokenOptions);
   res.status(200).json({ message: "요청 처리 성공" });
 });
 
@@ -193,12 +194,11 @@ exports.signInWithKakaoAuth = tryCatchWrapper((req, res, next) => {
 // 카카오 토큰발급 요청
 exports.checkOauthAndRedirect = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { code, error } = req.query;
-  if (error || !code) throw customErrorResponse(400, "카카오 인증 실패");
+  if (error || !code) throw customErrorResponse(400, "카카오 로그인 실패");
 
   const { accessToken, refreshToken, refreshTokenExpiresIn } = await as.getTokenFromKakao(code);
   const provider_user_id = await as.getProviderIdFromKakao(accessToken);
-  const { isExisted, users_idx } = await as.checkOauthUserAtDb(client, provider_user_id);
-
+  const { isExisted, users_idx } = await as.checkOauthUserAtDb(client, provider_user_id, "KAKAO");
   if (!isExisted) {
     const encryptedAccessToken = await algorithm.encrypt(accessToken);
     const encryptedRefreshToken = await algorithm.encrypt(refreshToken);
@@ -208,17 +208,26 @@ exports.checkOauthAndRedirect = tryCatchWrapperWithDb(async (req, res, next, cli
       encryptedAccessToken,
       encryptedRefreshToken,
       refreshTokenExpiresIn,
-      provider_user_id
+      provider_user_id,
+      "KAKAO"
     );
 
-    const token = jwt.createAccessToken({ oauth_idx });
+    const token = jwt.createAccessToken({ oauth_idx }, process.env.JWT_ACCESS_EXPIRES_IN);
     res.cookie("oauthIdx", token, accessTokenOptions);
     res.redirect("http://localhost:3000/oauth/signup");
   } else {
     const payload = { users_idx, provider: "KAKAO", role: "USER" };
-    const token = jwt.createAccessToken(payload);
+    const token = jwt.createAccessToken(payload, process.env.JWT_ACCESS_EXPIRES_IN);
 
     res.cookie("accessToken", token, accessTokenOptions);
     res.redirect("http://localhost:3000/");
   }
+});
+
+exports.getStatus = tryCatchWrapperWithDb(async (req, res, next, client) => {
+  const { users_idx, provider } = req.accessToken;
+
+  const nickname = await as.getUserNicknameFromDb(client, users_idx);
+
+  res.status(200).json({ message: "요청 처리 성공", user_idx: users_idx, nickname });
 });

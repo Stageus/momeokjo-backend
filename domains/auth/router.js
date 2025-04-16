@@ -31,10 +31,10 @@ router.post(
 );
 
 // 아이디 찾기
-router.get("/findid", createValidateChain(schema.findId), validateRequest, ac.getUserId);
+router.post("/findid", createValidateChain(schema.findId), validateRequest, ac.getUserId);
 
 // 비밀번호 찾기
-router.get(
+router.post(
   "/findpw",
   createValidateChain(schema.findPw),
   validateRequest,
@@ -42,7 +42,7 @@ router.get(
 );
 
 // 비밀번호 초기화
-router.post(
+router.put(
   "/resetpw",
   verifyAccessToken("resetPw"),
   createValidateChain(schema.resetPw),
@@ -72,5 +72,8 @@ router.get("/oauth/kakao", ac.signInWithKakaoAuth);
 
 // 카카오 토큰발급 요청
 router.get("/oauth/kakao/redirect", ac.checkOauthAndRedirect);
+
+// 로그인 상태 조회
+router.get("/status", verifyAccessToken("accessToken"), ac.getStatus);
 
 module.exports = router;

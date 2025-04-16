@@ -1,7 +1,7 @@
 const router = require("express").Router();
 const { createValidateChain } = require("../../middlewares/createValidateChain");
 const { validateRequest } = require("../../middlewares/validateRequest");
-const verifyAccessToken = require("../../middlewares");
+const verifyAccessToken = require("../../middlewares/verifyAccessToken");
 const schema = require("./schema");
 const uc = require("./controller");
 

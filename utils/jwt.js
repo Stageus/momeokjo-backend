@@ -45,10 +45,10 @@ exports.verifyToken = (token, isRefresh = false) => {
     if (isRefresh === true && !process.env.JWT_REFRESH_SECRET)
       throw new Error("환경 변수 JWT_REFRESH_SECRET 확인 필요");
 
-    const key = isRefresh ? process.env.JWT_ACCESS_SECRET : process.env.JWT_REFRESH_SECRET;
+    const key = isRefresh ? process.env.JWT_REFRESH_SECRET : process.env.JWT_ACCESS_SECRET;
     const decoded = jwt.verify(token, key);
 
-    return decoded;
+    return { isValid: true, results: decoded };
   } catch (err) {
     throw customErrorResponse(500, err.message || "토큰 디코딩 중 오류 발생");
   }
