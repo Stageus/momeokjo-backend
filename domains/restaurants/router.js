@@ -5,11 +5,12 @@ const { validateRequest } = require("../../middlewares/validateRequest");
 const rc = require("./controller");
 const schema = require("./schema");
 const verifyAccessToken = require("../../middlewares/verifyAccessToken");
+const verifyAccessTokenOptional = require("../../middlewares/verifyAccessTokenOptional");
 
 // 음식점 리스트 조회
 router.get(
   "/",
-  verifyAccessToken("accessToken"),
+  verifyAccessTokenOptional("accessToken"),
   createValidateChain(schema.getRestaurantInfoList),
   validateRequest,
   rc.getRestaurantInfoList
@@ -52,7 +53,7 @@ router.put(
 // 음식점 랜덤 조회
 router.get(
   "/recommends",
-  verifyAccessToken("accessToken"),
+  verifyAccessTokenOptional("accessToken"),
   createValidateChain(schema.getRecommendRestaurant),
   validateRequest,
   rc.getRecommendRestaurant
@@ -61,7 +62,7 @@ router.get(
 // 메뉴 후기 리스트 조회
 router.get(
   "/menus/:menu_idx/reviews",
-  verifyAccessToken("accessToken"),
+  verifyAccessTokenOptional("accessToken"),
   createValidateChain(schema.getMenuReviewInfoList),
   validateRequest,
   rc.getMenuReviewInfoList
@@ -90,7 +91,7 @@ router.put(
 // 음식점 메뉴 리스트 조회
 router.get(
   "/:restaurant_idx/menus",
-  verifyAccessToken("accessToken"),
+  verifyAccessTokenOptional("accessToken"),
   createValidateChain(schema.getRestaurantMenuInfoList),
   validateRequest,
   rc.getRestaurantMenuInfoList
@@ -117,7 +118,7 @@ router.put(
 // 음식점 상세보기 조회
 router.get(
   "/:restaurant_idx",
-  verifyAccessToken("accessToken"),
+  verifyAccessTokenOptional("accessToken"),
   createValidateChain(schema.getRestaurantInfoByIdx),
   validateRequest,
   rc.getRestaurantInfoByIdx
