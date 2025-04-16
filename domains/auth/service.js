@@ -6,7 +6,8 @@ exports.checkIsUserFromDb = async (client, id, pw) => {
     `
       SELECT
         TRUE AS is_user,
-        idx
+        idx,
+        role
       FROM users.lists
       WHERE id = $1
       AND pw = $2
@@ -15,7 +16,11 @@ exports.checkIsUserFromDb = async (client, id, pw) => {
     [id, pw]
   );
 
-  return { isUser: results.rows[0]?.is_user || false, users_idx: results.rows[0]?.idx };
+  return {
+    isUser: results.rows[0]?.is_user || false,
+    users_idx: results.rows[0]?.idx,
+    role: results.rows[0]?.role,
+  };
 };
 
 exports.checkLocalRefreshTokenFromDb = async (client, users_idx) => {
@@ -56,10 +61,10 @@ exports.saveNewRefreshTokenAtDb = async (client, users_idx, refreshToken, refres
   );
 };
 
-exports.createUserAtDb = async (client, id, pw, nickname, email, oauth_idx) => {
+exports.createUserAtDb = async (client, id, pw, nickname, email, role, oauth_idx) => {
   await client.query(
     "INSERT INTO users.lists (id, pw, nickname, email, role, oauth_idx) VALUES ($1, $2, $3, $4, $5, $6);",
-    [id, pw, nickname, email, "USER", oauth_idx]
+    [id, pw, nickname, email, role, oauth_idx]
   );
 };
 

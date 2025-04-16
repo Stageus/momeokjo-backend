@@ -11,7 +11,7 @@ afterEach(async () => {
   await client.query("DELETE FROM users.codes");
   await client.query("DELETE FROM users.local_tokens");
   await client.query("DELETE FROM users.lists");
-  // await client.query("DELETE FROM users.oauth");
+  await client.query("DELETE FROM users.oauth");
   client.release();
 });
 
@@ -43,7 +43,7 @@ describe("POST /verify-email", () => {
 
     // 임의로 회원가입 시키기
     const client = await pool.connect();
-    await service.createUserAtDb(client, "test", "test", "test", email, null);
+    await service.createUserAtDb(client, "test", "test", "test", email, "USER", null);
     client.release();
 
     const res = await agent.post("/auth/verify-email").send({ email });
@@ -229,7 +229,15 @@ describe("POST /signup", () => {
     expect(verifyCodeCookies).toBeDefined();
 
     const client2 = await pool.connect();
-    await service.createUserAtDb(client2, "test", "Test!1@2", "test1", "test@test.com", null);
+    await service.createUserAtDb(
+      client2,
+      "test",
+      "Test!1@2",
+      "test1",
+      "test@test.com",
+      "USER",
+      null
+    );
     client2.release();
 
     const res = await agent
@@ -260,7 +268,15 @@ describe("POST /signup", () => {
     expect(verifyCodeCookies).toBeDefined();
 
     const client2 = await pool.connect();
-    await service.createUserAtDb(client2, "test1", "Test!1@2", "same", "test@test.com", null);
+    await service.createUserAtDb(
+      client2,
+      "test1",
+      "Test!1@2",
+      "same",
+      "test@test.com",
+      "USER",
+      null
+    );
     client2.release();
 
     const res = await agent
@@ -291,7 +307,7 @@ describe("POST /signup", () => {
     expect(verifyCodeCookies).toBeDefined();
 
     const client2 = await pool.connect();
-    await service.createUserAtDb(client2, "test1", "Test!1@2", "test1", email, null);
+    await service.createUserAtDb(client2, "test1", "Test!1@2", "test1", email, "USER", null);
     client2.release();
 
     const res = await agent
@@ -309,7 +325,7 @@ describe("POST /signin", () => {
   const agent = request(app);
   it("로그인 성공한 경우 상태코드 200을 응답해야한다.", async () => {
     const client = await pool.connect();
-    await service.createUserAtDb(client, "test", "Test!1@2", "test", "test@test.com", null);
+    await service.createUserAtDb(client, "test", "Test!1@2", "test", "test@test.com", "USER", null);
     client.release();
 
     const res = await agent.post("/auth/signin").send({ id: "test", pw: "Test!1@2" });
@@ -348,7 +364,7 @@ describe("POST /findid", () => {
     const email = "test@test.com";
 
     const client = await pool.connect();
-    await service.createUserAtDb(client, id, "Test!1@2", "test", email, null);
+    await service.createUserAtDb(client, id, "Test!1@2", "test", email, "USER", null);
     client.release();
 
     const res = await agent.post("/auth/findid").send({ email });
@@ -377,7 +393,7 @@ describe("POST /findpw", () => {
     const id = "test";
     const email = "test@test.com";
     const client = await pool.connect();
-    await service.createUserAtDb(client, id, "Test!1@2", "test", email, null);
+    await service.createUserAtDb(client, id, "Test!1@2", "test", email, "USER", null);
     client.release();
 
     const res = await agent.post("/auth/findpw").send({ id, email });
@@ -408,7 +424,7 @@ describe("PUT /resetpw", () => {
     const id = "test";
     const email = "test@test.com";
     const client = await pool.connect();
-    await service.createUserAtDb(client, id, "Test!1@2", "test", email, null);
+    await service.createUserAtDb(client, id, "Test!1@2", "test", email, "USER", null);
     client.release();
 
     const responseFindPw = await agent.post("/auth/findpw").send({ id, email });
@@ -434,7 +450,7 @@ describe("PUT /resetpw", () => {
     const id = "test";
     const email = "test@test.com";
     const client = await pool.connect();
-    await service.createUserAtDb(client, id, "Test!1@2", "test", email, null);
+    await service.createUserAtDb(client, id, "Test!1@2", "test", email, "USER", null);
     client.release();
 
     const responseFindPw = await agent.post("/auth/findpw").send({ id, email });
@@ -461,7 +477,7 @@ describe("PUT /resetpw", () => {
     const id = "test";
     const email = "test@test.com";
     const client1 = await pool.connect();
-    await service.createUserAtDb(client1, id, "Test!1@2", "test", email, null);
+    await service.createUserAtDb(client1, id, "Test!1@2", "test", email, "USER", null);
     client1.release();
 
     const responseFindPw = await agent.post("/auth/findpw").send({ id, email });
@@ -525,7 +541,7 @@ describe("GET /auth/oauth/kakao/redirect", () => {
       1,
       "KAKAO"
     );
-    await service.createUserAtDb(client, null, null, "test", "test@test.com", oauth_idx);
+    await service.createUserAtDb(client, null, null, "test", "test@test.com", "USER", oauth_idx);
     client.release();
 
     nock("https://kauth.kakao.com").post("/oauth/token").reply(200, {
@@ -712,7 +728,7 @@ describe("POST /auth/oauth/signup", () => {
     );
 
     const client2 = await pool.connect();
-    await service.createUserAtDb(client2, null, null, "test1", email, null);
+    await service.createUserAtDb(client2, null, null, "test1", email, "USER", null);
     client2.release();
 
     const res = await agent
@@ -757,7 +773,7 @@ describe("POST /auth/oauth/signup", () => {
     );
 
     const client2 = await pool.connect();
-    await service.createUserAtDb(client2, null, null, "test", "test@test.com", null);
+    await service.createUserAtDb(client2, null, null, "test", "test@test.com", "USER", null);
     client2.release();
 
     const res = await agent
@@ -775,7 +791,7 @@ describe("DELETE /signout", () => {
   const agent = request(app);
   it("로컬 로그인한 회원이 로그아웃 성공한 경우 상태코드 200을 응답해야한다.", async () => {
     const client = await pool.connect();
-    await service.createUserAtDb(client, "test", "Test!1@2", "test", "test@test.com", null);
+    await service.createUserAtDb(client, "test", "Test!1@2", "test", "test@test.com", "USER", null);
     client.release();
 
     const responseSignin = await agent.post("/auth/signin").send({ id: "test", pw: "Test!1@2" });
@@ -804,7 +820,7 @@ describe("DELETE /signout", () => {
       1,
       "KAKAO"
     );
-    await service.createUserAtDb(client, null, null, "test", "test@test.com", oauth_idx);
+    await service.createUserAtDb(client, null, null, "test", "test@test.com", "USER", oauth_idx);
     client.release();
 
     nock("https://kauth.kakao.com").post("/oauth/token").reply(200, {
@@ -846,7 +862,7 @@ describe("GET /status", () => {
   const agent = request(app);
   it("상태조회 성공한 경우 상태코드 200을 응답해야한다.", async () => {
     const client = await pool.connect();
-    await service.createUserAtDb(client, "test", "Test!1@2", "test", "test@test.com", null);
+    await service.createUserAtDb(client, "test", "Test!1@2", "test", "test@test.com", "USER", null);
     client.release();
 
     const responseSignin = await agent.post("/auth/signin").send({ id: "test", pw: "Test!1@2" });

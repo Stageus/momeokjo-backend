@@ -1,3 +1,4 @@
+const customErrorResponse = require("../../utils/customErrorResponse");
 const { tryCatchWrapperWithDb } = require("../../utils/customWrapper");
 const rs = require("./service");
 
@@ -68,8 +69,10 @@ exports.getRestaurantCategoryList = tryCatchWrapperWithDb(async (req, res, next,
 
 // 음식점 카테고리 등록
 exports.createRestaurantCategory = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { users_idx } = req.accessToken;
+  const { users_idx, role } = req.accessToken;
   const { category_name } = req.body;
+
+  if (role !== "ADMIN") throw customErrorResponse(403, "권한 없음");
 
   await rs.createRestaurantCategoryAtDb(users_idx, category_name, client);
 
