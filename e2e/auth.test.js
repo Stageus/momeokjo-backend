@@ -351,7 +351,7 @@ describe("POST /findid", () => {
     client.release();
 
     const res = await agent.post("/auth/findid").send({ email });
-    console.log(res);
+
     expect(res.status).toBe(200);
     expect(res.body.message).toBe("아이디 조회 성공");
     expect(res.body.id).toBe(id);
@@ -420,7 +420,7 @@ describe("PUT /resetpw", () => {
       .put("/auth/resetpw")
       .set("Cookie", findpwCookie)
       .send({ pw: "Abcd!1@2" });
-    console.log(res);
+
     expect(res.status).toBe(200);
     expect(res.body.message).toBe("요청 처리 성공");
 
@@ -546,5 +546,226 @@ describe("GET /auth/oauth/kakao/redirect", () => {
 
   it("카카오 로그인에 실패한 경우 상태코드 400을 응답해야한다.", (done) => {
     agent.get("/auth/oauth/kakao/redirect").expect(400, done);
+  });
+});
+
+describe("POST /auth/oauth/signup", () => {
+  const agent = request(app);
+  it("회원가입 성공한 경우 상태코드 200을 응답해야한다.", async () => {
+    nock("https://kauth.kakao.com").post("/oauth/token").reply(200, {
+      access_token: "some_access_token",
+      refresh_token: "some_refresh_token",
+      refresh_token_expires_in: 123123,
+    });
+
+    nock("https://kapi.kakao.com").get("/v2/user/me").reply(200, { id: 1 });
+
+    const responseToken = await agent.get("/auth/oauth/kakao/redirect?code=code");
+    const oauthIdxCookie = responseToken.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith("oauthIdx=")
+    );
+
+    const email = "bluegyufordev@gmail.com";
+    const responseSendEmail = await agent.post("/auth/verify-email").send({ email });
+    const responseSendEmailCookies = responseSendEmail.headers["set-cookie"];
+
+    const client = await pool.connect();
+    const code = await service.getVerifyCodeFromDb(client, email);
+    client.release();
+
+    const reseponseVerifyCode = await agent
+      .post("/auth/verify-email/confirm")
+      .set("Cookie", responseSendEmailCookies.join("; "))
+      .send({ code });
+
+    const emailVerifiedCookie = reseponseVerifyCode.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith("emailVerified=")
+    );
+
+    const res = await agent
+      .post("/auth/oauth/signup")
+      .set("Cookie", `${oauthIdxCookie}; ${emailVerifiedCookie}`)
+      .send({ nickname: "test", code });
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("요청 처리 성공");
+  });
+
+  it("입력값이 유효하지 않은 경우 상태코드 400을 응답해야한다.", async () => {
+    nock("https://kauth.kakao.com").post("/oauth/token").reply(200, {
+      access_token: "some_access_token",
+      refresh_token: "some_refresh_token",
+      refresh_token_expires_in: 123123,
+    });
+
+    nock("https://kapi.kakao.com").get("/v2/user/me").reply(200, { id: 1 });
+
+    const responseToken = await agent.get("/auth/oauth/kakao/redirect?code=code");
+    const oauthIdxCookie = responseToken.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith("oauthIdx=")
+    );
+
+    const email = "bluegyufordev@gmail.com";
+    const responseSendEmail = await agent.post("/auth/verify-email").send({ email });
+    const responseSendEmailCookies = responseSendEmail.headers["set-cookie"];
+
+    const client = await pool.connect();
+    const code = await service.getVerifyCodeFromDb(client, email);
+    client.release();
+
+    const reseponseVerifyCode = await agent
+      .post("/auth/verify-email/confirm")
+      .set("Cookie", responseSendEmailCookies.join("; "))
+      .send({ code });
+
+    const emailVerifiedCookie = reseponseVerifyCode.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith("emailVerified=")
+    );
+
+    const res = await agent
+      .post("/auth/oauth/signup")
+      .set("Cookie", `${oauthIdxCookie}; ${emailVerifiedCookie}`)
+      .send({ nickname: "test" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe("입력값 확인 필요");
+    expect(res.body.target).toBe("code");
+  });
+
+  it("인증정보가 유효하지 않은 경우 상태코드 401을 응답해야한다.", async () => {
+    const res = await agent.post("/auth/oauth/signup").send({ nickname: "test", code: "123456" });
+
+    expect(res.status).toBe(401);
+    expect(res.body.message).toBe("토큰 없음");
+  });
+
+  it("이메일 인증번호가 없으면 상태코드 404를 응답해야한다.", async () => {
+    nock("https://kauth.kakao.com").post("/oauth/token").reply(200, {
+      access_token: "some_access_token",
+      refresh_token: "some_refresh_token",
+      refresh_token_expires_in: 123123,
+    });
+
+    nock("https://kapi.kakao.com").get("/v2/user/me").reply(200, { id: 1 });
+
+    const responseToken = await agent.get("/auth/oauth/kakao/redirect?code=code");
+    const oauthIdxCookie = responseToken.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith("oauthIdx=")
+    );
+
+    const email = "bluegyufordev@gmail.com";
+    const responseSendEmail = await agent.post("/auth/verify-email").send({ email });
+    const responseSendEmailCookies = responseSendEmail.headers["set-cookie"];
+
+    const client = await pool.connect();
+    const code = await service.getVerifyCodeFromDb(client, email);
+    client.release();
+
+    const reseponseVerifyCode = await agent
+      .post("/auth/verify-email/confirm")
+      .set("Cookie", responseSendEmailCookies.join("; "))
+      .send({ code });
+
+    const emailVerifiedCookie = reseponseVerifyCode.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith("emailVerified=")
+    );
+
+    const res = await agent
+      .post("/auth/oauth/signup")
+      .set("Cookie", `${oauthIdxCookie}; ${emailVerifiedCookie}`)
+      .send({ nickname: "test", code: "123456" });
+
+    expect(res.status).toBe(404);
+    expect(res.body.message).toBe("인증번호 전송내역 없음");
+  });
+
+  it("중복 이메일 회원이 있는 경우 상태코드 409를 응답해야한다.", async () => {
+    nock("https://kauth.kakao.com").post("/oauth/token").reply(200, {
+      access_token: "some_access_token",
+      refresh_token: "some_refresh_token",
+      refresh_token_expires_in: 123123,
+    });
+
+    nock("https://kapi.kakao.com").get("/v2/user/me").reply(200, { id: 1 });
+
+    const responseToken = await agent.get("/auth/oauth/kakao/redirect?code=code");
+    const oauthIdxCookie = responseToken.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith("oauthIdx=")
+    );
+
+    const email = "bluegyufordev@gmail.com";
+    const responseSendEmail = await agent.post("/auth/verify-email").send({ email });
+    const responseSendEmailCookies = responseSendEmail.headers["set-cookie"];
+
+    const client1 = await pool.connect();
+    const code = await service.getVerifyCodeFromDb(client1, email);
+    client1.release();
+
+    const reseponseVerifyCode = await agent
+      .post("/auth/verify-email/confirm")
+      .set("Cookie", responseSendEmailCookies.join("; "))
+      .send({ code });
+
+    const emailVerifiedCookie = reseponseVerifyCode.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith("emailVerified=")
+    );
+
+    const client2 = await pool.connect();
+    await service.createUserAtDb(client2, null, null, "test1", email, null);
+    client2.release();
+
+    const res = await agent
+      .post("/auth/oauth/signup")
+      .set("Cookie", `${oauthIdxCookie}; ${emailVerifiedCookie}`)
+      .send({ nickname: "test", code });
+
+    expect(res.status).toBe(409);
+    expect(res.body.message).toBe("중복 이메일 회원 있음");
+    expect(res.body.target).toBe("email");
+  });
+
+  it("중복 닉네임 회원이 있는 경우 상태코드 409를 응답해야한다.", async () => {
+    nock("https://kauth.kakao.com").post("/oauth/token").reply(200, {
+      access_token: "some_access_token",
+      refresh_token: "some_refresh_token",
+      refresh_token_expires_in: 123123,
+    });
+
+    nock("https://kapi.kakao.com").get("/v2/user/me").reply(200, { id: 1 });
+
+    const responseToken = await agent.get("/auth/oauth/kakao/redirect?code=code");
+    const oauthIdxCookie = responseToken.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith("oauthIdx=")
+    );
+
+    const email = "bluegyufordev@gmail.com";
+    const responseSendEmail = await agent.post("/auth/verify-email").send({ email });
+    const responseSendEmailCookies = responseSendEmail.headers["set-cookie"];
+
+    const client1 = await pool.connect();
+    const code = await service.getVerifyCodeFromDb(client1, email);
+    client1.release();
+
+    const reseponseVerifyCode = await agent
+      .post("/auth/verify-email/confirm")
+      .set("Cookie", responseSendEmailCookies.join("; "))
+      .send({ code });
+
+    const emailVerifiedCookie = reseponseVerifyCode.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith("emailVerified=")
+    );
+
+    const client2 = await pool.connect();
+    await service.createUserAtDb(client2, null, null, "test", "test@test.com", null);
+    client2.release();
+
+    const res = await agent
+      .post("/auth/oauth/signup")
+      .set("Cookie", `${oauthIdxCookie}; ${emailVerifiedCookie}`)
+      .send({ nickname: "test", code });
+
+    expect(res.status).toBe(409);
+    expect(res.body.message).toBe("중복 닉네임 회원 있음");
+    expect(res.body.target).toBe("nickname");
   });
 });

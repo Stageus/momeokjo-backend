@@ -96,7 +96,7 @@ exports.signUpWithOauth = tryCatchWrapperWithDb(async (req, res, next, client) =
   // 쿠키 삭제
   res.clearCookie("emailVerified", baseCookieOptions);
   res.clearCookie("oauthIdx", baseCookieOptions);
-  res.status(200).json({ message: "회원가입 성공" });
+  res.status(200).json({ message: "요청 처리 성공" });
 });
 
 // 아이디 찾기
@@ -200,7 +200,6 @@ exports.checkOauthAndRedirect = tryCatchWrapperWithDb(async (req, res, next, cli
   const { accessToken, refreshToken, refreshTokenExpiresIn } = await as.getTokenFromKakao(code);
   const provider_user_id = await as.getProviderIdFromKakao(accessToken);
   const { isExisted, users_idx } = await as.checkOauthUserAtDb(client, provider_user_id, "KAKAO");
-  console.log(isExisted, users_idx);
   if (!isExisted) {
     const encryptedAccessToken = await algorithm.encrypt(accessToken);
     const encryptedRefreshToken = await algorithm.encrypt(refreshToken);
@@ -215,7 +214,6 @@ exports.checkOauthAndRedirect = tryCatchWrapperWithDb(async (req, res, next, cli
     );
 
     const token = jwt.createAccessToken({ oauth_idx }, process.env.JWT_ACCESS_EXPIRES_IN);
-    console.log(oauth_idx);
     res.cookie("oauthIdx", token, accessTokenOptions);
     res.redirect("http://localhost:3000/oauth/signup");
   } else {

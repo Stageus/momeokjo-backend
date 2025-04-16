@@ -216,7 +216,7 @@ exports.checkOauthUserAtDb = async (client, provider_user_id, provider) => {
     `,
     [provider_user_id, provider]
   );
-  console.log(results.rows[0]?.is_existed);
+
   return {
     isExisted: results.rows[0]?.is_existed || false,
     users_idx: results.rows[0]?.users_idx || undefined,
