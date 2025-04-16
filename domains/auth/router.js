@@ -42,7 +42,7 @@ router.post(
 );
 
 // 비밀번호 초기화
-router.post(
+router.put(
   "/resetpw",
   verifyAccessToken("resetPw"),
   createValidateChain(schema.resetPw),

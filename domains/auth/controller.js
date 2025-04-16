@@ -131,7 +131,8 @@ exports.resetPassword = tryCatchWrapperWithDb(async (req, res, next, client) => 
 
   await as.updatePasswordAtDb(client, id, pw, email);
 
-  res.status(200).json({ message: "비밀번호 변경 성공" });
+  res.clearCookie("resetPw", accessTokenOptions);
+  res.status(200).json({ message: "요청 처리 성공" });
 });
 
 // 이메일 인증번호 전송

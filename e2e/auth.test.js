@@ -397,3 +397,85 @@ describe("POST /findpw", () => {
     agent.post("/auth/findpw").send({ id: "test", email: "test@test.com" }).expect(404, done);
   });
 });
+
+describe("PUT /resetpw", () => {
+  const agent = request(app);
+  it("비밀번호 성공한 경우 상태코드 200을 응답해야한다.", async () => {
+    const id = "test";
+    const email = "test@test.com";
+    const client = await pool.connect();
+    await service.createUserAtDb(client, id, "Test!1@2", "test", email, null);
+    client.release();
+
+    const responseFindPw = await agent.post("/auth/findpw").send({ id, email });
+    const findpwCookie = responseFindPw.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith("resetPw=")
+    );
+    expect(findpwCookie).toBeDefined();
+
+    const res = await agent
+      .put("/auth/resetpw")
+      .set("Cookie", findpwCookie)
+      .send({ pw: "Abcd!1@2" });
+    console.log(res);
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("요청 처리 성공");
+
+    const cookie = res.headers["set-cookie"].find((cookie) => cookie.startsWith("resetPw="));
+    expect(cookie).toBeDefined();
+    expect(cookie).toMatch(/resetPw=;/);
+  });
+
+  it("비밀번호를 입력하지 않은 경우 상태코드 400을 응답해야한다.", async () => {
+    const id = "test";
+    const email = "test@test.com";
+    const client = await pool.connect();
+    await service.createUserAtDb(client, id, "Test!1@2", "test", email, null);
+    client.release();
+
+    const responseFindPw = await agent.post("/auth/findpw").send({ id, email });
+    const findpwCookie = responseFindPw.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith("resetPw=")
+    );
+    expect(findpwCookie).toBeDefined();
+
+    const res = await agent.put("/auth/resetpw").set("Cookie", findpwCookie).send();
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe("입력값 확인 필요");
+    expect(res.body.target).toBe("pw");
+  });
+
+  it("인증정보가 유효하지 않은 경우 상태코드 401을 응답해야한다.", async () => {
+    const res = await agent.put("/auth/resetpw").send({ pw: "Abcd!1@2" });
+
+    expect(res.status).toBe(401);
+    expect(res.body.message).toBe("토큰 없음");
+  });
+
+  it("비밀번호 변경 회원 없는 경우 상태코드 404를 응답해야한다.", async () => {
+    const id = "test";
+    const email = "test@test.com";
+    const client1 = await pool.connect();
+    await service.createUserAtDb(client1, id, "Test!1@2", "test", email, null);
+    client1.release();
+
+    const responseFindPw = await agent.post("/auth/findpw").send({ id, email });
+    const findpwCookie = responseFindPw.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith("resetPw=")
+    );
+    expect(findpwCookie).toBeDefined();
+
+    const client2 = await pool.connect();
+    client2.query(`DELETE FROM users.lists`);
+    client2.release();
+
+    const res = await agent
+      .put("/auth/resetpw")
+      .set("Cookie", findpwCookie)
+      .send({ pw: "Abcd!1@2" });
+
+    expect(res.status).toBe(404);
+    expect(res.body.message).toBe("계정 없음");
+  });
+});
