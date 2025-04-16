@@ -74,7 +74,7 @@ exports.getUserIdFromDb = async (client, email) => {
     [email]
   );
 
-  return { isUser: results.rowCount > 0, id: results.rows[0].id };
+  return { isUser: results.rowCount > 0, id: results.rows[0]?.id };
 };
 
 //
@@ -289,7 +289,7 @@ exports.invalidateLocalRefreshTokenAtDb = async (client, users_idx) => {
     `
       UPDATE users.local_tokens SET
         is_deleted = true
-      WHERE users_id = $1
+      WHERE users_idx = $1
       AND is_deleted = false
     `,
     [users_idx]

@@ -31,10 +31,10 @@ router.post(
 );
 
 // 아이디 찾기
-router.get("/findid", createValidateChain(schema.findId), validateRequest, ac.getUserId);
+router.post("/findid", createValidateChain(schema.findId), validateRequest, ac.getUserId);
 
 // 비밀번호 찾기
-router.get(
+router.post(
   "/findpw",
   createValidateChain(schema.findPw),
   validateRequest,
