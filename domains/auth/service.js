@@ -199,27 +199,27 @@ exports.getProviderIdFromKakao = async (accessToken) => {
 };
 
 // 사용자 회원가입 이력 확인
-exports.checkOauthUserAtDb = async (client, provider_user_id) => {
+exports.checkOauthUserAtDb = async (client, provider_user_id, provider) => {
   const results = await client.query(
     `
       SELECT
-        CASE
-          WHEN TO_TIMESTAMP(refresh_expires_in) > NOW() THEN true
-          ELSE false
-        END AS is_existed,
-        user_idx
-      FROM users.oauth
-      WHERE provider_user_id = $1
-      AND is_deleted = false
-      ORDER BY created_at DESC
+        TO_TIMESTAMP(oauth.refresh_expires_in) > NOW() AS is_existed,
+        users.idx AS users_idx
+      FROM users.oauth oauth
+      JOIN users.lists users ON users.oauth_idx = oauth.idx
+      WHERE oauth.provider_user_id = $1
+      AND oauth.provider = $2
+      AND oauth.is_deleted = false
+      AND users.is_deleted = false
+      ORDER BY oauth.created_at DESC
       LIMIT 1;
     `,
-    [provider_user_id]
+    [provider_user_id, provider]
   );
-
+  console.log(results.rows[0]?.is_existed);
   return {
-    isExisted: results.rows[0].is_existed,
-    users_idx: results.rows[0].users_idx,
+    isExisted: results.rows[0]?.is_existed || false,
+    users_idx: results.rows[0]?.users_idx || undefined,
   };
 };
 
@@ -228,24 +228,28 @@ exports.saveOauthInfoAtDb = async (
   client,
   encryptedAccessToken,
   encryptedRefreshToken,
-  provider_user_id
+  refreshTokenExpiresIn,
+  provider_user_id,
+  provider
 ) => {
-  const results = client.query(
+  const results = await client.query(
     `
         INSERT INTO users.oauth (
           provider,
           provider_user_id,
           refresh_token,
-          access_token
+          access_token,
+          refresh_expires_in
         ) VALUES (
-          'KAKAO',
           $1,
           $2,
-          $3
+          $3,
+          $4,
+          $5
         )
         RETURNING idx AS oauth_idx;
       `,
-    [provider_user_id, encryptedRefreshToken, encryptedAccessToken]
+    [provider, provider_user_id, encryptedRefreshToken, encryptedAccessToken, refreshTokenExpiresIn]
   );
 
   return results.rows[0].oauth_idx;

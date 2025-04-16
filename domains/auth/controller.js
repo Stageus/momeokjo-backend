@@ -195,12 +195,12 @@ exports.signInWithKakaoAuth = tryCatchWrapper((req, res, next) => {
 // 카카오 토큰발급 요청
 exports.checkOauthAndRedirect = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { code, error } = req.query;
-  if (error || !code) throw customErrorResponse(400, "카카오 인증 실패");
+  if (error || !code) throw customErrorResponse(400, "카카오 로그인 실패");
 
   const { accessToken, refreshToken, refreshTokenExpiresIn } = await as.getTokenFromKakao(code);
   const provider_user_id = await as.getProviderIdFromKakao(accessToken);
-  const { isExisted, users_idx } = await as.checkOauthUserAtDb(client, provider_user_id);
-
+  const { isExisted, users_idx } = await as.checkOauthUserAtDb(client, provider_user_id, "KAKAO");
+  console.log(isExisted, users_idx);
   if (!isExisted) {
     const encryptedAccessToken = await algorithm.encrypt(accessToken);
     const encryptedRefreshToken = await algorithm.encrypt(refreshToken);
@@ -210,15 +210,17 @@ exports.checkOauthAndRedirect = tryCatchWrapperWithDb(async (req, res, next, cli
       encryptedAccessToken,
       encryptedRefreshToken,
       refreshTokenExpiresIn,
-      provider_user_id
+      provider_user_id,
+      "KAKAO"
     );
 
-    const token = jwt.createAccessToken({ oauth_idx });
+    const token = jwt.createAccessToken({ oauth_idx }, process.env.JWT_ACCESS_EXPIRES_IN);
+    console.log(oauth_idx);
     res.cookie("oauthIdx", token, accessTokenOptions);
     res.redirect("http://localhost:3000/oauth/signup");
   } else {
     const payload = { users_idx, provider: "KAKAO", role: "USER" };
-    const token = jwt.createAccessToken(payload);
+    const token = jwt.createAccessToken(payload, process.env.JWT_ACCESS_EXPIRES_IN);
 
     res.cookie("accessToken", token, accessTokenOptions);
     res.redirect("http://localhost:3000/");
