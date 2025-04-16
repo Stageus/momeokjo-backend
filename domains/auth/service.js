@@ -346,3 +346,18 @@ exports.requestKakaoLogout = async (accessToken, provider_user_id) => {
     },
   });
 };
+
+exports.getUserNicknameFromDb = async (client, users_idx) => {
+  const results = await client.query(
+    `
+      SELECT
+        nickname
+      FROM users.lists
+      WHERE idx = $1
+        AND is_deleted = false;
+    `,
+    [users_idx]
+  );
+
+  return results.rows[0].nickname;
+};

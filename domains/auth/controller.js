@@ -223,3 +223,11 @@ exports.checkOauthAndRedirect = tryCatchWrapperWithDb(async (req, res, next, cli
     res.redirect("http://localhost:3000/");
   }
 });
+
+exports.getStatus = tryCatchWrapperWithDb(async (req, res, next, client) => {
+  const { users_idx, provider } = req.accessToken;
+
+  const nickname = await as.getUserNicknameFromDb(client, users_idx);
+
+  res.status(200).json({ message: "요청 처리 성공", user_idx: users_idx, nickname });
+});
