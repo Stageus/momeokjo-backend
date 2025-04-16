@@ -52,9 +52,8 @@ exports.signOut = tryCatchWrapperWithDb(async (req, res, next, client) => {
       oauth_idx
     );
 
-    const decryptedAccessToken = algorithm.decrypt(accessToken);
-
-    as.requestKakaoLogout(decryptedAccessToken, provider_user_id);
+    const decryptedAccessToken = await algorithm.decrypt(accessToken);
+    await as.requestKakaoLogout(decryptedAccessToken, provider_user_id);
   }
 
   res.clearCookie("accessToken", baseCookieOptions);
