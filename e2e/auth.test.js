@@ -788,7 +788,7 @@ describe("DELETE /signout", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.message).toBe("요청 처리 성공");
-    console.log(res.headers["set-cookie"]);
+
     const resCookie = res.headers["set-cookie"].find((cookie) => cookie.startsWith("accessToken="));
     expect(resCookie).toBeDefined();
     expect(resCookie).toMatch(/accessToken=;/);
@@ -839,5 +839,29 @@ describe("DELETE /signout", () => {
 
     expect(res.status).toBe(401);
     expect(res.body.message).toBe("토큰 없음");
+  });
+});
+
+describe("GET /status", () => {
+  const agent = request(app);
+  it("상태조회 성공한 경우 상태코드 200을 응답해야한다.", async () => {
+    const client = await pool.connect();
+    await service.createUserAtDb(client, "test", "Test!1@2", "test", "test@test.com", null);
+    client.release();
+
+    const responseSignin = await agent.post("/auth/signin").send({ id: "test", pw: "Test!1@2" });
+
+    const cookies = responseSignin.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith("accessToken=")
+    );
+
+    const res = await agent.get("/auth/status").set("Cookie", cookies);
+
+    expect(res.status).toBe(200);
+    expect(res.body.nickname).toBe("test");
+  });
+
+  it("유효하지 않은 인증인 경우 상태코드 401을 응답해야한다.", (done) => {
+    agent.get("/auth/status").expect(401, done);
   });
 });
