@@ -159,15 +159,18 @@ exports.createRestaurantCategoryAtDb = async (users_idx, category_name, client) 
 
 // 음식점 카테고리 수정
 exports.updateRestaurantCategoryByIdxAtDb = async (category_idx, category_name, client) => {
-  await client.query(
+  const results = await client.query(
     `
       UPDATE restaurants.categories
       SET name = $1
       WHERE idx = $2
       AND is_deleted = false
+      RETURNING idx AS category_idx
     `,
     [category_name, category_idx]
   );
+
+  return results.rows[0]?.category_idx;
 };
 
 // 음식점 랜덤 조회

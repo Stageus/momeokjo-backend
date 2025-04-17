@@ -14,7 +14,7 @@ module.exports = {
   RESTAURANT_PHONE: /^(01[016789]-\d{3,4}-\d{4}|0\d{1,2}-\d{3,4}-\d{4})$/,
   RESTAURANT_RUN_TIME: /^\d{4}$/,
   BOOLEAN: /^(true|false)$/,
-  CATEGORY_NAME: /^[A-Za-z가-힣0-9]{1,10}$/,
+  CATEGORY_NAME: /^.{1,10}$/,
   REVIEW: /^.{0,200}$/,
   MENU_NAME: /^.{0,20}$/,
   MENU_PRICE: /^\d+$/,

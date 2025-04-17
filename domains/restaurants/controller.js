@@ -84,7 +84,13 @@ exports.updateRestaurantCategoryByIdx = tryCatchWrapperWithDb(async (req, res, n
   const { category_idx } = req.params;
   const { category_name } = req.body;
 
-  await rs.updateRestaurantCategoryByIdxAtDb(category_idx, category_name, client);
+  const updated_idx = await rs.updateRestaurantCategoryByIdxAtDb(
+    category_idx,
+    category_name,
+    client
+  );
+  console.log(updated_idx);
+  if (!updated_idx) throw customErrorResponse(404, "수정 대상 없음");
 
   res.status(200).json({ message: "요청 처리 성공" });
 });
