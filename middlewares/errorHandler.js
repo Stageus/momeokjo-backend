@@ -14,6 +14,8 @@ const errorHandler = (err, req, res, next) => {
   } else if (code === "23503") {
     if (constraint === "lists_restaurants_idx_fkey") {
       res.status(404).json({ message: "음식점 없음", target: "restaurant_idx" });
+    } else if (constraint === "lists_menus_idx_fkey") {
+      res.status(404).json({ message: "메뉴 없음", target: "menu_idx" });
     } else {
       res.status(404).json({ message, target: constraint });
     }

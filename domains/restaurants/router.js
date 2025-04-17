@@ -73,9 +73,9 @@ router.get(
 router.post(
   "/menus/:menu_idx/reviews",
   verifyAccessToken("accessToken"),
+  upload.single("image"),
   createValidateChain(schema.createMenuReview),
   validateRequest,
-  upload.single("image"),
   rc.createMenuReview
 );
 
@@ -83,9 +83,9 @@ router.post(
 router.put(
   "/menus/reviews/:review_idx",
   verifyAccessToken("accessToken"),
+  upload.single("image"),
   createValidateChain(schema.updateMenuReviewByIdx),
   validateRequest,
-  upload.single("image"),
   rc.updateMenuReviewByIdx
 );
 

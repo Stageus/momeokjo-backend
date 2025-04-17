@@ -173,7 +173,7 @@ exports.createMenuReview = {
   },
   body: {
     content: {
-      isRequired: false,
+      isRequired: true,
       defaultValue: null,
       regexp: REGEXP.REVIEW,
     },
