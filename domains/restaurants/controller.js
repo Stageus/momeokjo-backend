@@ -205,7 +205,14 @@ exports.updateMenuReviewByIdx = tryCatchWrapperWithDb(async (req, res, next, cli
   const { content } = req.body;
   const image_url = req.file?.location;
 
-  await rs.updateMenuReviewByIdxAtDb(users_idx, review_idx, content, image_url, client);
+  const return_review_idx = await rs.updateMenuReviewByIdxAtDb(
+    users_idx,
+    review_idx,
+    content,
+    image_url,
+    client
+  );
+  if (!return_review_idx) throw customErrorResponse(404, "조회 결과 없음");
 
   res.status(200).json({ message: "요청 처리 성공" });
 });

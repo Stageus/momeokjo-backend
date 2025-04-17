@@ -190,7 +190,7 @@ exports.updateMenuReviewByIdx = {
   },
   body: {
     content: {
-      isRequired: false,
+      isRequired: true,
       defaultValue: null,
       regexp: REGEXP.REVIEW,
     },

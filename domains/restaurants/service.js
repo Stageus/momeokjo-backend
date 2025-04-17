@@ -408,7 +408,7 @@ exports.createMenuReviewAtDb = async (users_idx, menu_idx, content, image_url, c
 
 // 메뉴 후기 수정
 exports.updateMenuReviewByIdxAtDb = async (users_idx, review_idx, content, image_url, client) => {
-  await client.query(
+  const results = await client.query(
     `
       UPDATE reviews.lists
       SET content = $1,
@@ -416,9 +416,12 @@ exports.updateMenuReviewByIdxAtDb = async (users_idx, review_idx, content, image
       WHERE idx = $3
       AND is_deleted = false
       AND users_idx = $4
+      RETURNING idx AS review_idx;
     `,
     [content, image_url, review_idx, users_idx]
   );
+
+  return results.rows[0]?.review_idx;
 };
 
 // 음식점 상세보기 조회
