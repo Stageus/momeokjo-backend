@@ -122,13 +122,13 @@ exports.updateRestaurantCategoryByIdx = {
 exports.getRecommendRestaurant = {
   query: {
     category_idx: {
-      isRequired: true,
-      defaultValue: null,
+      isRequired: false,
+      defaultValue: 0,
       regexp: REGEXP.INDEX,
     },
     range: {
-      isRequired: true,
-      defaultValue: 100,
+      isRequired: false,
+      defaultValue: 500,
       regexp: REGEXP.RANGE,
     },
   },

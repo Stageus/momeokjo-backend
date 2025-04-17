@@ -99,13 +99,13 @@ exports.updateRestaurantCategoryByIdx = tryCatchWrapperWithDb(async (req, res, n
 
 // 음식점 랜덤 조회
 exports.getRecommendRestaurant = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { users_idx } = req.accessToken;
+  const users_idx = req.accessToken?.users_idx;
   const { category_idx, range } = req.query;
   const { user_longitude, user_latitude } = req.body;
 
   const data = await rs.getRecommendRestaurantFromDb(
     users_idx,
-    category_idx,
+    category_idx === 0 ? null : category_idx,
     range,
     user_longitude,
     user_latitude,

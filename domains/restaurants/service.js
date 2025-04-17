@@ -214,10 +214,12 @@ exports.getRecommendRestaurantFromDb = async (
       LEFT JOIN likes ON list.idx = likes.restaurants_idx
       WHERE list.is_deleted = false
       AND category.is_deleted = false
-      AND category.idx = $2
+      AND (
+        $2::INTEGER IS NULL OR category.idx = $2
+      )
       AND ST_DWithin(
-        list.location, 
-        ST_SetSRID(ST_MakePoint($3, $4), 4326), 
+        list.location::geography, 
+        ST_SetSRID(ST_MakePoint($3, $4), 4326)::geography, 
         $5
       )
       ORDER BY RANDOM()
