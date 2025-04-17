@@ -153,7 +153,14 @@ exports.updateRestaurantMenuByIdx = tryCatchWrapperWithDb(async (req, res, next,
   const { menu_idx } = req.params;
   const { menu_name, price } = req.body;
 
-  await rs.updateRestaurantMenuByIdxAtDb(users_idx, menu_idx, menu_name, price, client);
+  const return_menu_idx = await rs.updateRestaurantMenuByIdxAtDb(
+    users_idx,
+    menu_idx,
+    menu_name,
+    price,
+    client
+  );
+  if (!return_menu_idx) throw customErrorResponse(404, "조회 결과 없음");
 
   res.status(200).json({ message: "요청 처리 성공" });
 });

@@ -96,3 +96,24 @@ exports.createTempRestaurantReturnIdx = async ({
 
   return results.rows[0].restaurant_idx;
 };
+
+exports.createTempMenuReturnIdx = async ({ users_idx, restaurant_idx, menu_name, price }) => {
+  const client = await pool.connect();
+  const results = await client.query(
+    `
+      INSERT INTO menus.lists (
+        users_idx,
+        restaurants_idx,
+        name,
+        price
+      ) VALUES (
+        $1, $2, $3, $4
+      )
+      RETURNING idx AS menu_idx;
+    `,
+    [users_idx, restaurant_idx, menu_name, price]
+  );
+  client.release();
+
+  return results.rows[0].menu_idx;
+};

@@ -314,16 +314,19 @@ exports.createRestaurantMenuAtDb = async (users_idx, restaurant_idx, menu_name, 
 
 // 음식점 메뉴 수정
 exports.updateRestaurantMenuByIdxAtDb = async (users_idx, menu_idx, menu_name, price, client) => {
-  await client.query(
+  const results = await client.query(
     `
       UPDATE menus.lists
       SET name = $1, price = $2
       WHERE idx = $3
       AND users_idx = $4
       AND is_deleted = false
+      RETURNING idx AS menu_idx;
     `,
     [menu_name, price, menu_idx, users_idx]
   );
+
+  return results.rows[0]?.menu_idx;
 };
 
 // 메뉴 후기 리스트 조회
