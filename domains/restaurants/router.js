@@ -20,7 +20,7 @@ router.get(
 router.post(
   "/",
   verifyAccessToken("accessToken"),
-  createValidateChain(schema.getRestaurantInfoList),
+  createValidateChain(schema.createRestaurantInfo),
   validateRequest,
   rc.createRestaurantInfo
 );

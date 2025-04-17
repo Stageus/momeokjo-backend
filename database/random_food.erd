@@ -4,9 +4,9 @@
   "settings": {
     "width": 4000,
     "height": 4000,
-    "scrollTop": -1913.7252,
-    "scrollLeft": -1034.4892,
-    "zoomLevel": 0.88,
+    "scrollTop": -1054.4643,
+    "scrollLeft": -1515.8087,
+    "zoomLevel": 0.91,
     "show": 495,
     "database": 16,
     "databaseName": "random_food",
@@ -1448,18 +1448,18 @@
         "tableId": "4intI1JMoV8ED7bWKBcvq",
         "name": "\bphone",
         "comment": "음식점 전화번호",
-        "dataType": "varchar(11)",
+        "dataType": "varchar(12)",
         "default": "",
         "options": 0,
         "ui": {
           "keys": 0,
           "widthName": 60,
           "widthComment": 78,
-          "widthDataType": 65,
+          "widthDataType": 66,
           "widthDefault": 60
         },
         "meta": {
-          "updateAt": 1741536132402,
+          "updateAt": 1744885002345,
           "createAt": 1741536057244
         }
       },
@@ -3969,7 +3969,7 @@
       -1,
       {
         "name": 1741536060711,
-        "dataType": 1741536121317,
+        "dataType": 1744885002344,
         "comment": 1741536132402
       }
     ],
