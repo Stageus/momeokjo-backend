@@ -91,7 +91,7 @@ exports.updateRestaurantCategoryByIdx = tryCatchWrapperWithDb(async (req, res, n
     category_name,
     client
   );
-  console.log(updated_idx);
+
   if (!updated_idx) throw customErrorResponse(404, "수정 대상 없음");
 
   res.status(200).json({ message: "요청 처리 성공" });
@@ -127,7 +127,7 @@ exports.getRestaurantMenuInfoList = tryCatchWrapperWithDb(async (req, res, next,
     page,
     client
   );
-  console.log(data);
+
   res.status(200).json({
     message: "요청 처리 성공",
     total_pages,
