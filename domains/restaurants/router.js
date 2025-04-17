@@ -45,6 +45,7 @@ router.post(
 // 음식점 카테고리 수정
 router.put(
   "/categories/:category_idx",
+  verifyAccessToken("accessToken"),
   createValidateChain(schema.updateRestaurantCategoryByIdx),
   validateRequest,
   rc.updateRestaurantCategoryByIdx

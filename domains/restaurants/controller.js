@@ -81,6 +81,8 @@ exports.createRestaurantCategory = tryCatchWrapperWithDb(async (req, res, next, 
 
 // 음식점 카테고리 수정
 exports.updateRestaurantCategoryByIdx = tryCatchWrapperWithDb(async (req, res, next, client) => {
+  if (req.accessToken.role !== "ADMIN") throw customErrorResponse(403, "권한 없음");
+
   const { category_idx } = req.params;
   const { category_name } = req.body;
 
@@ -203,10 +205,12 @@ exports.updateMenuReviewByIdx = tryCatchWrapperWithDb(async (req, res, next, cli
 
 // 음식점 상세보기 조회
 exports.getRestaurantInfoByIdx = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { users_idx } = req.accessToken;
+  const users_idx = req.accessToken?.users_idx;
   const { restaurant_idx } = req.params;
 
   const data = await rs.getRestaurantInfoByIdxFromDb(users_idx, restaurant_idx, client);
+  if (typeof data !== "object" || Object.keys(data).length === 0)
+    throw customErrorResponse(404, "조회 결과 없음");
 
   res.status(200).json({ message: "요청 처리 성공", data });
 });

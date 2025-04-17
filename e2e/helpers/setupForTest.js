@@ -44,3 +44,55 @@ exports.createTempCateoryReturnIdx = async ({ users_idx, category_name }) => {
 
   return results.rows[0].category_idx;
 };
+
+exports.createTempRestaurantReturnIdx = async ({
+  category_idx,
+  users_idx,
+  restaurant_name,
+  longitude,
+  latitude,
+  address,
+  address_detail,
+  phone,
+  start_time,
+  end_time,
+}) => {
+  const client = await pool.connect();
+  const results = await client.query(
+    `
+      INSERT INTO restaurants.lists (
+        categories_idx,
+        users_idx,
+        name,
+        longitude,
+        latitude,
+        location,
+        address,
+        address_detail,
+        phone,
+        start_time,
+        end_time
+      ) VALUES (
+        $1, $2, $3, $4, $5,
+        ST_SetSRID(ST_MakePoint($4, $5), 4326), 
+        $6, $7, $8, $9, $10
+      )
+      RETURNING idx AS restaurant_idx
+    `,
+    [
+      category_idx,
+      users_idx,
+      restaurant_name,
+      longitude,
+      latitude,
+      address,
+      address_detail,
+      phone,
+      start_time,
+      end_time,
+    ]
+  );
+  client.release();
+
+  return results.rows[0].restaurant_idx;
+};
