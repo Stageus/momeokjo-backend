@@ -117,7 +117,7 @@ exports.getRecommendRestaurant = tryCatchWrapperWithDb(async (req, res, next, cl
 
 // 음식점 메뉴 리스트 조회
 exports.getRestaurantMenuInfoList = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { users_idx } = req.accessToken;
+  const users_idx = req.accessToken?.users_idx;
   const { restaurant_idx } = req.params;
   const { page } = req.query;
 
