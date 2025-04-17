@@ -16,10 +16,12 @@ exports.getRestaurantInfoListFromDb = async (
       JOIN restaurants.categories AS category ON list.categories_idx = category.idx
       WHERE list.is_deleted = false
       AND category.is_deleted = false
-      AND category.idx = $1
+      AND (
+        $1::INTEGER IS NULL OR category.idx = $1
+      )
       AND ST_DWithin(
-        list.location, 
-        ST_SetSRID(ST_MakePoint($2, $3), 4326), 
+        list.location::geography,
+        ST_SetSRID(ST_MakePoint($2, $3), 4326)::geography,
         $4
       )
     `,
@@ -58,10 +60,12 @@ exports.getRestaurantInfoListFromDb = async (
       LEFT JOIN likes ON list.idx = likes.restaurants_idx
       WHERE list.is_deleted = false
       AND category.is_deleted = false
-      AND category.idx = $2
+      AND (
+        $2::INTEGER IS NULL OR category.idx = $2
+      )
       AND ST_DWithin(
-        list.location, 
-        ST_SetSRID(ST_MakePoint($3, $4), 4326), 
+        list.location::geography, 
+        ST_SetSRID(ST_MakePoint($3, $4), 4326)::geography, 
         $5
       )
       OFFSET $6
@@ -159,15 +163,18 @@ exports.createRestaurantCategoryAtDb = async (users_idx, category_name, client) 
 
 // 음식점 카테고리 수정
 exports.updateRestaurantCategoryByIdxAtDb = async (category_idx, category_name, client) => {
-  await client.query(
+  const results = await client.query(
     `
       UPDATE restaurants.categories
       SET name = $1
       WHERE idx = $2
       AND is_deleted = false
+      RETURNING idx AS category_idx
     `,
     [category_name, category_idx]
   );
+
+  return results.rows[0]?.category_idx;
 };
 
 // 음식점 랜덤 조회
@@ -207,10 +214,12 @@ exports.getRecommendRestaurantFromDb = async (
       LEFT JOIN likes ON list.idx = likes.restaurants_idx
       WHERE list.is_deleted = false
       AND category.is_deleted = false
-      AND category.idx = $2
+      AND (
+        $2::INTEGER IS NULL OR category.idx = $2
+      )
       AND ST_DWithin(
-        list.location, 
-        ST_SetSRID(ST_MakePoint($3, $4), 4326), 
+        list.location::geography, 
+        ST_SetSRID(ST_MakePoint($3, $4), 4326)::geography, 
         $5
       )
       ORDER BY RANDOM()
@@ -305,16 +314,19 @@ exports.createRestaurantMenuAtDb = async (users_idx, restaurant_idx, menu_name, 
 
 // 음식점 메뉴 수정
 exports.updateRestaurantMenuByIdxAtDb = async (users_idx, menu_idx, menu_name, price, client) => {
-  await client.query(
+  const results = await client.query(
     `
       UPDATE menus.lists
       SET name = $1, price = $2
       WHERE idx = $3
       AND users_idx = $4
       AND is_deleted = false
+      RETURNING idx AS menu_idx;
     `,
     [menu_name, price, menu_idx, users_idx]
   );
+
+  return results.rows[0]?.menu_idx;
 };
 
 // 메뉴 후기 리스트 조회
@@ -396,7 +408,7 @@ exports.createMenuReviewAtDb = async (users_idx, menu_idx, content, image_url, c
 
 // 메뉴 후기 수정
 exports.updateMenuReviewByIdxAtDb = async (users_idx, review_idx, content, image_url, client) => {
-  await client.query(
+  const results = await client.query(
     `
       UPDATE reviews.lists
       SET content = $1,
@@ -404,9 +416,12 @@ exports.updateMenuReviewByIdxAtDb = async (users_idx, review_idx, content, image
       WHERE idx = $3
       AND is_deleted = false
       AND users_idx = $4
+      RETURNING idx AS review_idx;
     `,
     [content, image_url, review_idx, users_idx]
   );
+
+  return results.rows[0]?.review_idx;
 };
 
 // 음식점 상세보기 조회
@@ -457,7 +472,7 @@ exports.updateRestaurantInfoByIdxAtDb = async (
   end_time,
   client
 ) => {
-  await client.query(
+  const results = await client.query(
     `
       UPDATE restaurants.lists
       SET
@@ -470,6 +485,7 @@ exports.updateRestaurantInfoByIdxAtDb = async (
       WHERE idx = $7
       AND users_idx = $8
       AND is_deleted = false
+      RETURNING idx AS restaurant_idx;
     `,
     [
       category_idx,
@@ -482,4 +498,6 @@ exports.updateRestaurantInfoByIdxAtDb = async (
       users_idx,
     ]
   );
+
+  return results.rows[0]?.restaurant_idx;
 };

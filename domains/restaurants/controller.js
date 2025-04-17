@@ -1,15 +1,16 @@
+const customErrorResponse = require("../../utils/customErrorResponse");
 const { tryCatchWrapperWithDb } = require("../../utils/customWrapper");
 const rs = require("./service");
 
 // 음식점 리스트 조회
 exports.getRestaurantInfoList = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { users_idx } = req.accessToken;
+  const users_idx = req.accessToken?.users_idx;
   const { category_idx, range, page } = req.query;
   const { user_longitude, user_latitude } = req.body;
 
   const { total_pages, data } = await rs.getRestaurantInfoListFromDb(
     users_idx,
-    category_idx,
+    category_idx === 0 ? null : category_idx,
     range,
     page,
     user_longitude,
@@ -68,8 +69,10 @@ exports.getRestaurantCategoryList = tryCatchWrapperWithDb(async (req, res, next,
 
 // 음식점 카테고리 등록
 exports.createRestaurantCategory = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { users_idx } = req.accessToken;
+  const { users_idx, role } = req.accessToken;
   const { category_name } = req.body;
+
+  if (role !== "ADMIN") throw customErrorResponse(403, "권한 없음");
 
   await rs.createRestaurantCategoryAtDb(users_idx, category_name, client);
 
@@ -78,23 +81,31 @@ exports.createRestaurantCategory = tryCatchWrapperWithDb(async (req, res, next, 
 
 // 음식점 카테고리 수정
 exports.updateRestaurantCategoryByIdx = tryCatchWrapperWithDb(async (req, res, next, client) => {
+  if (req.accessToken.role !== "ADMIN") throw customErrorResponse(403, "권한 없음");
+
   const { category_idx } = req.params;
   const { category_name } = req.body;
 
-  await rs.updateRestaurantCategoryByIdxAtDb(category_idx, category_name, client);
+  const updated_idx = await rs.updateRestaurantCategoryByIdxAtDb(
+    category_idx,
+    category_name,
+    client
+  );
+
+  if (!updated_idx) throw customErrorResponse(404, "수정 대상 없음");
 
   res.status(200).json({ message: "요청 처리 성공" });
 });
 
 // 음식점 랜덤 조회
 exports.getRecommendRestaurant = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { users_idx } = req.accessToken;
+  const users_idx = req.accessToken?.users_idx;
   const { category_idx, range } = req.query;
   const { user_longitude, user_latitude } = req.body;
 
   const data = await rs.getRecommendRestaurantFromDb(
     users_idx,
-    category_idx,
+    category_idx === 0 ? null : category_idx,
     range,
     user_longitude,
     user_latitude,
@@ -106,7 +117,7 @@ exports.getRecommendRestaurant = tryCatchWrapperWithDb(async (req, res, next, cl
 
 // 음식점 메뉴 리스트 조회
 exports.getRestaurantMenuInfoList = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { users_idx } = req.accessToken;
+  const users_idx = req.accessToken?.users_idx;
   const { restaurant_idx } = req.params;
   const { page } = req.query;
 
@@ -116,7 +127,7 @@ exports.getRestaurantMenuInfoList = tryCatchWrapperWithDb(async (req, res, next,
     page,
     client
   );
-  console.log(data);
+
   res.status(200).json({
     message: "요청 처리 성공",
     total_pages,
@@ -142,14 +153,21 @@ exports.updateRestaurantMenuByIdx = tryCatchWrapperWithDb(async (req, res, next,
   const { menu_idx } = req.params;
   const { menu_name, price } = req.body;
 
-  await rs.updateRestaurantMenuByIdxAtDb(users_idx, menu_idx, menu_name, price, client);
+  const return_menu_idx = await rs.updateRestaurantMenuByIdxAtDb(
+    users_idx,
+    menu_idx,
+    menu_name,
+    price,
+    client
+  );
+  if (!return_menu_idx) throw customErrorResponse(404, "조회 결과 없음");
 
   res.status(200).json({ message: "요청 처리 성공" });
 });
 
 // 메뉴 후기 리스트 조회
 exports.getMenuReviewInfoList = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { users_idx } = req.accessToken;
+  const users_idx = req.accessToken?.users_idx;
   const { menu_idx } = req.params;
   const { page } = req.query;
 
@@ -187,17 +205,26 @@ exports.updateMenuReviewByIdx = tryCatchWrapperWithDb(async (req, res, next, cli
   const { content } = req.body;
   const image_url = req.file?.location;
 
-  await rs.updateMenuReviewByIdxAtDb(users_idx, review_idx, content, image_url, client);
+  const return_review_idx = await rs.updateMenuReviewByIdxAtDb(
+    users_idx,
+    review_idx,
+    content,
+    image_url,
+    client
+  );
+  if (!return_review_idx) throw customErrorResponse(404, "조회 결과 없음");
 
   res.status(200).json({ message: "요청 처리 성공" });
 });
 
 // 음식점 상세보기 조회
 exports.getRestaurantInfoByIdx = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { users_idx } = req.accessToken;
+  const users_idx = req.accessToken?.users_idx;
   const { restaurant_idx } = req.params;
 
   const data = await rs.getRestaurantInfoByIdxFromDb(users_idx, restaurant_idx, client);
+  if (typeof data !== "object" || Object.keys(data).length === 0)
+    throw customErrorResponse(404, "조회 결과 없음");
 
   res.status(200).json({ message: "요청 처리 성공", data });
 });
@@ -208,7 +235,7 @@ exports.updateRestaurantInfoByIdx = tryCatchWrapperWithDb(async (req, res, next,
   const { restaurant_idx } = req.params;
   const { category_idx, restaurant_name, address_detail, phone, start_time, end_time } = req.body;
 
-  await rs.updateRestaurantInfoByIdxAtDb(
+  const return_restaurant_idx = await rs.updateRestaurantInfoByIdxAtDb(
     users_idx,
     restaurant_idx,
     category_idx,
@@ -219,6 +246,7 @@ exports.updateRestaurantInfoByIdx = tryCatchWrapperWithDb(async (req, res, next,
     end_time,
     client
   );
+  if (!return_restaurant_idx) throw customErrorResponse(404, "조회 결과 없음");
 
   res.status(200).json({ message: "요청 처리 성공" });
 });

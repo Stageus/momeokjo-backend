@@ -13,13 +13,13 @@ const {
 exports.signIn = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { id, pw } = req.body;
 
-  const { isUser, users_idx } = await as.checkIsUserFromDb(client, id, pw);
+  const { isUser, users_idx, role } = await as.checkIsUserFromDb(client, id, pw);
   if (!isUser) throw customErrorResponse(404, "계정 없음");
 
   const { isExpired, refreshToken } = await as.checkLocalRefreshTokenFromDb(client, users_idx);
 
   let newRefreshToken = "";
-  const payload = { users_idx, provider: "LOCAL" };
+  const payload = { users_idx, provider: "LOCAL", role };
   if (isExpired) {
     const refreshToken = jwt.createRefreshToken(payload, process.env.JWT_REFRESH_EXPIRES_IN);
     newRefreshToken = algorithm.encrypt(refreshToken);
@@ -71,7 +71,7 @@ exports.signUp = tryCatchWrapperWithDb(async (req, res, next, client) => {
     throw customErrorResponse(404, "인증번호 전송내역 없음");
   }
 
-  await as.createUserAtDb(client, id, pw, nickname, email, null);
+  await as.createUserAtDb(client, id, pw, nickname, email, "USER", null);
 
   // 쿠키 삭제
   res.clearCookie("emailVerified", baseCookieOptions);
@@ -90,7 +90,7 @@ exports.signUpWithOauth = tryCatchWrapperWithDb(async (req, res, next, client) =
     throw customErrorResponse(404, "인증번호 전송내역 없음");
   }
 
-  await as.createUserAtDb(client, null, null, nickname, email, oauth_idx);
+  await as.createUserAtDb(client, null, null, nickname, email, "USER", oauth_idx);
 
   // 쿠키 삭제
   res.clearCookie("emailVerified", baseCookieOptions);

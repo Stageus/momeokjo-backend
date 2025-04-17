@@ -77,7 +77,7 @@ CREATE TABLE restaurants.lists
   location        geography(point, 4326) NOT NULL,
   address         varchar(100)           NOT NULL,
   address_detail  varchar(100)           ,
-  phone           varchar(11)            ,
+  phone           varchar(12)            ,
   start_time      varchar(4)             ,
   end_time        varchar(4)             ,
   is_deleted      boolean                NOT NULL DEFAULT false,

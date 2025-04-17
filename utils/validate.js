@@ -41,10 +41,11 @@ const createChain = (type, obj) => {
       }
 
       return method(key)
-        .optional()
+        .customSanitizer((value) => {
+          return value === undefined || value === null ? defaultValue : value;
+        })
         .matches(regexp)
-        .withMessage("정규표현식과 일치하지 않습니다.")
-        .customSanitizer((value) => value || defaultValue);
+        .withMessage("정규표현식과 일치하지 않습니다.");
     });
 
     return chainOfKeys;

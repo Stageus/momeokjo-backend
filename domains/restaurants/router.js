@@ -5,11 +5,12 @@ const { validateRequest } = require("../../middlewares/validateRequest");
 const rc = require("./controller");
 const schema = require("./schema");
 const verifyAccessToken = require("../../middlewares/verifyAccessToken");
+const verifyAccessTokenOptional = require("../../middlewares/verifyAccessTokenOptional");
 
 // 음식점 리스트 조회
 router.get(
   "/",
-  verifyAccessToken("accessToken"),
+  verifyAccessTokenOptional("accessToken"),
   createValidateChain(schema.getRestaurantInfoList),
   validateRequest,
   rc.getRestaurantInfoList
@@ -19,7 +20,7 @@ router.get(
 router.post(
   "/",
   verifyAccessToken("accessToken"),
-  createValidateChain(schema.getRestaurantInfoList),
+  createValidateChain(schema.createRestaurantInfo),
   validateRequest,
   rc.createRestaurantInfo
 );
@@ -44,6 +45,7 @@ router.post(
 // 음식점 카테고리 수정
 router.put(
   "/categories/:category_idx",
+  verifyAccessToken("accessToken"),
   createValidateChain(schema.updateRestaurantCategoryByIdx),
   validateRequest,
   rc.updateRestaurantCategoryByIdx
@@ -52,7 +54,7 @@ router.put(
 // 음식점 랜덤 조회
 router.get(
   "/recommends",
-  verifyAccessToken("accessToken"),
+  verifyAccessTokenOptional("accessToken"),
   createValidateChain(schema.getRecommendRestaurant),
   validateRequest,
   rc.getRecommendRestaurant
@@ -61,7 +63,7 @@ router.get(
 // 메뉴 후기 리스트 조회
 router.get(
   "/menus/:menu_idx/reviews",
-  verifyAccessToken("accessToken"),
+  verifyAccessTokenOptional("accessToken"),
   createValidateChain(schema.getMenuReviewInfoList),
   validateRequest,
   rc.getMenuReviewInfoList
@@ -71,9 +73,9 @@ router.get(
 router.post(
   "/menus/:menu_idx/reviews",
   verifyAccessToken("accessToken"),
+  upload.single("image"),
   createValidateChain(schema.createMenuReview),
   validateRequest,
-  upload.single("image"),
   rc.createMenuReview
 );
 
@@ -81,16 +83,16 @@ router.post(
 router.put(
   "/menus/reviews/:review_idx",
   verifyAccessToken("accessToken"),
+  upload.single("image"),
   createValidateChain(schema.updateMenuReviewByIdx),
   validateRequest,
-  upload.single("image"),
   rc.updateMenuReviewByIdx
 );
 
 // 음식점 메뉴 리스트 조회
 router.get(
   "/:restaurant_idx/menus",
-  verifyAccessToken("accessToken"),
+  verifyAccessTokenOptional("accessToken"),
   createValidateChain(schema.getRestaurantMenuInfoList),
   validateRequest,
   rc.getRestaurantMenuInfoList
@@ -117,7 +119,7 @@ router.put(
 // 음식점 상세보기 조회
 router.get(
   "/:restaurant_idx",
-  verifyAccessToken("accessToken"),
+  verifyAccessTokenOptional("accessToken"),
   createValidateChain(schema.getRestaurantInfoByIdx),
   validateRequest,
   rc.getRestaurantInfoByIdx

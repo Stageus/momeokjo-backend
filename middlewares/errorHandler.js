@@ -1,7 +1,6 @@
 const errorHandler = (err, req, res, next) => {
   const { status, message, code, constraint } = err;
 
-  // console.log(err);
   if (code === "23505") {
     if (constraint === "lists_id_key") {
       res.status(409).json({ message: "중복 아이디 회원 있음", target: "id" });
@@ -11,6 +10,14 @@ const errorHandler = (err, req, res, next) => {
       res.status(409).json({ message: "중복 이메일 회원 있음", target: "email" });
     } else {
       res.status(409).json({ message, target: constraint });
+    }
+  } else if (code === "23503") {
+    if (constraint === "lists_restaurants_idx_fkey") {
+      res.status(404).json({ message: "음식점 없음", target: "restaurant_idx" });
+    } else if (constraint === "lists_menus_idx_fkey") {
+      res.status(404).json({ message: "메뉴 없음", target: "menu_idx" });
+    } else {
+      res.status(404).json({ message, target: constraint });
     }
   }
 

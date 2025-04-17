@@ -3,13 +3,13 @@ const REGEXP = require("../../utils/regexp");
 exports.getRestaurantInfoList = {
   query: {
     category_idx: {
-      isRequired: true,
-      defaultValue: null,
+      isRequired: false,
+      defaultValue: 0,
       regexp: REGEXP.INDEX,
     },
     range: {
-      isRequired: true,
-      defaultValue: 100,
+      isRequired: false,
+      defaultValue: 500,
       regexp: REGEXP.RANGE,
     },
     page: {
@@ -87,7 +87,7 @@ exports.getRestaurantCategoryList = {
     include_deleted: {
       isRequired: false,
       defaultValue: false,
-      regexp: REGEXP.RESTAURANT_RUN_TIME,
+      regexp: REGEXP.BOOLEAN,
     },
   },
 };
@@ -122,13 +122,13 @@ exports.updateRestaurantCategoryByIdx = {
 exports.getRecommendRestaurant = {
   query: {
     category_idx: {
-      isRequired: true,
-      defaultValue: null,
+      isRequired: false,
+      defaultValue: 0,
       regexp: REGEXP.INDEX,
     },
     range: {
-      isRequired: true,
-      defaultValue: 100,
+      isRequired: false,
+      defaultValue: 500,
       regexp: REGEXP.RANGE,
     },
   },
@@ -173,7 +173,7 @@ exports.createMenuReview = {
   },
   body: {
     content: {
-      isRequired: false,
+      isRequired: true,
       defaultValue: null,
       regexp: REGEXP.REVIEW,
     },
@@ -190,7 +190,7 @@ exports.updateMenuReviewByIdx = {
   },
   body: {
     content: {
-      isRequired: false,
+      isRequired: true,
       defaultValue: null,
       regexp: REGEXP.REVIEW,
     },
