@@ -460,7 +460,7 @@ exports.updateRestaurantInfoByIdxAtDb = async (
   end_time,
   client
 ) => {
-  await client.query(
+  const results = await client.query(
     `
       UPDATE restaurants.lists
       SET
@@ -473,6 +473,7 @@ exports.updateRestaurantInfoByIdxAtDb = async (
       WHERE idx = $7
       AND users_idx = $8
       AND is_deleted = false
+      RETURNING idx AS restaurant_idx;
     `,
     [
       category_idx,
@@ -485,4 +486,6 @@ exports.updateRestaurantInfoByIdxAtDb = async (
       users_idx,
     ]
   );
+
+  return results.rows[0]?.restaurant_idx;
 };

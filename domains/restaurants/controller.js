@@ -221,7 +221,7 @@ exports.updateRestaurantInfoByIdx = tryCatchWrapperWithDb(async (req, res, next,
   const { restaurant_idx } = req.params;
   const { category_idx, restaurant_name, address_detail, phone, start_time, end_time } = req.body;
 
-  await rs.updateRestaurantInfoByIdxAtDb(
+  const return_restaurant_idx = await rs.updateRestaurantInfoByIdxAtDb(
     users_idx,
     restaurant_idx,
     category_idx,
@@ -232,6 +232,7 @@ exports.updateRestaurantInfoByIdx = tryCatchWrapperWithDb(async (req, res, next,
     end_time,
     client
   );
+  if (!return_restaurant_idx) throw customErrorResponse(404, "조회 결과 없음");
 
   res.status(200).json({ message: "요청 처리 성공" });
 });
