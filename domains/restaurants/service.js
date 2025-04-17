@@ -16,10 +16,12 @@ exports.getRestaurantInfoListFromDb = async (
       JOIN restaurants.categories AS category ON list.categories_idx = category.idx
       WHERE list.is_deleted = false
       AND category.is_deleted = false
-      AND category.idx = $1
+      AND (
+        $1::INTEGER IS NULL OR category.idx = $1
+      )
       AND ST_DWithin(
-        list.location, 
-        ST_SetSRID(ST_MakePoint($2, $3), 4326), 
+        list.location::geography,
+        ST_SetSRID(ST_MakePoint($2, $3), 4326)::geography,
         $4
       )
     `,
@@ -58,10 +60,12 @@ exports.getRestaurantInfoListFromDb = async (
       LEFT JOIN likes ON list.idx = likes.restaurants_idx
       WHERE list.is_deleted = false
       AND category.is_deleted = false
-      AND category.idx = $2
+      AND (
+        $2::INTEGER IS NULL OR category.idx = $2
+      )
       AND ST_DWithin(
-        list.location, 
-        ST_SetSRID(ST_MakePoint($3, $4), 4326), 
+        list.location::geography, 
+        ST_SetSRID(ST_MakePoint($3, $4), 4326)::geography, 
         $5
       )
       OFFSET $6

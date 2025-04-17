@@ -4,13 +4,13 @@ const rs = require("./service");
 
 // 음식점 리스트 조회
 exports.getRestaurantInfoList = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { users_idx } = req.accessToken;
+  const users_idx = req.accessToken?.users_idx;
   const { category_idx, range, page } = req.query;
   const { user_longitude, user_latitude } = req.body;
 
   const { total_pages, data } = await rs.getRestaurantInfoListFromDb(
     users_idx,
-    category_idx,
+    category_idx === 0 ? null : category_idx,
     range,
     page,
     user_longitude,
