@@ -138,3 +138,36 @@ describe("PUT /", () => {
     expect(res.body.message).toBe("중복 닉네임 회원 있음");
   });
 });
+
+describe("GET /:user_idx", () => {
+  const agent = request(app);
+  it("사용자 정보 조회 성공한 경우 상태코드 200과 사용자 정보를 응답해야한다.", async () => {
+    const id = "test";
+    const pw = "Test!1@2";
+
+    const users_idx = await helper.createTempUserReturnIdx({
+      id,
+      pw,
+      nickname: "test",
+      email: "test@test.com",
+      role: "USER",
+      oauth_idx: null,
+    });
+
+    const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
+
+    const res = await agent.get(`/users/${users_idx}`).set("Cookie", cookie);
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("요청 처리 성공");
+    expect(res.body.data).toStrictEqual(expect.any(Object));
+  });
+
+  it("입력값이 유효하지 않은 경우 상태코드 400을 응답해야한다.", (done) => {
+    agent.get(`/users/asdfasdf`).expect(400, done);
+  });
+
+  it("사용자가 없는 경우 상태코드 404를 응답해야한다.", (done) => {
+    agent.get("/users/1").expect(404, done);
+  });
+});

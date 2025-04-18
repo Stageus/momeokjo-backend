@@ -18,10 +18,12 @@ exports.updateMyInfo = tryCatchWrapperWithDb(async (req, res, next, client) => {
 
 // 사용자 정보 상세정보 조회
 exports.getUserInfoByIdx = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { users_idx: user_idx_from_cookie } = req.accessToken;
+  const user_idx_from_cookie = req.accessToken?.user_idx;
   const { user_idx } = req.params;
 
   const data = await us.getUserInfoByIdxFromDb(user_idx_from_cookie, user_idx, client);
+  if (typeof data !== "object" || Object.keys(data).length === 0)
+    throw customErrorResponse(404, "조회 결과 없음");
 
   res.status(200).json({ message: "요청 처리 성공", data });
 });

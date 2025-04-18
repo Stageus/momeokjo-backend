@@ -4,6 +4,7 @@ const { validateRequest } = require("../../middlewares/validateRequest");
 const verifyAccessToken = require("../../middlewares/verifyAccessToken");
 const schema = require("./schema");
 const uc = require("./controller");
+const verifyAccessTokenOptional = require("../../middlewares/verifyAccessTokenOptional");
 
 // 내 정보 수정
 router.put(
@@ -17,7 +18,7 @@ router.put(
 // 사용자 정보 상세정보 조회
 router.get(
   "/:user_idx",
-  verifyAccessToken("accessToken"),
+  verifyAccessTokenOptional("accessToken"),
   createValidateChain(schema.getUserInfoByIdx),
   validateRequest,
   uc.getUserInfoByIdx
