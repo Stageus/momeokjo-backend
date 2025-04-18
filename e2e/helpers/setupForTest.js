@@ -155,3 +155,20 @@ exports.createTempRestaurantLikes = async ({ restaurant_idx, users_idx }) => {
   );
   client.release();
 };
+
+exports.createTempMenuLikes = async ({ menu_idx, users_idx }) => {
+  const client = await pool.connect();
+  await client.query(
+    `
+    INSERT INTO menus.likes (
+      menus_idx,
+      users_idx
+    ) VALUES (
+      $1,
+      $2
+    );
+  `,
+    [menu_idx, users_idx]
+  );
+  client.release();
+};

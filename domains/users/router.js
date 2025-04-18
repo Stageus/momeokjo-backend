@@ -62,7 +62,8 @@ router.delete(
 
 // 메뉴 추천 등록
 router.post(
-  "/:user_idx/likes/menus/:menu_idx",
+  "/likes/menus/:menu_idx",
+  verifyAccessToken("accessToken"),
   createValidateChain(schema.createMenuLike),
   validateRequest,
   uc.createMenuLike

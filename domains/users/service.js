@@ -187,7 +187,7 @@ exports.deleteRestaurantLikeFromDb = async (client, restaurant_idx, users_idx) =
 };
 
 // 메뉴 추천 등록
-exports.createMenuLikeAtDb = async (user_idx, menu_idx, client) => {
+exports.createMenuLikeAtDb = async (users_idx, menu_idx, client) => {
   await client.query(
     `
       INSERT INTO menus.likes (
@@ -198,7 +198,7 @@ exports.createMenuLikeAtDb = async (user_idx, menu_idx, client) => {
         $2
       );
     `,
-    [menu_idx, user_idx]
+    [menu_idx, users_idx]
   );
 };
 

@@ -87,9 +87,10 @@ exports.deleteRestaurantLike = tryCatchWrapperWithDb(async (req, res, next, clie
 
 // 메뉴 추천 등록
 exports.createMenuLike = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { user_idx, menu_idx } = req.params;
+  const { users_idx } = req.accessToken;
+  const { menu_idx } = req.params;
 
-  await us.createMenuLikeAtDb(user_idx, menu_idx, client);
+  await us.createMenuLikeAtDb(users_idx, menu_idx, client);
 
   res.status(200).json({ message: "요청 처리 성공" });
 });

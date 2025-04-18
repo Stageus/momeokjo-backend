@@ -10,6 +10,8 @@ const errorHandler = (err, req, res, next) => {
       res.status(409).json({ message: "중복 이메일 회원 있음", target: "email" });
     } else if (constraint === "unique_restaurants_likes") {
       res.status(409).json({ message: "중복 음식점 즐겨찾기 등록" });
+    } else if (constraint === "unique_menus_likes") {
+      res.status(409).json({ message: "중복 메뉴 추천 등록" });
     } else {
       res.status(409).json({ message, target: constraint });
     }
@@ -22,6 +24,8 @@ const errorHandler = (err, req, res, next) => {
       res.status(404).json({ message: "사용자 없음", target: "users_idx" });
     } else if (constraint === "likes_restaurants_idx_fkey") {
       res.status(404).json({ message: "음식점 없음", target: "restaurants_idx" });
+    } else if (constraint === "likes_menus_idx_fkey") {
+      res.status(404).json({ message: "메뉴 없음", target: "menu_idx" });
     } else {
       res.status(404).json({ message, target: constraint });
     }
