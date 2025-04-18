@@ -4,6 +4,7 @@ const { validateRequest } = require("../../middlewares/validateRequest");
 const verifyAccessToken = require("../../middlewares/verifyAccessToken");
 const schema = require("./schema");
 const uc = require("./controller");
+const verifyAccessTokenOptional = require("../../middlewares/verifyAccessTokenOptional");
 
 // 내 정보 수정
 router.put(
@@ -17,7 +18,7 @@ router.put(
 // 사용자 정보 상세정보 조회
 router.get(
   "/:user_idx",
-  verifyAccessToken("accessToken"),
+  verifyAccessTokenOptional("accessToken"),
   createValidateChain(schema.getUserInfoByIdx),
   validateRequest,
   uc.getUserInfoByIdx
@@ -43,7 +44,8 @@ router.get(
 
 // 음식점 즐겨찾기 등록
 router.post(
-  "/:user_idx/likes/restaurants/:restaurant_idx",
+  "/likes/restaurants/:restaurant_idx",
+  verifyAccessToken("accessToken"),
   createValidateChain(schema.createRestaurantLike),
   validateRequest,
   uc.createRestaurantLike
@@ -51,7 +53,8 @@ router.post(
 
 // 음식점 즐겨찾기 해제
 router.delete(
-  "/:user_idx/likes/restaurants/:restaurant_idx",
+  "/likes/restaurants/:restaurant_idx",
+  verifyAccessToken("accessToken"),
   createValidateChain(schema.deleteRestaurantLike),
   validateRequest,
   uc.deleteRestaurantLike
@@ -59,7 +62,8 @@ router.delete(
 
 // 메뉴 추천 등록
 router.post(
-  "/:user_idx/likes/menus/:menu_idx",
+  "/likes/menus/:menu_idx",
+  verifyAccessToken("accessToken"),
   createValidateChain(schema.createMenuLike),
   validateRequest,
   uc.createMenuLike
@@ -67,7 +71,8 @@ router.post(
 
 // 메뉴 추천 해제
 router.delete(
-  "/:user_idx/likes/menus/:menu_idx",
+  "/likes/menus/:menu_idx",
+  verifyAccessToken("accessToken"),
   createValidateChain(schema.deleteMenuLike),
   validateRequest,
   uc.deleteMenuLike
@@ -75,7 +80,8 @@ router.delete(
 
 // 후기 좋아요 등록
 router.post(
-  "/:user_idx/likes/reviews/:review_idx",
+  "/likes/reviews/:review_idx",
+  verifyAccessToken("accessToken"),
   createValidateChain(schema.createReviewLike),
   validateRequest,
   uc.createReviewLike
@@ -83,7 +89,8 @@ router.post(
 
 // 후기 좋아요 해제
 router.delete(
-  "/:user_idx/likes/reviews/:review_idx",
+  "/likes/reviews/:review_idx",
+  verifyAccessToken("accessToken"),
   createValidateChain(schema.deleteReviewLike),
   validateRequest,
   uc.deleteReviewLike
