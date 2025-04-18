@@ -154,7 +154,7 @@ exports.getReviewListFromDb = async (client, user_idx_from_cookie, user_idx, pag
 };
 
 // 음식점 즐겨찾기 등록
-exports.createRestaurantLikeAtDb = async (user_idx, restaurant_idx, client) => {
+exports.createRestaurantLikeAtDb = async (users_idx, restaurant_idx, client) => {
   await client.query(
     `
       INSERT INTO restaurants.likes (
@@ -165,7 +165,7 @@ exports.createRestaurantLikeAtDb = async (user_idx, restaurant_idx, client) => {
         $2
       );
     `,
-    [restaurant_idx, user_idx]
+    [restaurant_idx, users_idx]
   );
 };
 

@@ -56,11 +56,6 @@ exports.getReviewList = {
 
 exports.createRestaurantLike = {
   param: {
-    user_idx: {
-      isRequired: true,
-      defaultValue: null,
-      regexp: REGEXP.INDEX,
-    },
     restaurant_idx: {
       isRequired: true,
       defaultValue: null,

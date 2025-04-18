@@ -138,3 +138,20 @@ exports.createTempReviewReturnIdx = async ({ users_idx, menu_idx, content, image
 
   return results.rows[0]?.review_idx;
 };
+
+exports.createTempRestaurantLikes = async ({ restaurant_idx, users_idx }) => {
+  const client = await pool.connect();
+  await client.query(
+    `
+      INSERT INTO restaurants.likes (
+        restaurants_idx,
+        users_idx
+      ) VALUES (
+        $1,
+        $2
+      );
+    `,
+    [restaurant_idx, users_idx]
+  );
+  client.release();
+};

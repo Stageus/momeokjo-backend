@@ -44,7 +44,8 @@ router.get(
 
 // 음식점 즐겨찾기 등록
 router.post(
-  "/:user_idx/likes/restaurants/:restaurant_idx",
+  "/likes/restaurants/:restaurant_idx",
+  verifyAccessToken("accessToken"),
   createValidateChain(schema.createRestaurantLike),
   validateRequest,
   uc.createRestaurantLike

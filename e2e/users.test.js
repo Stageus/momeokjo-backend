@@ -5,6 +5,8 @@ const helper = require("./helpers/setupForTest");
 
 afterEach(async () => {
   const client = await pool.connect();
+
+  await client.query("DELETE FROM restaurants.likes");
   await client.query("DELETE FROM reviews.lists");
   await client.query("DELETE FROM menus.lists");
   await client.query("DELETE FROM restaurants.lists");
@@ -169,5 +171,172 @@ describe("GET /:user_idx", () => {
 
   it("사용자가 없는 경우 상태코드 404를 응답해야한다.", (done) => {
     agent.get("/users/1").expect(404, done);
+  });
+});
+
+describe("POST /likes/restaurants/:restaurant_idx", () => {
+  const agent = request(app);
+  it("음식점 즐겨찾기 등록 성공한 경우 상태코드 200을 응답해야한다.", async () => {
+    const id = "test";
+    const pw = "Test!1@2";
+
+    const users_idx = await helper.createTempUserReturnIdx({
+      id,
+      pw,
+      nickname: "test",
+      email: "test@test.com",
+      role: "USER",
+      oauth_idx: null,
+    });
+
+    const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
+
+    const category_idx = await helper.createTempCateoryReturnIdx({
+      users_idx,
+      category_name: "테스트 카테고리",
+    });
+
+    const restaurant_idx = await helper.createTempRestaurantReturnIdx({
+      category_idx,
+      users_idx,
+      restaurant_name: "테스트 음식점",
+      longitude: "127.0316",
+      latitude: "37.4979",
+      address: "테스트 음식점 테스트로 123",
+      address_detail: "테스트 음식점 상세 주소",
+      phone: "01012345678",
+      start_time: "0000",
+      end_time: "0000",
+    });
+
+    const res = await agent
+      .post(`/users/likes/restaurants/${restaurant_idx}`)
+      .set("Cookie", cookie);
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("요청 처리 성공");
+  });
+
+  it("입력값이 유효하지 않은 경우 상태코드 400을 응답해야한다.", async () => {
+    const id = "test";
+    const pw = "Test!1@2";
+
+    await helper.createTempUserReturnIdx({
+      id,
+      pw,
+      nickname: "test",
+      email: "test@test.com",
+      role: "USER",
+      oauth_idx: null,
+    });
+
+    const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
+
+    const res = await agent.post(`/users/likes/restaurants/bbasdfasfs`).set("Cookie", cookie);
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe("입력값 확인 필요");
+    expect(res.body.target).toBe("restaurant_idx");
+  });
+
+  it("인증이 유효하지 않은 경우 상태코드 401을 응답해야한다.", async () => {
+    const id = "test";
+    const pw = "Test!1@2";
+
+    const users_idx = await helper.createTempUserReturnIdx({
+      id,
+      pw,
+      nickname: "test",
+      email: "test@test.com",
+      role: "USER",
+      oauth_idx: null,
+    });
+
+    const category_idx = await helper.createTempCateoryReturnIdx({
+      users_idx,
+      category_name: "테스트 카테고리",
+    });
+
+    const restaurant_idx = await helper.createTempRestaurantReturnIdx({
+      category_idx,
+      users_idx,
+      restaurant_name: "테스트 음식점",
+      longitude: "127.0316",
+      latitude: "37.4979",
+      address: "테스트 음식점 테스트로 123",
+      address_detail: "테스트 음식점 상세 주소",
+      phone: "01012345678",
+      start_time: "0000",
+      end_time: "0000",
+    });
+
+    const res = await agent.post(`/users/likes/restaurants/${restaurant_idx}`);
+
+    expect(res.status).toBe(401);
+    expect(res.body.message).toBe("토큰 없음");
+  });
+
+  it("음식점 없는 경우 상태코드 404를 응답해야한다.", async () => {
+    const id = "test";
+    const pw = "Test!1@2";
+
+    await helper.createTempUserReturnIdx({
+      id,
+      pw,
+      nickname: "test",
+      email: "test@test.com",
+      role: "USER",
+      oauth_idx: null,
+    });
+
+    const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
+
+    const res = await agent.post(`/users/likes/restaurants/1`).set("Cookie", cookie);
+
+    expect(res.status).toBe(404);
+    expect(res.body.message).toBe("음식점 없음");
+  });
+
+  it("중복 즐겨찾기한 경우 상태코드 409를 응답해야한다.", async () => {
+    const id = "test";
+    const pw = "Test!1@2";
+
+    const users_idx = await helper.createTempUserReturnIdx({
+      id,
+      pw,
+      nickname: "test",
+      email: "test@test.com",
+      role: "USER",
+      oauth_idx: null,
+    });
+
+    const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
+
+    const category_idx = await helper.createTempCateoryReturnIdx({
+      users_idx,
+      category_name: "테스트 카테고리",
+    });
+
+    const restaurant_idx = await helper.createTempRestaurantReturnIdx({
+      category_idx,
+      users_idx,
+      restaurant_name: "테스트 음식점",
+      longitude: "127.0316",
+      latitude: "37.4979",
+      address: "테스트 음식점 테스트로 123",
+      address_detail: "테스트 음식점 상세 주소",
+      phone: "01012345678",
+      start_time: "0000",
+      end_time: "0000",
+    });
+
+    await helper.createTempRestaurantLikes({ restaurant_idx, users_idx });
+
+    const res = await agent
+      .post(`/users/likes/restaurants/${restaurant_idx}`)
+      .set("Cookie", cookie);
+
+    expect(res.status).toBe(409);
+    expect(res.body.message).toBe("중복 음식점 즐겨찾기 등록");
   });
 });
