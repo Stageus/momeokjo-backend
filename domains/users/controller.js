@@ -1,3 +1,4 @@
+const customErrorResponse = require("../../utils/customErrorResponse");
 const {
   tryCatchWrapperWithDb,
   tryCatchWrapperWithDbTransaction,
@@ -9,7 +10,8 @@ exports.updateMyInfo = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { users_idx } = req.accessToken;
   const { nickname } = req.body;
 
-  await us.updateMyInfoAtDb(users_idx, nickname, client);
+  const isUpdated = await us.updateMyInfoAtDb(users_idx, nickname, client);
+  if (!isUpdated) throw customErrorResponse(404, "수정 대상 없음");
 
   res.status(200).json({ message: "요청 처리 성공" });
 });

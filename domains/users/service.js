@@ -1,14 +1,17 @@
 // 내 정보 수정
 exports.updateMyInfoAtDb = async (users_idx, nickname, client) => {
-  await client.query(
+  const results = await client.query(
     `
       UPDATE users.lists SET 
         nickname = $1 
       WHERE idx = $2
-      AND is_deleted = false;
+      AND is_deleted = false
+      RETURNING idx;
     `,
     [nickname, users_idx]
   );
+
+  return results.rowCount > 0;
 };
 
 // 사용자 정보 상세정보 조회
