@@ -203,21 +203,20 @@ exports.createMenuLikeAtDb = async (users_idx, menu_idx, client) => {
 };
 
 // 메뉴 추천 해제
-exports.deleteMenuLikeFromDb = async (client, menu_idx, user_idx) => {
-  let query = `
-    UPDATE menus.likes SET
-      is_deleted = true
-    WHERE menus_idx = ANY(STRING_TO_ARRAY($1, ',')::BIGINT[])
-    AND is_deleted = false`;
+exports.deleteMenuLikeFromDb = async (client, users_idx, menu_idx) => {
+  const results = await client.query(
+    `
+      UPDATE menus.likes SET
+        is_deleted = true
+      WHERE menus_idx = $1
+      AND users_idx = $2
+      AND is_deleted = false
+      RETURNING idx;
+    `,
+    [menu_idx, users_idx]
+  );
 
-  let values = [menu_idx];
-
-  if (user_idx) {
-    query += ` AND users_idx = $2`;
-    values.push(user_idx);
-  }
-
-  await client.query(query, values);
+  return results.rowCount > 0;
 };
 
 // 후기 좋아요 등록

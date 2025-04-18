@@ -86,11 +86,6 @@ exports.createMenuLike = {
 
 exports.deleteMenuLike = {
   param: {
-    user_idx: {
-      isRequired: true,
-      defaultValue: null,
-      regexp: REGEXP.INDEX,
-    },
     menu_idx: {
       isRequired: true,
       defaultValue: null,

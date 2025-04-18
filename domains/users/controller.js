@@ -97,9 +97,11 @@ exports.createMenuLike = tryCatchWrapperWithDb(async (req, res, next, client) =>
 
 // 메뉴 추천 해제
 exports.deleteMenuLike = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { user_idx, menu_idx } = req.params;
+  const { users_idx } = req.accessToken;
+  const { menu_idx } = req.params;
 
-  await us.deleteMenuLikeFromDb(user_idx, menu_idx, client);
+  const isUpdated = await us.deleteMenuLikeFromDb(client, users_idx, menu_idx);
+  if (!isUpdated) throw customErrorResponse(404, "메뉴 추천 내역 없음");
 
   res.status(200).json({ message: "요청 처리 성공" });
 });
