@@ -66,11 +66,6 @@ exports.createRestaurantLike = {
 
 exports.deleteRestaurantLike = {
   param: {
-    user_idx: {
-      isRequired: true,
-      defaultValue: null,
-      regexp: REGEXP.INDEX,
-    },
     restaurant_idx: {
       isRequired: true,
       defaultValue: null,

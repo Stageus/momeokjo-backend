@@ -170,21 +170,20 @@ exports.createRestaurantLikeAtDb = async (users_idx, restaurant_idx, client) => 
 };
 
 // 음식점 즐겨찾기 해제
-exports.deleteRestaurantLikeFromDb = async (client, restaurant_idx, user_idx) => {
-  let query = `
+exports.deleteRestaurantLikeFromDb = async (client, restaurant_idx, users_idx) => {
+  const results = await client.query(
+    `
       UPDATE restaurants.likes SET
         is_deleted = true
       WHERE restaurants_idx = $1
-      AND is_deleted = false`;
+        AND users_idx = $2
+        AND is_deleted = false
+        RETURNING idx;
+    `,
+    [restaurant_idx, users_idx]
+  );
 
-  let values = [restaurant_idx];
-
-  if (!user_idx) {
-    query += ` AND users_idx = $2`;
-    values.push(user_idx);
-  }
-
-  await client.query(query, values);
+  return results.rowCount > 0;
 };
 
 // 메뉴 추천 등록

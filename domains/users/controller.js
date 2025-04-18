@@ -76,9 +76,11 @@ exports.createRestaurantLike = tryCatchWrapperWithDb(async (req, res, next, clie
 
 // 음식점 즐겨찾기 해제
 exports.deleteRestaurantLike = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { user_idx, restaurant_idx } = req.params;
+  const { users_idx } = req.accessToken;
+  const { restaurant_idx } = req.params;
 
-  await us.deleteRestaurantLikeFromDb(user_idx, restaurant_idx, client);
+  const isUpdated = await us.deleteRestaurantLikeFromDb(client, restaurant_idx, users_idx);
+  if (!isUpdated) throw customErrorResponse(404, "음식점 즐겨찾기 없음");
 
   res.status(200).json({ message: "요청 처리 성공" });
 });

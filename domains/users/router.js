@@ -53,7 +53,8 @@ router.post(
 
 // 음식점 즐겨찾기 해제
 router.delete(
-  "/:user_idx/likes/restaurants/:restaurant_idx",
+  "/likes/restaurants/:restaurant_idx",
+  verifyAccessToken("accessToken"),
   createValidateChain(schema.deleteRestaurantLike),
   validateRequest,
   uc.deleteRestaurantLike
