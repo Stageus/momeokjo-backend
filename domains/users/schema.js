@@ -96,11 +96,6 @@ exports.deleteMenuLike = {
 
 exports.createReviewLike = {
   param: {
-    user_idx: {
-      isRequired: true,
-      defaultValue: null,
-      regexp: REGEXP.INDEX,
-    },
     review_idx: {
       isRequired: true,
       defaultValue: null,

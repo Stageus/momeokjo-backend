@@ -80,7 +80,8 @@ router.delete(
 
 // 후기 좋아요 등록
 router.post(
-  "/:user_idx/likes/reviews/:review_idx",
+  "/likes/reviews/:review_idx",
+  verifyAccessToken("accessToken"),
   createValidateChain(schema.createReviewLike),
   validateRequest,
   uc.createReviewLike

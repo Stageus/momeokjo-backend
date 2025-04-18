@@ -172,3 +172,20 @@ exports.createTempMenuLikes = async ({ menu_idx, users_idx }) => {
   );
   client.release();
 };
+
+exports.createTempReviewLikes = async ({ review_idx, users_idx }) => {
+  const client = await pool.connect();
+  client.query(
+    `
+    INSERT INTO reviews.likes (
+      reviews_idx,
+      users_idx
+    ) VALUES (
+      $1,
+      $2
+    );
+  `,
+    [review_idx, users_idx]
+  );
+  client.release();
+};

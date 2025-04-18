@@ -108,9 +108,10 @@ exports.deleteMenuLike = tryCatchWrapperWithDb(async (req, res, next, client) =>
 
 // 후기 좋아요 등록
 exports.createReviewLike = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { user_idx, review_idx } = req.params;
+  const { users_idx } = req.accessToken;
+  const { review_idx } = req.params;
 
-  await us.createReviewLikeAtDb(user_idx, review_idx, client);
+  await us.createReviewLikeAtDb(users_idx, review_idx, client);
 
   res.status(200).json({ message: "요청 처리 성공" });
 });
