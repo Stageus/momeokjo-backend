@@ -118,9 +118,11 @@ exports.createReviewLike = tryCatchWrapperWithDb(async (req, res, next, client) 
 
 // 후기 좋아요 해제
 exports.deleteReviewLike = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { user_idx, review_idx } = req.params;
+  const { users_idx } = req.accessToken;
+  const { review_idx } = req.params;
 
-  await us.deleteReviewLikeFromDb(user_idx, review_idx, client);
+  const isUpdated = await us.deleteReviewLikeFromDb(client, review_idx, users_idx);
+  if (!isUpdated) throw customErrorResponse(404, "후기 좋아요 내역 없음");
 
   res.status(200).json({ message: "요청 처리 성공" });
 });

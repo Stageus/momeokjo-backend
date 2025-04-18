@@ -89,7 +89,8 @@ router.post(
 
 // 후기 좋아요 해제
 router.delete(
-  "/:user_idx/likes/reviews/:review_idx",
+  "/likes/reviews/:review_idx",
+  verifyAccessToken("accessToken"),
   createValidateChain(schema.deleteReviewLike),
   validateRequest,
   uc.deleteReviewLike

@@ -237,20 +237,19 @@ exports.createReviewLikeAtDb = async (users_idx, review_idx, client) => {
 
 // 후괴 좋아요 해제
 exports.deleteReviewLikeFromDb = async (client, review_idx, user_idx) => {
-  let query = `
+  const results = await client.query(
+    `
     UPDATE reviews.likes SET
       is_deleted = true
-    WHERE reviews_idx = ANY(STRING_TO_ARRAY($1, ',')::BIGINT[])
-    AND is_deleted = false`;
+    WHERE reviews_idx = $1
+    AND users_idx = $2
+    AND is_deleted = false
+    RETURNING idx;
+    `,
+    [review_idx, user_idx]
+  );
 
-  let values = [review_idx];
-
-  if (user_idx) {
-    query += ` AND users_idx = $2`;
-    values.push(user_idx);
-  }
-
-  await client.query(query, values);
+  return results.rowCount > 0;
 };
 
 // 음식점 신고 등록
