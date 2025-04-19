@@ -4,42 +4,43 @@ const {
   tryCatchWrapperWithDbTransaction,
 } = require("../../utils/customWrapper");
 const us = require("./service");
+const COOKIE_NAME = require("../../utils/cookieName");
 
 // 내 정보 수정
 exports.updateMyInfo = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { users_idx } = req.accessToken;
+  const { users_idx } = req[COOKIE_NAME.ACCESS_TOKEN];
   const { nickname } = req.body;
 
-  const isUpdated = await us.updateMyInfoAtDb(users_idx, nickname, client);
-  if (!isUpdated) throw customErrorResponse(404, "수정 대상 없음");
+  const isUpdated = await us.updateMyInfoAtDb({ users_idx, nickname, client });
+  if (!isUpdated) throw customErrorResponse({ status: 404, message: "사용자 정보 수정 대상 없음" });
 
   res.status(200).json({ message: "요청 처리 성공" });
 });
 
 // 사용자 정보 상세정보 조회
 exports.getUserInfoByIdx = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const user_idx_from_cookie = req.accessToken?.user_idx;
-  const { user_idx } = req.params;
+  const users_idx_from_cookie = req[COOKIE_NAME.ACCESS_TOKEN]?.user_idx;
+  const { users_idx } = req.params;
 
-  const data = await us.getUserInfoByIdxFromDb(user_idx_from_cookie, user_idx, client);
+  const data = await us.getUserInfoByIdxFromDb({ users_idx_from_cookie, users_idx, client });
   if (typeof data !== "object" || Object.keys(data).length === 0)
-    throw customErrorResponse(404, "조회 결과 없음");
+    throw customErrorResponse({ status: 404, message: "일치하는 사용자 없음" });
 
   res.status(200).json({ message: "요청 처리 성공", data });
 });
 
 // 사용자가 즐겨찾기 등록한 음식점 리스트 조회
 exports.getRestaurantLikeList = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { users_idx: user_idx_from_cookie } = req.accessToken;
-  const { user_idx } = req.params;
+  const user_idx_from_cookie = req[COOKIE_NAME.ACCESS_TOKEN]?.users_idx;
+  const { users_idx } = req.params;
   const { page } = req.query;
 
-  const { data, total_pages } = await us.getRestaurantLikeListFromDb(
+  const { data, total_pages } = await us.getRestaurantLikeListFromDb({
     client,
     user_idx_from_cookie,
-    user_idx,
-    page
-  );
+    users_idx,
+    page,
+  });
 
   res
     .status(200)
@@ -48,16 +49,16 @@ exports.getRestaurantLikeList = tryCatchWrapperWithDb(async (req, res, next, cli
 
 // 사용자가 작성한 후기 리스트 조회
 exports.getReviewList = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { users_idx: user_idx_from_cookie } = req.accessToken;
-  const { user_idx } = req.params;
+  const user_idx_from_cookie = req[COOKIE_NAME.ACCESS_TOKEN]?.users_idx;
+  const { users_idx } = req.params;
   const { page } = req.query;
 
-  const { data, total_pages } = await us.getReviewListFromDb(
+  const { data, total_pages } = await us.getReviewListFromDb({
     client,
     user_idx_from_cookie,
-    user_idx,
-    page
-  );
+    users_idx,
+    page,
+  });
 
   res
     .status(200)
@@ -66,20 +67,20 @@ exports.getReviewList = tryCatchWrapperWithDb(async (req, res, next, client) => 
 
 // 음식점 즐겨찾기 등록
 exports.createRestaurantLike = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { users_idx } = req.accessToken;
-  const { restaurant_idx } = req.params;
+  const { users_idx } = req[COOKIE_NAME.ACCESS_TOKEN];
+  const { restaurants_idx } = req.params;
 
-  await us.createRestaurantLikeAtDb(users_idx, restaurant_idx, client);
+  await us.createRestaurantLikeAtDb({ users_idx, restaurants_idx, client });
 
   res.status(200).json({ message: "요청 처리 성공" });
 });
 
 // 음식점 즐겨찾기 해제
 exports.deleteRestaurantLike = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { users_idx } = req.accessToken;
-  const { restaurant_idx } = req.params;
+  const { users_idx } = req[COOKIE_NAME.ACCESS_TOKEN];
+  const { restaurants_idx } = req.params;
 
-  const isUpdated = await us.deleteRestaurantLikeFromDb(client, restaurant_idx, users_idx);
+  const isUpdated = await us.deleteRestaurantLikeFromDb({ client, restaurants_idx, users_idx });
   if (!isUpdated) throw customErrorResponse(404, "음식점 즐겨찾기 없음");
 
   res.status(200).json({ message: "요청 처리 성공" });
@@ -87,42 +88,42 @@ exports.deleteRestaurantLike = tryCatchWrapperWithDb(async (req, res, next, clie
 
 // 메뉴 추천 등록
 exports.createMenuLike = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { users_idx } = req.accessToken;
-  const { menu_idx } = req.params;
+  const { users_idx } = req[COOKIE_NAME.ACCESS_TOKEN];
+  const { menus_idx } = req.params;
 
-  await us.createMenuLikeAtDb(users_idx, menu_idx, client);
+  await us.createMenuLikeAtDb({ users_idx, menus_idx, client });
 
   res.status(200).json({ message: "요청 처리 성공" });
 });
 
 // 메뉴 추천 해제
 exports.deleteMenuLike = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { users_idx } = req.accessToken;
-  const { menu_idx } = req.params;
+  const { users_idx } = req[COOKIE_NAME.ACCESS_TOKEN];
+  const { menus_idx } = req.params;
 
-  const isUpdated = await us.deleteMenuLikeFromDb(client, users_idx, menu_idx);
-  if (!isUpdated) throw customErrorResponse(404, "메뉴 추천 내역 없음");
+  const isUpdated = await us.deleteMenuLikeFromDb({ client, users_idx, menus_idx });
+  if (!isUpdated) throw customErrorResponse({ status: 404, message: "메뉴 추천 내역 없음" });
 
   res.status(200).json({ message: "요청 처리 성공" });
 });
 
 // 후기 좋아요 등록
 exports.createReviewLike = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { users_idx } = req.accessToken;
-  const { review_idx } = req.params;
+  const { users_idx } = req[COOKIE_NAME.ACCESS_TOKEN];
+  const { reviews_idx } = req.params;
 
-  await us.createReviewLikeAtDb(users_idx, review_idx, client);
+  await us.createReviewLikeAtDb({ users_idx, reviews_idx, client });
 
   res.status(200).json({ message: "요청 처리 성공" });
 });
 
 // 후기 좋아요 해제
 exports.deleteReviewLike = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { users_idx } = req.accessToken;
-  const { review_idx } = req.params;
+  const { users_idx } = req[COOKIE_NAME.ACCESS_TOKEN];
+  const { reviews_idx } = req.params;
 
-  const isUpdated = await us.deleteReviewLikeFromDb(client, review_idx, users_idx);
-  if (!isUpdated) throw customErrorResponse(404, "후기 좋아요 내역 없음");
+  const isUpdated = await us.deleteReviewLikeFromDb({ client, reviews_idx, users_idx });
+  if (!isUpdated) throw customErrorResponse({ status: 404, message: "후기 좋아요 내역 없음" });
 
   res.status(200).json({ message: "요청 처리 성공" });
 });
@@ -130,24 +131,25 @@ exports.deleteReviewLike = tryCatchWrapperWithDb(async (req, res, next, client) 
 // 음식점 신고 등록
 exports.createRestaurantReport = tryCatchWrapperWithDbTransaction(
   async (req, res, next, client) => {
-    const { user_idx, restaurant_idx } = req.params;
+    const { users_idx } = req[COOKIE_NAME.ACCESS_TOKEN];
+    const { restaurants_idx } = req.params;
 
-    await us.createRestaurantReportAtDb(client, restaurant_idx, user_idx);
+    await us.createRestaurantReportAtDb({ client, restaurants_idx, users_idx });
 
-    const total_count = await us.checkTotalRestaurantReportByIdx(client, restaurant_idx);
+    const total_count = await us.checkTotalRestaurantReportByIdx({ client, restaurants_idx });
 
     if (total_count >= 5) {
-      await us.deleteRestaurantFromDb(client, restaurant_idx);
-      await us.deleteRestaurantLikeFromDb(client, restaurant_idx);
+      await us.deleteRestaurantFromDb({ client, restaurants_idx });
+      await us.deleteRestaurantLikeFromDb({ client, restaurants_idx });
 
-      const menu_idx_list_stringify = await deleteMenuFromDb(client, "restaurant", restaurant_idx);
-      await us.deleteMenuLikeFromDb(client, menu_idx_list_stringify);
+      const menus_idx_list = await us.deleteMenuFromDbByRestaurantsIdx({ client, restaurants_idx });
+      await us.deleteMenuLikeFromDb({ client, menus_idx_list });
 
-      const review_idx_list_stringify = await us.deleteReviewFromDb(
+      const reviews_idx_list = await us.deleteReviewFromDbByRestaurantsIdx({
         client,
-        menu_idx_list_stringify
-      );
-      await us.deleteReviewLikeFromDb(client, review_idx_list_stringify);
+        restaurants_idx,
+      });
+      await us.deleteReviewLikeFromDb({ client, reviews_idx_list });
     }
 
     res.status(200).json({ message: "요청 처리 성공" });
@@ -156,22 +158,22 @@ exports.createRestaurantReport = tryCatchWrapperWithDbTransaction(
 
 // 메뉴 신고 등록
 exports.createMenuReport = tryCatchWrapperWithDbTransaction(async (req, res, next, client) => {
-  const { user_idx, menu_idx } = req.params;
+  const { users_idx } = req[COOKIE_NAME.ACCESS_TOKEN];
+  const { menus_idx } = req.params;
 
-  await us.createMenuReportAtDb(client, menu_idx, user_idx);
+  await us.createMenuReportAtDb({ client, menus_idx, users_idx });
 
-  const total_count = await us.checkTotalMenuReportByIdx(client, menu_idx);
+  const total_count = await us.checkTotalMenuReportByIdx({ client, menus_idx });
 
   if (total_count >= 5) {
-    const menu_idx_list_stringify = await us.deleteMenuFromDb(client, "menu", menu_idx);
-    await us.deleteMenuLikeFromDb(client, menu_idx_list_stringify);
+    const menus_idx_list = await us.deleteMenuFromDbByMenusIdx({ client, menus_idx });
+    await us.deleteMenuLikeFromDb({ client, menus_idx_list });
 
-    const review_idx_list_stringify = await us.deleteReviewFromDb(
+    const reviews_idx_list = await us.deleteReviewFromDbByMenusIdx({
       client,
-      "menu",
-      menu_idx_list_stringify
-    );
-    await us.deleteReviewLikeFromDb(client, review_idx_list_stringify);
+      menus_idx_list,
+    });
+    await us.deleteReviewLikeFromDb({ client, reviews_idx_list });
   }
 
   res.status(200).json({ message: "요청 처리 성공" });
@@ -179,16 +181,20 @@ exports.createMenuReport = tryCatchWrapperWithDbTransaction(async (req, res, nex
 
 // 후기 신고 등록
 exports.createReviewReport = tryCatchWrapperWithDbTransaction(async (req, res, next, client) => {
-  const { user_idx, review_idx } = req.params;
+  const { users_idx } = req[COOKIE_NAME.ACCESS_TOKEN];
+  const { reviews_idx } = req.params;
 
-  await us.createReviewReportAtDb(client, review_idx, user_idx);
+  await us.createReviewReportAtDb({ client, reviews_idx, users_idx });
 
-  const total_count = await us.checkTotalReviewReportByIdx(client, review_idx);
+  const total_count = await us.checkTotalReviewReportByIdx({ client, reviews_idx });
   console.log(total_count);
 
   if (total_count >= 1) {
-    const review_idx_list_stringify = await us.deleteReviewFromDb(client, "review", review_idx);
-    await us.deleteReviewLikeFromDb(client, review_idx_list_stringify);
+    const reviews_idx_list = await us.deleteReviewFromDbByReviewsIdx({
+      client,
+      reviews_idx,
+    });
+    await us.deleteReviewLikeFromDb({ client, reviews_idx_list });
   }
 
   res.status(200).json({ message: "요청 처리 성공" });

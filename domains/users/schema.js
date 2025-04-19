@@ -12,7 +12,7 @@ exports.updateMyInfo = {
 
 exports.getUserInfoByIdx = {
   param: {
-    user_idx: {
+    users_idx: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.INDEX,
@@ -22,7 +22,7 @@ exports.getUserInfoByIdx = {
 
 exports.getRestaurantLikeList = {
   param: {
-    user_idx: {
+    users_idx: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.INDEX,
@@ -39,7 +39,7 @@ exports.getRestaurantLikeList = {
 
 exports.getReviewList = {
   param: {
-    user_idx: {
+    users_idx: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.INDEX,
@@ -56,7 +56,7 @@ exports.getReviewList = {
 
 exports.createRestaurantLike = {
   param: {
-    restaurant_idx: {
+    restaurants_idx: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.INDEX,
@@ -66,7 +66,7 @@ exports.createRestaurantLike = {
 
 exports.deleteRestaurantLike = {
   param: {
-    restaurant_idx: {
+    restaurants_idx: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.INDEX,
@@ -76,7 +76,7 @@ exports.deleteRestaurantLike = {
 
 exports.createMenuLike = {
   param: {
-    menu_idx: {
+    menus_idx: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.INDEX,
@@ -86,7 +86,7 @@ exports.createMenuLike = {
 
 exports.deleteMenuLike = {
   param: {
-    menu_idx: {
+    menus_idx: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.INDEX,
@@ -96,7 +96,7 @@ exports.deleteMenuLike = {
 
 exports.createReviewLike = {
   param: {
-    review_idx: {
+    reviews_idx: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.INDEX,
@@ -106,7 +106,7 @@ exports.createReviewLike = {
 
 exports.deleteReviewLike = {
   param: {
-    review_idx: {
+    reviews_idx: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.INDEX,
@@ -116,12 +116,12 @@ exports.deleteReviewLike = {
 
 exports.createRestaurantReport = {
   param: {
-    user_idx: {
+    users_idx: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.INDEX,
     },
-    restaurant_idx: {
+    restaurants_idx: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.INDEX,
@@ -131,12 +131,12 @@ exports.createRestaurantReport = {
 
 exports.createMenuReport = {
   param: {
-    user_idx: {
+    users_idx: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.INDEX,
     },
-    menu_idx: {
+    menus_idx: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.INDEX,
@@ -146,12 +146,12 @@ exports.createMenuReport = {
 
 exports.createReviewReport = {
   param: {
-    user_idx: {
+    users_idx: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.INDEX,
     },
-    review_idx: {
+    reviews_idx: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.INDEX,
