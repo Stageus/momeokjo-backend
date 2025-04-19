@@ -285,7 +285,7 @@ exports.deleteReviewLikeFromDbWithArray = async ({ client, reviews_idx_list }) =
 };
 
 // 음식점 신고 등록
-exports.createRestaurantReportAtDb = async ({ client, restaurant_idx, users_idx }) => {
+exports.createRestaurantReportAtDb = async ({ client, restaurants_idx, users_idx }) => {
   await client.query(
     `
       INSERT INTO restaurants.reports (
@@ -296,12 +296,12 @@ exports.createRestaurantReportAtDb = async ({ client, restaurant_idx, users_idx 
         $2
       );
     `,
-    [restaurant_idx, users_idx]
+    [restaurants_idx, users_idx]
   );
 };
 
 // 총 음식점 신고 횟수 조회
-exports.checkTotalRestaurantReportByIdx = async ({ client, restaurants_idx }) => {
+exports.getTotalRestaurantReportByIdx = async ({ client, restaurants_idx }) => {
   const results = await client.query(
     `
       SELECT COUNT(*) AS total_count
@@ -311,7 +311,7 @@ exports.checkTotalRestaurantReportByIdx = async ({ client, restaurants_idx }) =>
     [restaurants_idx]
   );
 
-  return results.rows[0].total_count ?? 0;
+  return results.rows[0]?.total_count ?? 0;
 };
 
 // 음식점 비활성화
@@ -370,7 +370,7 @@ exports.deleteReviewFromDbByRestaurantsIdx = async ({ client, restaurants_idx })
     [restaurants_idx]
   );
 
-  return results.rows.map(({ idx }) => parseInt(idx));
+  return results.rows?.map(({ idx }) => parseInt(idx)) ?? [];
 };
 
 exports.deleteReviewFromDbByMenusIdx = async ({ client, menus_idx }) => {

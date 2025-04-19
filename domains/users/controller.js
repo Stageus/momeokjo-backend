@@ -137,7 +137,7 @@ exports.createRestaurantReport = tryCatchWrapperWithDbTransaction(
 
     await us.createRestaurantReportAtDb({ client, restaurants_idx, users_idx });
 
-    const total_count = await us.checkTotalRestaurantReportByIdx({ client, restaurants_idx });
+    const total_count = await us.getTotalRestaurantReportByIdx({ client, restaurants_idx });
 
     if (total_count >= 5) {
       await us.deleteRestaurantFromDb({ client, restaurants_idx });
@@ -150,7 +150,7 @@ exports.createRestaurantReport = tryCatchWrapperWithDbTransaction(
         client,
         restaurants_idx,
       });
-      await us.deleteReviewLikeFromDb({ client, reviews_idx_list });
+      await us.deleteReviewLikeFromDbWithArray({ client, reviews_idx_list });
     }
 
     res.status(200).json({ message: "요청 처리 성공" });

@@ -5,15 +5,19 @@ const helper = require("./helpers/setupForTest");
 
 afterEach(async () => {
   const client = await pool.connect();
-  await client.query("DELETE FROM reviews.likes");
-  await client.query("DELETE FROM menus.likes");
-  await client.query("DELETE FROM restaurants.likes");
-  await client.query("DELETE FROM reviews.lists");
-  await client.query("DELETE FROM menus.lists");
-  await client.query("DELETE FROM restaurants.lists");
-  await client.query("DELETE FROM restaurants.categories");
-  await client.query("DELETE FROM users.local_tokens");
-  await client.query("DELETE FROM users.lists");
+  await client.query(`
+    TRUNCATE 
+      reviews.likes,
+      menus.likes,
+      restaurants.likes,
+      reviews.lists,
+      menus.lists,
+      restaurants.lists,
+      restaurants.categories,
+      users.local_tokens,
+      users.lists
+    CASCADE;
+  `);
   client.release();
 });
 
@@ -1042,5 +1046,151 @@ describe("DELETE /users/likes/reviews/:review_idx", () => {
 
     expect(res.status).toBe(404);
     expect(res.body.message).toBe("후기 좋아요 등록 내역 없음");
+  });
+});
+
+describe("POST /users/reports/restaurants/:restaurants_idx", () => {
+  const agent = request(app);
+  it("음식점 신고 등록에 성공하면 상태코드 200을 응답해야한다.", async () => {
+    const id = "test";
+    const pw = "Test!1@2";
+
+    const users_idx = await helper.createTempUserReturnIdx({
+      id,
+      pw,
+      nickname: "test",
+      email: "test@test.com",
+      role: "USER",
+      oauth_idx: null,
+    });
+
+    const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
+
+    const category_idx = await helper.createTempCateoryReturnIdx({
+      users_idx,
+      category_name: "테스트 카테고리",
+    });
+
+    const restaurants_idx = await helper.createTempRestaurantReturnIdx({
+      category_idx,
+      users_idx,
+      restaurant_name: "테스트 음식점",
+      longitude: "127.0316",
+      latitude: "37.4979",
+      address: "테스트 음식점 테스트로 123",
+      address_detail: "테스트 음식점 상세 주소",
+      phone: "01012345678",
+      start_time: "0000",
+      end_time: "0000",
+    });
+
+    const res = await agent
+      .post(`/users/reports/restaurants/${restaurants_idx}`)
+      .set("Cookie", cookie);
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("요청 처리 성공");
+  });
+
+  it("입력값이 유효하지 않은 경우 상태코드 400을 응답해야한다.", async () => {
+    const id = "test";
+    const pw = "Test!1@2";
+
+    await helper.createTempUserReturnIdx({
+      id,
+      pw,
+      nickname: "test",
+      email: "test@test.com",
+      role: "USER",
+      oauth_idx: null,
+    });
+
+    const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
+
+    const res = await agent.post(`/users/reports/restaurants/asdfasdfasdf`).set("Cookie", cookie);
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe("입력값 확인 필요");
+    expect(res.body.target).toBe("restaurants_idx");
+  });
+
+  it("로그인 하지 않은 경우 상태코드 401을 응답해야한다.", async () => {
+    const id = "test";
+    const pw = "Test!1@2";
+
+    const users_idx = await helper.createTempUserReturnIdx({
+      id,
+      pw,
+      nickname: "test",
+      email: "test@test.com",
+      role: "USER",
+      oauth_idx: null,
+    });
+
+    const category_idx = await helper.createTempCateoryReturnIdx({
+      users_idx,
+      category_name: "테스트 카테고리",
+    });
+
+    const restaurants_idx = await helper.createTempRestaurantReturnIdx({
+      category_idx,
+      users_idx,
+      restaurant_name: "테스트 음식점",
+      longitude: "127.0316",
+      latitude: "37.4979",
+      address: "테스트 음식점 테스트로 123",
+      address_detail: "테스트 음식점 상세 주소",
+      phone: "01012345678",
+      start_time: "0000",
+      end_time: "0000",
+    });
+
+    const res = await agent.post(`/users/reports/restaurants/${restaurants_idx}`);
+
+    expect(res.status).toBe(401);
+    expect(res.body.message).toBe("로그인 필요");
+  });
+
+  it("음식점 신고 중복인 경우 상태코드 409를 응답해야한다.", async () => {
+    const id = "test";
+    const pw = "Test!1@2";
+
+    const users_idx = await helper.createTempUserReturnIdx({
+      id,
+      pw,
+      nickname: "test",
+      email: "test@test.com",
+      role: "USER",
+      oauth_idx: null,
+    });
+
+    const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
+
+    const category_idx = await helper.createTempCateoryReturnIdx({
+      users_idx,
+      category_name: "테스트 카테고리",
+    });
+
+    const restaurants_idx = await helper.createTempRestaurantReturnIdx({
+      category_idx,
+      users_idx,
+      restaurant_name: "테스트 음식점",
+      longitude: "127.0316",
+      latitude: "37.4979",
+      address: "테스트 음식점 테스트로 123",
+      address_detail: "테스트 음식점 상세 주소",
+      phone: "01012345678",
+      start_time: "0000",
+      end_time: "0000",
+    });
+
+    await agent.post(`/users/reports/restaurants/${restaurants_idx}`).set("Cookie", cookie);
+
+    const res = await agent
+      .post(`/users/reports/restaurants/${restaurants_idx}`)
+      .set("Cookie", cookie);
+
+    expect(res.status).toBe(409);
+    expect(res.body.message).toBe("음식점 신고 중복 등록");
   });
 });
