@@ -4,9 +4,9 @@
   "settings": {
     "width": 4000,
     "height": 4000,
-    "scrollTop": -1054.4643,
-    "scrollLeft": -1515.8087,
-    "zoomLevel": 0.91,
+    "scrollTop": -2571.7358,
+    "scrollLeft": -1122.0605,
+    "zoomLevel": 0.79,
     "show": 495,
     "database": 16,
     "databaseName": "random_food",
@@ -70,7 +70,8 @@
       "WvBmDFDyQpD9Kq4l-_1oX",
       "7qG8Uj2kz6BNRWPhjQW7w",
       "VHwrtSTilTyAqwyw73OAP",
-      "DgE8j00BWu-KY7GRLlvZ3"
+      "DgE8j00BWu-KY7GRLlvZ3",
+      "3EU_DsME5XnSeEviGgtV1"
     ],
     "indexIds": [],
     "memoIds": []
@@ -472,6 +473,7 @@
         "comment": "메뉴 후기 테이블",
         "columnIds": [
           "Q-bzPqB0kkLMETYTSikE4",
+          "kwARInGPHQcZ3SHld3TZm",
           "fgyvlLKTjBXxIJR4mVy--",
           "sevpWt9UWK4BBdGZu9nR9",
           "4v2y20vic89qLJLfelSLF",
@@ -482,6 +484,7 @@
         ],
         "seqColumnIds": [
           "Q-bzPqB0kkLMETYTSikE4",
+          "kwARInGPHQcZ3SHld3TZm",
           "fgyvlLKTjBXxIJR4mVy--",
           "sevpWt9UWK4BBdGZu9nR9",
           "4v2y20vic89qLJLfelSLF",
@@ -499,7 +502,7 @@
           "color": ""
         },
         "meta": {
-          "updateAt": 1744045914240,
+          "updateAt": 1745020145866,
           "createAt": 1741537298792
         }
       },
@@ -2762,6 +2765,26 @@
           "updateAt": 1744278076655,
           "createAt": 1744276613848
         }
+      },
+      "kwARInGPHQcZ3SHld3TZm": {
+        "id": "kwARInGPHQcZ3SHld3TZm",
+        "tableId": "fWCeBq-JnzQyVxcZd6kG5",
+        "name": "restaurants_idx",
+        "comment": "음식점 idx",
+        "dataType": "bigint",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 90,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1745020157193,
+          "createAt": 1745020137584
+        }
       }
     },
     "relationshipEntities": {
@@ -2868,7 +2891,7 @@
           "columnIds": [
             "Mwgvc8ugMLma9hcI3MRJM"
           ],
-          "x": 1757.0345,
+          "x": 1860.1094999999998,
           "y": 1368.3447999999999,
           "direction": 8
         },
@@ -2896,7 +2919,7 @@
           "columnIds": [
             "S-ukt6Ls6XoXFK0xvFfdT"
           ],
-          "x": 2051.5344999999998,
+          "x": 2095.7095,
           "y": 1368.3447999999999,
           "direction": 8
         },
@@ -2999,7 +3022,7 @@
           "columnIds": [
             "z1HArZq3QG1hnVsz4Chrz"
           ],
-          "x": 1904.2845,
+          "x": 1977.9094999999998,
           "y": 1368.3447999999999,
           "direction": 8
         },
@@ -3027,7 +3050,7 @@
           "columnIds": [
             "z1HArZq3QG1hnVsz4Chrz"
           ],
-          "x": 2198.7844999999998,
+          "x": 2213.5095,
           "y": 1368.3447999999999,
           "direction": 8
         },
@@ -3204,8 +3227,8 @@
           "columnIds": [
             "fgyvlLKTjBXxIJR4mVy--"
           ],
-          "x": 1518.5559,
-          "y": 3112.890666666666,
+          "x": 1541.5559,
+          "y": 3132.890666666666,
           "direction": 2
         },
         "meta": {
@@ -3232,8 +3255,8 @@
           "columnIds": [
             "sevpWt9UWK4BBdGZu9nR9"
           ],
-          "x": 1518.5559,
-          "y": 2947.557333333333,
+          "x": 1541.5559,
+          "y": 2951.557333333333,
           "direction": 2
         },
         "meta": {
@@ -3251,8 +3274,8 @@
           "columnIds": [
             "Q-bzPqB0kkLMETYTSikE4"
           ],
-          "x": 1518.5559,
-          "y": 3030.2239999999997,
+          "x": 1541.5559,
+          "y": 3042.2239999999997,
           "direction": 2
         },
         "end": {
@@ -3335,7 +3358,7 @@
           "columnIds": [
             "Q-bzPqB0kkLMETYTSikE4"
           ],
-          "x": 1274.5559,
+          "x": 1158.3059,
           "y": 2906.224,
           "direction": 4
         },
@@ -3407,6 +3430,34 @@
         "meta": {
           "updateAt": 1744045695007,
           "createAt": 1744045695007
+        }
+      },
+      "3EU_DsME5XnSeEviGgtV1": {
+        "id": "3EU_DsME5XnSeEviGgtV1",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "4intI1JMoV8ED7bWKBcvq",
+          "columnIds": [
+            "z1HArZq3QG1hnVsz4Chrz"
+          ],
+          "x": 1742.3094999999998,
+          "y": 1368.3447999999999,
+          "direction": 8
+        },
+        "end": {
+          "tableId": "fWCeBq-JnzQyVxcZd6kG5",
+          "columnIds": [
+            "kwARInGPHQcZ3SHld3TZm"
+          ],
+          "x": 1413.8059,
+          "y": 2906.224,
+          "direction": 4
+        },
+        "meta": {
+          "updateAt": 1745020137585,
+          "createAt": 1745020137585
         }
       }
     },
@@ -4931,6 +4982,24 @@
         "options(notNull)": 1744276639054,
         "comment": 1744276649312
       }
+    ],
+    "kwARInGPHQcZ3SHld3TZm": [
+      "tableColumnEntities",
+      1745020137580,
+      -1,
+      {
+        "options(notNull)": 1745020137580,
+        "name": 1745020151429,
+        "dataType": 1745020157191,
+        "default": 1745020137580,
+        "comment": 1745020137580
+      }
+    ],
+    "3EU_DsME5XnSeEviGgtV1": [
+      "relationshipEntities",
+      1745020137580,
+      -1,
+      {}
     ]
   }
 }
