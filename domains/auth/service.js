@@ -212,7 +212,7 @@ exports.getProviderIdFromKakao = async (accessToken) => {
 };
 
 // 사용자 회원가입 이력 확인
-exports.checkOauthUserAtDb = async (client, provider_user_id, provider) => {
+exports.checkOauthUserAtDb = async ({ client, provider_user_id, provider }) => {
   const results = await client.query(
     `
       SELECT
@@ -231,20 +231,20 @@ exports.checkOauthUserAtDb = async (client, provider_user_id, provider) => {
   );
 
   return {
-    isExisted: results.rows[0]?.is_existed || false,
-    users_idx: results.rows[0]?.users_idx || undefined,
+    isExisted: results.rows[0]?.is_existed ?? false,
+    users_idx: results.rows[0]?.users_idx,
   };
 };
 
 // oauth 인증정보 데이터베이스에 저장
-exports.saveOauthInfoAtDb = async (
+exports.saveOauthInfoAtDb = async ({
   client,
   encryptedAccessToken,
   encryptedRefreshToken,
   refreshTokenExpiresIn,
   provider_user_id,
-  provider
-) => {
+  provider,
+}) => {
   const results = await client.query(
     `
         INSERT INTO users.oauth (

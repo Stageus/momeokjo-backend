@@ -213,32 +213,40 @@ exports.signInWithKakaoAuth = tryCatchWrapper((req, res, next) => {
 // 카카오 토큰발급 요청
 exports.checkOauthAndRedirect = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { code, error } = req.query;
-  if (error || !code) throw customErrorResponse(400, "카카오 로그인 실패");
+  if (error || !code) throw customErrorResponse({ status: 400, message: "카카오 로그인 실패" });
 
   const { accessToken, refreshToken, refreshTokenExpiresIn } = await as.getTokenFromKakao(code);
   const provider_user_id = await as.getProviderIdFromKakao(accessToken);
-  const { isExisted, users_idx } = await as.checkOauthUserAtDb(client, provider_user_id, "KAKAO");
+  const { isExisted, users_idx } = await as.checkOauthUserAtDb({
+    client,
+    provider_user_id,
+    provider: "KAKAO",
+  });
   if (!isExisted) {
     const encryptedAccessToken = await algorithm.encrypt(accessToken);
     const encryptedRefreshToken = await algorithm.encrypt(refreshToken);
 
-    const oauth_idx = await as.saveOauthInfoAtDb(
+    const oauth_idx = await as.saveOauthInfoAtDb({
       client,
       encryptedAccessToken,
       encryptedRefreshToken,
       refreshTokenExpiresIn,
       provider_user_id,
-      "KAKAO"
-    );
+      provider: "KAKAO",
+    });
 
-    const token = jwt.createAccessToken({ oauth_idx }, process.env.JWT_ACCESS_EXPIRES_IN);
-    res.cookie("oauthIdx", token, accessTokenOptions);
+    const token = jwt.createAccessToken({
+      payload: { oauth_idx },
+      expiresIn: process.env.JWT_ACCESS_EXPIRES_IN,
+    });
+
+    res.cookie(COOKIE_NAME.OAUTH_INDEX, token, accessTokenOptions);
     res.redirect("http://localhost:3000/oauth/signup");
   } else {
     const payload = { users_idx, provider: "KAKAO", role: "USER" };
-    const token = jwt.createAccessToken(payload, process.env.JWT_ACCESS_EXPIRES_IN);
+    const token = jwt.createAccessToken({ payload, expiresIn: process.env.JWT_ACCESS_EXPIRES_IN });
 
-    res.cookie("accessToken", token, accessTokenOptions);
+    res.cookie(COOKIE_NAME.ACCESS_TOKEN, token, accessTokenOptions);
     res.redirect("http://localhost:3000/");
   }
 });
