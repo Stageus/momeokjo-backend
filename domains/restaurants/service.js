@@ -232,7 +232,7 @@ exports.getRecommendRestaurantFromDb = async ({
 };
 
 // 음식점 메뉴 리스트 조회
-exports.getRestaurantMenuInfoListFromDb = async ({ users_idx, restaurant_idx, page, client }) => {
+exports.getRestaurantMenuInfoListFromDb = async ({ users_idx, restaurants_idx, page, client }) => {
   const check_total = await client.query(
     `
       SELECT
@@ -241,7 +241,7 @@ exports.getRestaurantMenuInfoListFromDb = async ({ users_idx, restaurant_idx, pa
       WHERE restaurants_idx = $1
       AND is_deleted = false
     `,
-    [restaurant_idx]
+    [restaurants_idx]
   );
 
   const results = await client.query(
@@ -443,7 +443,7 @@ exports.updateMenuReviewByIdxAtDb = async ({
 };
 
 // 음식점 상세보기 조회
-exports.getRestaurantInfoByIdxFromDb = async ({ users_idx, restaurant_idx, client }) => {
+exports.getRestaurantInfoByIdxFromDb = async ({ users_idx, restaurants_idx, client }) => {
   const results = await client.query(
     `
       WITH likes AS (
@@ -472,7 +472,7 @@ exports.getRestaurantInfoByIdxFromDb = async ({ users_idx, restaurant_idx, clien
       AND list.is_deleted = false
       AND category.is_deleted = false
     `,
-    [users_idx, restaurant_idx]
+    [users_idx, restaurants_idx]
   );
 
   return results.rows[0] || {};
@@ -481,7 +481,7 @@ exports.getRestaurantInfoByIdxFromDb = async ({ users_idx, restaurant_idx, clien
 // 음식점 수정
 exports.updateRestaurantInfoByIdxAtDb = async ({
   users_idx,
-  restaurant_idx,
+  restaurants_idx,
   category_idx,
   restaurant_name,
   address_detail,
@@ -503,7 +503,7 @@ exports.updateRestaurantInfoByIdxAtDb = async ({
       WHERE idx = $7
       AND users_idx = $8
       AND is_deleted = false
-      RETURNING idx AS restaurant_idx;
+      RETURNING idx;
     `,
     [
       category_idx,
@@ -512,10 +512,10 @@ exports.updateRestaurantInfoByIdxAtDb = async ({
       phone,
       start_time,
       end_time,
-      restaurant_idx,
+      restaurants_idx,
       users_idx,
     ]
   );
 
-  return results.rows[0]?.restaurant_idx;
+  return results.rowCount > 0;
 };

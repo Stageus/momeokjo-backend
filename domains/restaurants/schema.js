@@ -148,7 +148,7 @@ exports.getRecommendRestaurant = {
 
 exports.getMenuReviewInfoList = {
   param: {
-    menu_idx: {
+    menus_idx: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.INDEX,
@@ -165,7 +165,7 @@ exports.getMenuReviewInfoList = {
 
 exports.createMenuReview = {
   param: {
-    menu_idx: {
+    menus_idx: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.INDEX,
@@ -182,7 +182,7 @@ exports.createMenuReview = {
 
 exports.updateMenuReviewByIdx = {
   param: {
-    review_idx: {
+    reviews_idx: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.INDEX,
@@ -199,7 +199,7 @@ exports.updateMenuReviewByIdx = {
 
 exports.getRestaurantMenuInfoList = {
   param: {
-    restaurant_idx: {
+    restaurants_idx: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.INDEX,
@@ -216,7 +216,7 @@ exports.getRestaurantMenuInfoList = {
 
 exports.createRestaurantMenu = {
   param: {
-    restaurant_idx: {
+    restaurants_idx: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.INDEX,
@@ -238,7 +238,7 @@ exports.createRestaurantMenu = {
 
 exports.updateRestaurantMenuByIdx = {
   param: {
-    menu_idx: {
+    menus_idx: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.INDEX,
@@ -260,7 +260,7 @@ exports.updateRestaurantMenuByIdx = {
 
 exports.getRestaurantInfoByIdx = {
   param: {
-    restaurant_idx: {
+    restaurants_idx: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.INDEX,
@@ -270,7 +270,7 @@ exports.getRestaurantInfoByIdx = {
 
 exports.updateRestaurantInfoByIdx = {
   param: {
-    restaurant_idx: {
+    restaurants_idx: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.INDEX,

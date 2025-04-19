@@ -63,7 +63,7 @@ router.get(
 
 // 메뉴 후기 리스트 조회
 router.get(
-  "/menus/:menu_idx/reviews",
+  "/menus/:menus_idx/reviews",
   verifyAccessTokenOptional(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.getMenuReviewInfoList),
   validateRequest,
@@ -72,7 +72,7 @@ router.get(
 
 // 메뉴 후기 등록
 router.post(
-  "/menus/:menu_idx/reviews",
+  "/menus/:menus_idx/reviews",
   verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN),
   upload.single("image"),
   createValidateChain(schema.createMenuReview),
@@ -82,7 +82,7 @@ router.post(
 
 // 메뉴 후기 수정
 router.put(
-  "/menus/reviews/:review_idx",
+  "/menus/reviews/:reviews_idx",
   verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN),
   upload.single("image"),
   createValidateChain(schema.updateMenuReviewByIdx),
@@ -92,7 +92,7 @@ router.put(
 
 // 음식점 메뉴 리스트 조회
 router.get(
-  "/:restaurant_idx/menus",
+  "/:restaurants_idx/menus",
   verifyAccessTokenOptional(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.getRestaurantMenuInfoList),
   validateRequest,
@@ -101,7 +101,7 @@ router.get(
 
 // 음식점 메뉴 등록
 router.post(
-  "/:restaurant_idx/menus",
+  "/:restaurants_idx/menus",
   verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.createRestaurantMenu),
   validateRequest,
@@ -110,7 +110,7 @@ router.post(
 
 // 음식점 메뉴 수정
 router.put(
-  "/menus/:menu_idx",
+  "/menus/:menus_idx",
   verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.updateRestaurantMenuByIdx),
   validateRequest,
@@ -119,7 +119,7 @@ router.put(
 
 // 음식점 상세보기 조회
 router.get(
-  "/:restaurant_idx",
+  "/:restaurants_idx",
   verifyAccessTokenOptional(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.getRestaurantInfoByIdx),
   validateRequest,
@@ -128,7 +128,7 @@ router.get(
 
 // 음식점 상세보기 수정
 router.put(
-  "/:restaurant_idx",
+  "/:restaurants_idx",
   verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.updateRestaurantInfoByIdx),
   validateRequest,

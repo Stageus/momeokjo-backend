@@ -120,12 +120,12 @@ exports.getRecommendRestaurant = tryCatchWrapperWithDb(async (req, res, next, cl
 // 음식점 메뉴 리스트 조회
 exports.getRestaurantMenuInfoList = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const users_idx = req[COOKIE_NAME.ACCESS_TOKEN]?.users_idx;
-  const { restaurant_idx } = req.params;
+  const { restaurants_idx } = req.params;
   const { page } = req.query;
 
   const { total_pages, data } = await rs.getRestaurantMenuInfoListFromDb({
     users_idx,
-    restaurant_idx,
+    restaurants_idx,
     page,
     client,
   });
@@ -222,11 +222,11 @@ exports.updateMenuReviewByIdx = tryCatchWrapperWithDb(async (req, res, next, cli
 // 음식점 상세보기 조회
 exports.getRestaurantInfoByIdx = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const users_idx = req[COOKIE_NAME.ACCESS_TOKEN]?.users_idx;
-  const { restaurant_idx } = req.params;
+  const { restaurants_idx } = req.params;
 
-  const data = await rs.getRestaurantInfoByIdxFromDb({ users_idx, restaurant_idx, client });
+  const data = await rs.getRestaurantInfoByIdxFromDb({ users_idx, restaurants_idx, client });
   if (typeof data !== "object" || Object.keys(data).length === 0)
-    throw customErrorResponse({ status: 404, message: "조회 결과 없음" });
+    throw customErrorResponse({ status: 404, message: "음식점 정보 없음" });
 
   res.status(200).json({ message: "요청 처리 성공", data });
 });
@@ -234,12 +234,12 @@ exports.getRestaurantInfoByIdx = tryCatchWrapperWithDb(async (req, res, next, cl
 // 음식점 상세보기 수정
 exports.updateRestaurantInfoByIdx = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { users_idx } = req[COOKIE_NAME.ACCESS_TOKEN];
-  const { restaurant_idx } = req.params;
+  const { restaurants_idx } = req.params;
   const { category_idx, restaurant_name, address_detail, phone, start_time, end_time } = req.body;
 
-  const return_restaurant_idx = await rs.updateRestaurantInfoByIdxAtDb({
+  const isUpdated = await rs.updateRestaurantInfoByIdxAtDb({
     users_idx,
-    restaurant_idx,
+    restaurants_idx,
     category_idx,
     restaurant_name,
     address_detail,
@@ -248,7 +248,7 @@ exports.updateRestaurantInfoByIdx = tryCatchWrapperWithDb(async (req, res, next,
     end_time,
     client,
   });
-  if (!return_restaurant_idx) throw customErrorResponse({ status: 404, message: "조회 결과 없음" });
+  if (!isUpdated) throw customErrorResponse({ status: 404, message: "조회 결과 없음" });
 
   res.status(200).json({ message: "요청 처리 성공" });
 });
