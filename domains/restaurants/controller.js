@@ -113,6 +113,8 @@ exports.getRecommendRestaurant = tryCatchWrapperWithDb(async (req, res, next, cl
     user_latitude,
     client,
   });
+  if (Object.keys(data).length === 0)
+    throw customErrorResponse({ status: 404, message: "추천 음식점 없음" });
 
   res.status(200).json({ message: "요청 처리 성공", data });
 });

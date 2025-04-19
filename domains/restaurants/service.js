@@ -191,7 +191,7 @@ exports.getRecommendRestaurantFromDb = async ({
 }) => {
   const results = await client.query(
     `
-    WITH likes AS (
+    WITH tot_likes AS (
       SELECT COUNT(*) AS likes_count,
       restaurants_idx
       FROM restaurants.likes
@@ -211,10 +211,12 @@ exports.getRecommendRestaurantFromDb = async ({
           phone,
           start_time,
           end_time,
-          CASE WHEN list.users_idx = $1 THEN true ELSE false END AS is_mine
+          CASE WHEN list.users_idx = $1 THEN true ELSE false END AS is_mine,
+          CASE WHEN likes.users_idx = $1 THEN true ELSE false END AS is_my_like
       FROM restaurants.lists AS list
       JOIN restaurants.categories AS category ON list.categories_idx = category.idx
-      LEFT JOIN likes ON list.idx = likes.restaurants_idx
+      LEFT JOIN tot_likes ON list.idx = tot_likes.restaurants_idx
+      LEFT JOIN restaurants.likes likes ON list.idx = likes.restaurants_idx
       WHERE list.is_deleted = false
       AND category.is_deleted = false
       AND (
