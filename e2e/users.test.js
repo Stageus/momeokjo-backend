@@ -461,7 +461,7 @@ describe("DELETE /users/likes/restaurants/:restaurants_idx", () => {
       .set("Cookie", cookie);
 
     expect(res.status).toBe(404);
-    expect(res.body.message).toBe("음식점 즐겨찾기 없음");
+    expect(res.body.message).toBe("음식점 즐겨찾기 등록 내역 없음");
   });
 });
 
