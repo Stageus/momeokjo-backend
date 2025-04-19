@@ -1,11 +1,24 @@
 const customErrorResponse = require("../utils/customErrorResponse");
 const { tryCatchWrapper } = require("../utils/customWrapper");
 const { verifyToken } = require("../utils/jwt");
+const COOKIE_NAME = require("../utils/cookieName");
 
 const verifyAccessToken = (tokenKey) =>
   tryCatchWrapper(async (req, res, next) => {
     const token = req.cookies[tokenKey];
-    if (!token) throw customErrorResponse(401, "토큰 없음");
+    if (!token) {
+      if (tokenKey === COOKIE_NAME.ACCESS_TOKEN) {
+        throw customErrorResponse(401, "로그인 필요");
+      } else if (tokenKey === COOKIE_NAME.EMAIL_AUTH_SEND) {
+        throw customErrorResponse(401, "인증번호 이메일 전송되지 않음");
+      } else if (tokenKey === COOKIE_NAME.EMAIL_AUTH_VERIFIED) {
+        throw customErrorResponse(401, "이메일 인증되지 않음");
+      } else if (tokenKey === COOKIE_NAME.PASSWORD_RESET) {
+        throw customErrorResponse(401, "비밀번호 변경 인증 정보 없음");
+      } else {
+        throw customErrorResponse(401, "토큰 없음");
+      }
+    }
 
     const { isValid, results } = verifyToken(token);
 
