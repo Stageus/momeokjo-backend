@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const customErrorResponse = require("./customErrorResponse");
 
-exports.createAccessToken = (payload, expiresIn) => {
+exports.createAccessToken = ({ payload, expiresIn }) => {
   try {
     if (!payload || typeof payload !== "object" || Object.keys(payload).length === 0)
       throw new Error("payload 확인 필요");
@@ -18,7 +18,7 @@ exports.createAccessToken = (payload, expiresIn) => {
   }
 };
 
-exports.createRefreshToken = (payload, expiresIn) => {
+exports.createRefreshToken = ({ payload, expiresIn }) => {
   try {
     if (!payload || typeof payload !== "object" || Object.keys(payload).length === 0)
       throw new Error("payload 확인 필요");
@@ -35,7 +35,7 @@ exports.createRefreshToken = (payload, expiresIn) => {
   }
 };
 
-exports.verifyToken = (token, isRefresh = false) => {
+exports.verifyToken = ({ token, isRefresh = false }) => {
   try {
     if (!token || typeof token !== "string") throw new Error("token 확인 필요");
 
