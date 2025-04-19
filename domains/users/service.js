@@ -398,7 +398,7 @@ exports.deleteReviewFromDbByReviewsIdx = async ({ client, reviews_idx }) => {
     [reviews_idx]
   );
 
-  return results.rows.map(({ idx }) => parseInt(idx));
+  return results.rows?.map(({ idx }) => parseInt(idx)) ?? [];
 };
 
 // 메뉴 신고 등록
@@ -432,7 +432,7 @@ exports.checkTotalMenuReportByIdx = async ({ client, menus_idx }) => {
 };
 
 // 후기 신고 등록
-exports.createReviewReportAtDb = async ({ client, review_idx, users_idx }) => {
+exports.createReviewReportAtDb = async ({ client, reviews_idx, users_idx }) => {
   await client.query(
     `
       INSERT INTO reviews.reports (
@@ -443,7 +443,7 @@ exports.createReviewReportAtDb = async ({ client, review_idx, users_idx }) => {
         $2
       );
     `,
-    [review_idx, users_idx]
+    [reviews_idx, users_idx]
   );
 };
 

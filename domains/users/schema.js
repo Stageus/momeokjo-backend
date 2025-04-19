@@ -136,11 +136,6 @@ exports.createMenuReport = {
 
 exports.createReviewReport = {
   param: {
-    users_idx: {
-      isRequired: true,
-      defaultValue: null,
-      regexp: REGEXP.INDEX,
-    },
     reviews_idx: {
       isRequired: true,
       defaultValue: null,

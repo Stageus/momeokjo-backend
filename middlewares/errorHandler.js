@@ -18,6 +18,8 @@ const errorHandler = (err, req, res, next) => {
       return res.status(409).json({ message: "음식점 신고 중복 등록" });
     } else if (constraint === "unique_menus_reports") {
       return res.status(409).json({ message: "메뉴 신고 중복 등록" });
+    } else if (constraint === "unique_reviews_reports") {
+      return res.status(409).json({ message: "후기 신고 중복 등록" });
     } else {
       return res.status(409).json({ message, target: constraint });
     }

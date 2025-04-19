@@ -188,14 +188,13 @@ exports.createReviewReport = tryCatchWrapperWithDbTransaction(async (req, res, n
   await us.createReviewReportAtDb({ client, reviews_idx, users_idx });
 
   const total_count = await us.checkTotalReviewReportByIdx({ client, reviews_idx });
-  console.log(total_count);
 
-  if (total_count >= 1) {
+  if (total_count >= 5) {
     const reviews_idx_list = await us.deleteReviewFromDbByReviewsIdx({
       client,
       reviews_idx,
     });
-    await us.deleteReviewLikeFromDb({ client, reviews_idx_list });
+    await us.deleteReviewLikeFromDbWithArray({ client, reviews_idx_list });
   }
 
   res.status(200).json({ message: "요청 처리 성공" });
