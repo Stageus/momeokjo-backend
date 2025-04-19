@@ -15,6 +15,8 @@ const verifyAccessToken = (tokenKey) =>
         throw customErrorResponse({ status: 401, message: "이메일 인증되지 않음" });
       } else if (tokenKey === COOKIE_NAME.PASSWORD_RESET) {
         throw customErrorResponse({ status: 401, message: "비밀번호 변경 인증 정보 없음" });
+      } else if (tokenKey === COOKIE_NAME.OAUTH_INDEX) {
+        throw customErrorResponse({ status: 401, message: "카카오 인증되지 않음" });
       } else {
         throw customErrorResponse({ status: 401, message: "토큰 없음" });
       }
