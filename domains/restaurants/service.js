@@ -429,7 +429,7 @@ exports.createMenuReviewAtDb = async ({ users_idx, menus_idx, content, image_url
 // 메뉴 후기 수정
 exports.updateMenuReviewByIdxAtDb = async ({
   users_idx,
-  review_idx,
+  reviews_idx,
   content,
   image_url,
   client,
@@ -442,12 +442,12 @@ exports.updateMenuReviewByIdxAtDb = async ({
       WHERE idx = $3
       AND is_deleted = false
       AND users_idx = $4
-      RETURNING idx AS review_idx;
+      RETURNING idx;
     `,
-    [content, image_url, review_idx, users_idx]
+    [content, image_url, reviews_idx, users_idx]
   );
 
-  return results.rows[0]?.review_idx;
+  return results.rowCount > 0;
 };
 
 // 음식점 상세보기 조회

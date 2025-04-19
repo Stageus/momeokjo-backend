@@ -211,18 +211,18 @@ exports.createMenuReview = tryCatchWrapperWithDb(async (req, res, next, client) 
 // 메뉴 후기 수정
 exports.updateMenuReviewByIdx = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { users_idx } = req.accessToken;
-  const { review_idx } = req.params;
+  const { reviews_idx } = req.params;
   const { content } = req.body;
   const image_url = req.file?.location;
 
-  const return_review_idx = await rs.updateMenuReviewByIdxAtDb({
+  const isUpdated = await rs.updateMenuReviewByIdxAtDb({
     users_idx,
-    review_idx,
+    reviews_idx,
     content,
     image_url,
     client,
   });
-  if (!return_review_idx) throw customErrorResponse({ status: 404, message: "조회 결과 없음" });
+  if (!isUpdated) throw customErrorResponse({ status: 404, message: "후기 수정 대상 없음" });
 
   res.status(200).json({ message: "요청 처리 성공" });
 });

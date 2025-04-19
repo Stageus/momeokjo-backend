@@ -1085,7 +1085,7 @@ describe("PUT /restaurants/menus/:menus_idx", () => {
       end_time: "0000",
     });
 
-    const menu_idx = await helper.createTempMenuReturnIdx({
+    const menus_idx = await helper.createTempMenuReturnIdx({
       users_idx,
       restaurants_idx,
       menu_name: "테스트 메뉴",
@@ -1093,7 +1093,7 @@ describe("PUT /restaurants/menus/:menus_idx", () => {
     });
 
     const res = await agent
-      .put(`/restaurants/menus/${menu_idx}`)
+      .put(`/restaurants/menus/${menus_idx}`)
       .set("Cookie", cookie)
       .send({ menu_name: "", price: "20000" });
 
@@ -1131,7 +1131,7 @@ describe("PUT /restaurants/menus/:menus_idx", () => {
       end_time: "0000",
     });
 
-    const menu_idx = await helper.createTempMenuReturnIdx({
+    const menus_idx = await helper.createTempMenuReturnIdx({
       users_idx,
       restaurants_idx,
       menu_name: "테스트 메뉴",
@@ -1139,7 +1139,7 @@ describe("PUT /restaurants/menus/:menus_idx", () => {
     });
 
     const res = await agent
-      .put(`/restaurants/menus/${menu_idx}`)
+      .put(`/restaurants/menus/${menus_idx}`)
       .send({ menu_name: "", price: "20000" });
 
     expect(res.status).toBe(401);
@@ -1173,7 +1173,7 @@ describe("PUT /restaurants/menus/:menus_idx", () => {
       end_time: "0000",
     });
 
-    const menu_idx = await helper.createTempMenuReturnIdx({
+    const menus_idx = await helper.createTempMenuReturnIdx({
       users_idx,
       restaurants_idx,
       menu_name: "테스트 메뉴",
@@ -1196,7 +1196,7 @@ describe("PUT /restaurants/menus/:menus_idx", () => {
     });
 
     const res = await agent
-      .put(`/restaurants/menus/${menu_idx}`)
+      .put(`/restaurants/menus/${menus_idx}`)
       .set("Cookie", cookie)
       .send({ menu_name: "테스트 메뉴", price: "20000" });
 
@@ -1298,7 +1298,7 @@ describe("GET /restaurants/:restaurant_idx/menus", () => {
   });
 });
 
-describe("POST /restaurants/menus/:review_idx/review", () => {
+describe("POST /restaurants/menus/:reviews_idx/review", () => {
   const agent = request(app);
   it("후기 등록 성공한 경우 상태코드 200을 응답해야한다.", async () => {
     const id = "test";
@@ -1331,7 +1331,7 @@ describe("POST /restaurants/menus/:review_idx/review", () => {
       end_time: "0000",
     });
 
-    const menu_idx = await helper.createTempMenuReturnIdx({
+    const menus_idx = await helper.createTempMenuReturnIdx({
       users_idx,
       restaurants_idx,
       menu_name: "테스트 메뉴",
@@ -1339,7 +1339,7 @@ describe("POST /restaurants/menus/:review_idx/review", () => {
     });
 
     const res = await agent
-      .post(`/restaurants/menus/${menu_idx}/reviews`)
+      .post(`/restaurants/menus/${menus_idx}/reviews`)
       .set("Cookie", cookie)
       .field("content", "테스트 후기");
 
@@ -1378,7 +1378,7 @@ describe("POST /restaurants/menus/:review_idx/review", () => {
       end_time: "0000",
     });
 
-    const menu_idx = await helper.createTempMenuReturnIdx({
+    const menus_idx = await helper.createTempMenuReturnIdx({
       users_idx,
       restaurants_idx,
       menu_name: "테스트 메뉴",
@@ -1386,7 +1386,7 @@ describe("POST /restaurants/menus/:review_idx/review", () => {
     });
 
     const res = await agent
-      .post(`/restaurants/menus/${menu_idx}/reviews`)
+      .post(`/restaurants/menus/${menus_idx}/reviews`)
       .set("Cookie", cookie)
       .field("content", "");
 
@@ -1471,7 +1471,7 @@ describe("POST /restaurants/menus/:review_idx/review", () => {
       end_time: "0000",
     });
 
-    const menu_idx = await helper.createTempMenuReturnIdx({
+    const menus_idx = await helper.createTempMenuReturnIdx({
       users_idx,
       restaurants_idx,
       menu_name: "테스트 메뉴",
@@ -1479,7 +1479,7 @@ describe("POST /restaurants/menus/:review_idx/review", () => {
     });
 
     const res = await agent
-      .post(`/restaurants/menus/${menu_idx}/reviews`)
+      .post(`/restaurants/menus/${menus_idx}/reviews`)
       .field("content", "테스트 후기");
 
     expect(res.status).toBe(401);
@@ -1487,222 +1487,222 @@ describe("POST /restaurants/menus/:review_idx/review", () => {
   });
 });
 
-// describe("PUT /menus/reviews/:review_idx", () => {
-//   const agent = request(app);
-//   it("후기 수정에 성공한 경우 상태코드 200을 응답해야한다.", async () => {
-//     const id = "test";
-//     const pw = "Test!1@2";
-//     const users_idx = await helper.createTempUserReturnIdx({
-//       id,
-//       pw,
-//       nickname: "test",
-//       email: "test@test.com",
-//       role: "ADMIN",
-//     });
+describe("PUT /restaurants/menus/reviews/:reviews_idx", () => {
+  const agent = request(app);
+  it("후기 수정에 성공한 경우 상태코드 200을 응답해야한다.", async () => {
+    const id = "test";
+    const pw = "Test!1@2";
+    const users_idx = await helper.createTempUserReturnIdx({
+      id,
+      pw,
+      nickname: "test",
+      email: "test@test.com",
+      role: "ADMIN",
+    });
 
-//     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
+    const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
 
-//     const category_idx = await helper.createTempCateoryReturnIdx({
-//       users_idx,
-//       category_name: "테스트",
-//     });
+    const category_idx = await helper.createTempCateoryReturnIdx({
+      users_idx,
+      category_name: "테스트",
+    });
 
-//     const restaurant_idx = await helper.createTempRestaurantReturnIdx({
-//       category_idx,
-//       users_idx,
-//       restaurant_name: "테스트 음식점",
-//       longitude: "127.0316",
-//       latitude: "37.4979",
-//       address: "테스트 음식점 테스트로 123",
-//       address_detail: "테스트 음식점 상세 주소",
-//       phone: "01012345678",
-//       start_time: "0000",
-//       end_time: "0000",
-//     });
+    const restaurants_idx = await helper.createTempRestaurantReturnIdx({
+      category_idx,
+      users_idx,
+      restaurant_name: "테스트 음식점",
+      longitude: "127.0316",
+      latitude: "37.4979",
+      address: "테스트 음식점 테스트로 123",
+      address_detail: "테스트 음식점 상세 주소",
+      phone: "01012345678",
+      start_time: "0000",
+      end_time: "0000",
+    });
 
-//     const menu_idx = await helper.createTempMenuReturnIdx({
-//       users_idx,
-//       restaurant_idx,
-//       menu_name: "테스트 메뉴",
-//       price: "10000",
-//     });
+    const menus_idx = await helper.createTempMenuReturnIdx({
+      users_idx,
+      restaurants_idx,
+      menu_name: "테스트 메뉴",
+      price: "10000",
+    });
 
-//     const review_idx = await helper.createTempReviewReturnIdx({
-//       users_idx,
-//       menu_idx,
-//       content: "테스트 후기",
-//       image_url: "",
-//     });
+    const reviews_idx = await helper.createTempReviewReturnIdx({
+      users_idx,
+      menus_idx,
+      content: "테스트 후기",
+      image_url: "",
+    });
 
-//     const res = await agent
-//       .put(`/restaurants/menus/reviews/${review_idx}`)
-//       .set("Cookie", cookie)
-//       .field("content", "테스트 후기 수정");
+    const res = await agent
+      .put(`/restaurants/menus/reviews/${reviews_idx}`)
+      .set("Cookie", cookie)
+      .field("content", "테스트 후기 수정");
 
-//     expect(res.status).toBe(200);
-//     expect(res.body.message).toBe("요청 처리 성공");
-//   });
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("요청 처리 성공");
+  });
 
-//   it("입력값이 유효하지 않은 경우 상태코드 400을 응답해야한다.", async () => {
-//     const id = "test";
-//     const pw = "Test!1@2";
-//     const users_idx = await helper.createTempUserReturnIdx({
-//       id,
-//       pw,
-//       nickname: "test",
-//       email: "test@test.com",
-//       role: "ADMIN",
-//     });
+  it("입력값이 유효하지 않은 경우 상태코드 400을 응답해야한다.", async () => {
+    const id = "test";
+    const pw = "Test!1@2";
+    const users_idx = await helper.createTempUserReturnIdx({
+      id,
+      pw,
+      nickname: "test",
+      email: "test@test.com",
+      role: "ADMIN",
+    });
 
-//     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
+    const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
 
-//     const category_idx = await helper.createTempCateoryReturnIdx({
-//       users_idx,
-//       category_name: "테스트",
-//     });
+    const category_idx = await helper.createTempCateoryReturnIdx({
+      users_idx,
+      category_name: "테스트",
+    });
 
-//     const restaurant_idx = await helper.createTempRestaurantReturnIdx({
-//       category_idx,
-//       users_idx,
-//       restaurant_name: "테스트 음식점",
-//       longitude: "127.0316",
-//       latitude: "37.4979",
-//       address: "테스트 음식점 테스트로 123",
-//       address_detail: "테스트 음식점 상세 주소",
-//       phone: "01012345678",
-//       start_time: "0000",
-//       end_time: "0000",
-//     });
+    const restaurants_idx = await helper.createTempRestaurantReturnIdx({
+      category_idx,
+      users_idx,
+      restaurant_name: "테스트 음식점",
+      longitude: "127.0316",
+      latitude: "37.4979",
+      address: "테스트 음식점 테스트로 123",
+      address_detail: "테스트 음식점 상세 주소",
+      phone: "01012345678",
+      start_time: "0000",
+      end_time: "0000",
+    });
 
-//     const menu_idx = await helper.createTempMenuReturnIdx({
-//       users_idx,
-//       restaurant_idx,
-//       menu_name: "테스트 메뉴",
-//       price: "10000",
-//     });
+    const menus_idx = await helper.createTempMenuReturnIdx({
+      users_idx,
+      restaurants_idx,
+      menu_name: "테스트 메뉴",
+      price: "10000",
+    });
 
-//     const review_idx = await helper.createTempReviewReturnIdx({
-//       users_idx,
-//       menu_idx,
-//       content: "테스트 후기",
-//       image_url: "",
-//     });
+    const reviews_idx = await helper.createTempReviewReturnIdx({
+      users_idx,
+      menus_idx,
+      content: "테스트 후기",
+      image_url: "",
+    });
 
-//     const res = await agent
-//       .put(`/restaurants/menus/reviews/${review_idx}`)
-//       .set("Cookie", cookie)
-//       .field("content", "");
+    const res = await agent
+      .put(`/restaurants/menus/reviews/${reviews_idx}`)
+      .set("Cookie", cookie)
+      .field("content", "");
 
-//     expect(res.status).toBe(400);
-//     expect(res.body.message).toBe("입력값 확인 필요");
-//     expect(res.body.target).toBe("content");
-//   });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe("입력값 확인 필요");
+    expect(res.body.target).toBe("content");
+  });
 
-//   it("인증이 유효하지 않은 경우 상태코드 401을 응답해야한다.", async () => {
-//     const id = "test";
-//     const pw = "Test!1@2";
-//     const users_idx = await helper.createTempUserReturnIdx({
-//       id,
-//       pw,
-//       nickname: "test",
-//       email: "test@test.com",
-//       role: "ADMIN",
-//     });
+  it("로그인 하지 않은 경우 상태코드 401을 응답해야한다.", async () => {
+    const id = "test";
+    const pw = "Test!1@2";
+    const users_idx = await helper.createTempUserReturnIdx({
+      id,
+      pw,
+      nickname: "test",
+      email: "test@test.com",
+      role: "ADMIN",
+    });
 
-//     const category_idx = await helper.createTempCateoryReturnIdx({
-//       users_idx,
-//       category_name: "테스트",
-//     });
+    const category_idx = await helper.createTempCateoryReturnIdx({
+      users_idx,
+      category_name: "테스트",
+    });
 
-//     const restaurant_idx = await helper.createTempRestaurantReturnIdx({
-//       category_idx,
-//       users_idx,
-//       restaurant_name: "테스트 음식점",
-//       longitude: "127.0316",
-//       latitude: "37.4979",
-//       address: "테스트 음식점 테스트로 123",
-//       address_detail: "테스트 음식점 상세 주소",
-//       phone: "01012345678",
-//       start_time: "0000",
-//       end_time: "0000",
-//     });
+    const restaurants_idx = await helper.createTempRestaurantReturnIdx({
+      category_idx,
+      users_idx,
+      restaurant_name: "테스트 음식점",
+      longitude: "127.0316",
+      latitude: "37.4979",
+      address: "테스트 음식점 테스트로 123",
+      address_detail: "테스트 음식점 상세 주소",
+      phone: "01012345678",
+      start_time: "0000",
+      end_time: "0000",
+    });
 
-//     const menu_idx = await helper.createTempMenuReturnIdx({
-//       users_idx,
-//       restaurant_idx,
-//       menu_name: "테스트 메뉴",
-//       price: "10000",
-//     });
+    const menus_idx = await helper.createTempMenuReturnIdx({
+      users_idx,
+      restaurants_idx,
+      menu_name: "테스트 메뉴",
+      price: "10000",
+    });
 
-//     const review_idx = await helper.createTempReviewReturnIdx({
-//       users_idx,
-//       menu_idx,
-//       content: "테스트 후기",
-//       image_url: "",
-//     });
+    const reviews_idx = await helper.createTempReviewReturnIdx({
+      users_idx,
+      menus_idx,
+      content: "테스트 후기",
+      image_url: "",
+    });
 
-//     const res = await agent
-//       .put(`/restaurants/menus/reviews/${review_idx}`)
-//       .field("content", "테스트 후기 수정");
+    const res = await agent
+      .put(`/restaurants/menus/reviews/${reviews_idx}`)
+      .field("content", "테스트 후기 수정");
 
-//     expect(res.status).toBe(401);
-//     expect(res.body.message).toBe("토큰 없음");
-//   });
+    expect(res.status).toBe(401);
+    expect(res.body.message).toBe("로그인 필요");
+  });
 
-//   it("수정 대상이 없는 경우 상태코드 404를 응답해야한다.", async () => {
-//     const id = "test";
-//     const pw = "Test!1@2";
-//     const users_idx = await helper.createTempUserReturnIdx({
-//       id,
-//       pw,
-//       nickname: "test",
-//       email: "test@test.com",
-//       role: "ADMIN",
-//     });
+  it("수정 대상이 없는 경우 상태코드 404를 응답해야한다.", async () => {
+    const id = "test";
+    const pw = "Test!1@2";
+    const users_idx = await helper.createTempUserReturnIdx({
+      id,
+      pw,
+      nickname: "test",
+      email: "test@test.com",
+      role: "ADMIN",
+    });
 
-//     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
+    const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
 
-//     const category_idx = await helper.createTempCateoryReturnIdx({
-//       users_idx,
-//       category_name: "테스트",
-//     });
+    const category_idx = await helper.createTempCateoryReturnIdx({
+      users_idx,
+      category_name: "테스트",
+    });
 
-//     const restaurant_idx = await helper.createTempRestaurantReturnIdx({
-//       category_idx,
-//       users_idx,
-//       restaurant_name: "테스트 음식점",
-//       longitude: "127.0316",
-//       latitude: "37.4979",
-//       address: "테스트 음식점 테스트로 123",
-//       address_detail: "테스트 음식점 상세 주소",
-//       phone: "01012345678",
-//       start_time: "0000",
-//       end_time: "0000",
-//     });
+    const restaurants_idx = await helper.createTempRestaurantReturnIdx({
+      category_idx,
+      users_idx,
+      restaurant_name: "테스트 음식점",
+      longitude: "127.0316",
+      latitude: "37.4979",
+      address: "테스트 음식점 테스트로 123",
+      address_detail: "테스트 음식점 상세 주소",
+      phone: "01012345678",
+      start_time: "0000",
+      end_time: "0000",
+    });
 
-//     const menu_idx = await helper.createTempMenuReturnIdx({
-//       users_idx,
-//       restaurant_idx,
-//       menu_name: "테스트 메뉴",
-//       price: "10000",
-//     });
+    const menus_idx = await helper.createTempMenuReturnIdx({
+      users_idx,
+      restaurants_idx,
+      menu_name: "테스트 메뉴",
+      price: "10000",
+    });
 
-//     await helper.createTempReviewReturnIdx({
-//       users_idx,
-//       menu_idx,
-//       content: "테스트 후기",
-//       image_url: "",
-//     });
+    await helper.createTempReviewReturnIdx({
+      users_idx,
+      menus_idx,
+      content: "테스트 후기",
+      image_url: "",
+    });
 
-//     const res = await agent
-//       .put(`/restaurants/menus/reviews/1`)
-//       .set("Cookie", cookie)
-//       .field("content", "테스트 후기 수정");
+    const res = await agent
+      .put(`/restaurants/menus/reviews/1`)
+      .set("Cookie", cookie)
+      .field("content", "테스트 후기 수정");
 
-//     expect(res.status).toBe(404);
-//     expect(res.body.message).toBe("조회 결과 없음");
-//   });
-// });
+    expect(res.status).toBe(404);
+    expect(res.body.message).toBe("후기 수정 대상 없음");
+  });
+});
 
 // describe("GET /menus/:menu_idx/reviews", () => {
 //   const agent = request(app);
