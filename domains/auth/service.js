@@ -99,7 +99,7 @@ exports.checkUserWithIdAndEmailFromDb = async ({ client, id, email }) => {
         FROM users.lists
         WHERE id = $1
         AND email = $2
-      ) AS is_existed
+      ) AS is_existed;
   `,
     [id, email]
   );
@@ -107,7 +107,7 @@ exports.checkUserWithIdAndEmailFromDb = async ({ client, id, email }) => {
   return results.rows[0].is_existed;
 };
 
-exports.updatePasswordAtDb = async (client, id, pw, email) => {
+exports.updatePasswordAtDb = async ({ client, id, pw, email }) => {
   await client.query(
     `
       UPDATE users.lists SET pw = $2
@@ -172,7 +172,7 @@ exports.checkVerifyCodeFromDb = async ({ client, email, code }) => {
       WHERE email = $1
         AND code = $2
       ORDER BY created_at DESC
-      LIMIT 1
+      LIMIT 1;
     `,
     [email, code]
   );

@@ -45,7 +45,7 @@ router.post(
 // 비밀번호 초기화
 router.put(
   "/resetpw",
-  verifyAccessToken("resetPw"),
+  verifyAccessToken(COOKIE_NAME.PASSWORD_RESET),
   createValidateChain(schema.resetPw),
   validateRequest,
   ac.resetPassword

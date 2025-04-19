@@ -134,15 +134,15 @@ exports.createRequestPasswordReset = tryCatchWrapperWithDb(async (req, res, next
 
 // 비밀번호 변경
 exports.resetPassword = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { id, email } = req.resetPw;
+  const { id, email } = req[COOKIE_NAME.PASSWORD_RESET];
   const { pw } = req.body;
 
-  const isExistedUser = await as.checkUserWithIdAndEmailFromDb(client, id, email);
-  if (!isExistedUser) throw customErrorResponse(404, "계정 없음");
+  const isExisted = await as.checkUserWithIdAndEmailFromDb({ client, id, email });
+  if (!isExisted) throw customErrorResponse({ status: 404, message: "해당하는 사용자 없음" });
 
-  await as.updatePasswordAtDb(client, id, pw, email);
+  await as.updatePasswordAtDb({ client, id, pw, email });
 
-  res.clearCookie("resetPw", accessTokenOptions);
+  res.clearCookie(COOKIE_NAME.PASSWORD_RESET, accessTokenOptions);
   res.status(200).json({ message: "요청 처리 성공" });
 });
 
