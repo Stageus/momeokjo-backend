@@ -168,13 +168,13 @@ exports.createMenuReport = tryCatchWrapperWithDbTransaction(async (req, res, nex
 
   if (total_count >= 5) {
     const menus_idx_list = await us.deleteMenuFromDbByMenusIdx({ client, menus_idx });
-    await us.deleteMenuLikeFromDb({ client, menus_idx_list });
+    await us.deleteMenuLikeFromDbWithArray({ client, menus_idx_list });
 
     const reviews_idx_list = await us.deleteReviewFromDbByMenusIdx({
       client,
-      menus_idx_list,
+      menus_idx,
     });
-    await us.deleteReviewLikeFromDb({ client, reviews_idx_list });
+    await us.deleteReviewLikeFromDbWithArray({ client, reviews_idx_list });
   }
 
   res.status(200).json({ message: "요청 처리 성공" });

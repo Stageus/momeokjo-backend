@@ -402,7 +402,7 @@ exports.deleteReviewFromDbByReviewsIdx = async ({ client, reviews_idx }) => {
 };
 
 // 메뉴 신고 등록
-exports.createMenuReportAtDb = async (client, menu_idx, users_idx) => {
+exports.createMenuReportAtDb = async ({ client, menus_idx, users_idx }) => {
   await client.query(
     `
       INSERT INTO menus.reports (
@@ -413,22 +413,22 @@ exports.createMenuReportAtDb = async (client, menu_idx, users_idx) => {
         $2
       );
     `,
-    [menu_idx, users_idx]
+    [menus_idx, users_idx]
   );
 };
 
 // 총 메뉴 신고 횟수 조회
-exports.checkTotalMenuReportByIdx = async (client, menu_idx) => {
+exports.checkTotalMenuReportByIdx = async ({ client, menus_idx }) => {
   const results = await client.query(
     `
       SELECT COUNT(*) AS total_count
       FROM menus.reports
       WHERE menus_idx = $1;
     `,
-    [menu_idx]
+    [menus_idx]
   );
 
-  return results.rows[0].total_count ?? 0;
+  return results.rows[0]?.total_count ?? 0;
 };
 
 // 후기 신고 등록

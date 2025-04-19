@@ -126,11 +126,6 @@ exports.createRestaurantReport = {
 
 exports.createMenuReport = {
   param: {
-    users_idx: {
-      isRequired: true,
-      defaultValue: null,
-      regexp: REGEXP.INDEX,
-    },
     menus_idx: {
       isRequired: true,
       defaultValue: null,
