@@ -6,11 +6,12 @@ const rc = require("./controller");
 const schema = require("./schema");
 const verifyAccessToken = require("../../middlewares/verifyAccessToken");
 const verifyAccessTokenOptional = require("../../middlewares/verifyAccessTokenOptional");
+const COOKIE_NAME = require("../../utils/cookieName");
 
 // 음식점 리스트 조회
 router.get(
   "/",
-  verifyAccessTokenOptional("accessToken"),
+  verifyAccessTokenOptional(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.getRestaurantInfoList),
   validateRequest,
   rc.getRestaurantInfoList
@@ -19,7 +20,7 @@ router.get(
 // 음식점 등록
 router.post(
   "/",
-  verifyAccessToken("accessToken"),
+  verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.createRestaurantInfo),
   validateRequest,
   rc.createRestaurantInfo
@@ -36,7 +37,7 @@ router.get(
 // 음식점 카테고리 등록
 router.post(
   "/categories",
-  verifyAccessToken("accessToken"),
+  verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.createRestaurantCategory),
   validateRequest,
   rc.createRestaurantCategory
@@ -45,7 +46,7 @@ router.post(
 // 음식점 카테고리 수정
 router.put(
   "/categories/:category_idx",
-  verifyAccessToken("accessToken"),
+  verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.updateRestaurantCategoryByIdx),
   validateRequest,
   rc.updateRestaurantCategoryByIdx
@@ -54,7 +55,7 @@ router.put(
 // 음식점 랜덤 조회
 router.get(
   "/recommends",
-  verifyAccessTokenOptional("accessToken"),
+  verifyAccessTokenOptional(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.getRecommendRestaurant),
   validateRequest,
   rc.getRecommendRestaurant
@@ -63,7 +64,7 @@ router.get(
 // 메뉴 후기 리스트 조회
 router.get(
   "/menus/:menu_idx/reviews",
-  verifyAccessTokenOptional("accessToken"),
+  verifyAccessTokenOptional(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.getMenuReviewInfoList),
   validateRequest,
   rc.getMenuReviewInfoList
@@ -72,7 +73,7 @@ router.get(
 // 메뉴 후기 등록
 router.post(
   "/menus/:menu_idx/reviews",
-  verifyAccessToken("accessToken"),
+  verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN),
   upload.single("image"),
   createValidateChain(schema.createMenuReview),
   validateRequest,
@@ -82,7 +83,7 @@ router.post(
 // 메뉴 후기 수정
 router.put(
   "/menus/reviews/:review_idx",
-  verifyAccessToken("accessToken"),
+  verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN),
   upload.single("image"),
   createValidateChain(schema.updateMenuReviewByIdx),
   validateRequest,
@@ -92,7 +93,7 @@ router.put(
 // 음식점 메뉴 리스트 조회
 router.get(
   "/:restaurant_idx/menus",
-  verifyAccessTokenOptional("accessToken"),
+  verifyAccessTokenOptional(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.getRestaurantMenuInfoList),
   validateRequest,
   rc.getRestaurantMenuInfoList
@@ -101,7 +102,7 @@ router.get(
 // 음식점 메뉴 등록
 router.post(
   "/:restaurant_idx/menus",
-  verifyAccessToken("accessToken"),
+  verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.createRestaurantMenu),
   validateRequest,
   rc.createRestaurantMenu
@@ -110,7 +111,7 @@ router.post(
 // 음식점 메뉴 수정
 router.put(
   "/menus/:menu_idx",
-  verifyAccessToken("accessToken"),
+  verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.updateRestaurantMenuByIdx),
   validateRequest,
   rc.updateRestaurantMenuByIdx
@@ -119,7 +120,7 @@ router.put(
 // 음식점 상세보기 조회
 router.get(
   "/:restaurant_idx",
-  verifyAccessTokenOptional("accessToken"),
+  verifyAccessTokenOptional(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.getRestaurantInfoByIdx),
   validateRequest,
   rc.getRestaurantInfoByIdx
@@ -128,7 +129,7 @@ router.get(
 // 음식점 상세보기 수정
 router.put(
   "/:restaurant_idx",
-  verifyAccessToken("accessToken"),
+  verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.updateRestaurantInfoByIdx),
   validateRequest,
   rc.updateRestaurantInfoByIdx

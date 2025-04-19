@@ -1,13 +1,13 @@
 // 음식점 리스트 조회
-exports.getRestaurantInfoListFromDb = async (
+exports.getRestaurantInfoListFromDb = async ({
   users_idx,
   category_idx,
   range,
   page,
   user_longitude,
   user_latitude,
-  client
-) => {
+  client,
+}) => {
   const check_total = await client.query(
     `
       SELECT 
@@ -81,7 +81,7 @@ exports.getRestaurantInfoListFromDb = async (
 };
 
 // 음식점 등록
-exports.createRestaurantInfoAtDb = async (
+exports.createRestaurantInfoAtDb = async ({
   category_idx,
   users_idx,
   restaurant_name,
@@ -92,8 +92,8 @@ exports.createRestaurantInfoAtDb = async (
   phone,
   start_time,
   end_time,
-  client
-) => {
+  client,
+}) => {
   await client.query(
     `
       INSERT INTO restaurants.lists (
@@ -130,7 +130,7 @@ exports.createRestaurantInfoAtDb = async (
 };
 
 // 음식점 카테고리 리스트 조회
-exports.getRestaurantCategoryListFromDb = async (include_deleted, client) => {
+exports.getRestaurantCategoryListFromDb = async ({ include_deleted, client }) => {
   const results = await client.query(
     `
       SELECT
@@ -146,7 +146,7 @@ exports.getRestaurantCategoryListFromDb = async (include_deleted, client) => {
 };
 
 // 음식점 카테고리 등록
-exports.createRestaurantCategoryAtDb = async (users_idx, category_name, client) => {
+exports.createRestaurantCategoryAtDb = async ({ users_idx, category_name, client }) => {
   await client.query(
     `
       INSERT INTO restaurants.categories (
@@ -162,7 +162,7 @@ exports.createRestaurantCategoryAtDb = async (users_idx, category_name, client) 
 };
 
 // 음식점 카테고리 수정
-exports.updateRestaurantCategoryByIdxAtDb = async (category_idx, category_name, client) => {
+exports.updateRestaurantCategoryByIdxAtDb = async ({ category_idx, category_name, client }) => {
   const results = await client.query(
     `
       UPDATE restaurants.categories
@@ -178,14 +178,14 @@ exports.updateRestaurantCategoryByIdxAtDb = async (category_idx, category_name, 
 };
 
 // 음식점 랜덤 조회
-exports.getRecommendRestaurantFromDb = async (
+exports.getRecommendRestaurantFromDb = async ({
   users_idx,
   category_idx,
   range,
   user_longitude,
   user_latitude,
-  client
-) => {
+  client,
+}) => {
   const results = await client.query(
     `
     WITH likes AS (
@@ -232,7 +232,7 @@ exports.getRecommendRestaurantFromDb = async (
 };
 
 // 음식점 메뉴 리스트 조회
-exports.getRestaurantMenuInfoListFromDb = async (users_idx, restaurant_idx, page, client) => {
+exports.getRestaurantMenuInfoListFromDb = async ({ users_idx, restaurant_idx, page, client }) => {
   const check_total = await client.query(
     `
       SELECT
@@ -296,7 +296,13 @@ exports.getRestaurantMenuInfoListFromDb = async (users_idx, restaurant_idx, page
 };
 
 // 음식점 메뉴 등록
-exports.createRestaurantMenuAtDb = async (users_idx, restaurant_idx, menu_name, price, client) => {
+exports.createRestaurantMenuAtDb = async ({
+  users_idx,
+  restaurant_idx,
+  menu_name,
+  price,
+  client,
+}) => {
   await client.query(
     `
       INSERT INTO menus.lists (
@@ -313,7 +319,13 @@ exports.createRestaurantMenuAtDb = async (users_idx, restaurant_idx, menu_name, 
 };
 
 // 음식점 메뉴 수정
-exports.updateRestaurantMenuByIdxAtDb = async (users_idx, menu_idx, menu_name, price, client) => {
+exports.updateRestaurantMenuByIdxAtDb = async ({
+  users_idx,
+  menu_idx,
+  menu_name,
+  price,
+  client,
+}) => {
   const results = await client.query(
     `
       UPDATE menus.lists
@@ -330,7 +342,7 @@ exports.updateRestaurantMenuByIdxAtDb = async (users_idx, menu_idx, menu_name, p
 };
 
 // 메뉴 후기 리스트 조회
-exports.getMenuReviewInfoListFromDb = async (users_idx, menu_idx, page, client) => {
+exports.getMenuReviewInfoListFromDb = async ({ users_idx, menu_idx, page, client }) => {
   const check_total = await client.query(
     `
       SELECT
@@ -390,7 +402,7 @@ exports.getMenuReviewInfoListFromDb = async (users_idx, menu_idx, page, client) 
 };
 
 // 메뉴 후기 등록
-exports.createMenuReviewAtDb = async (users_idx, menu_idx, content, image_url, client) => {
+exports.createMenuReviewAtDb = async ({ users_idx, menu_idx, content, image_url, client }) => {
   await client.query(
     `
       INSERT INTO reviews.lists (
@@ -407,7 +419,13 @@ exports.createMenuReviewAtDb = async (users_idx, menu_idx, content, image_url, c
 };
 
 // 메뉴 후기 수정
-exports.updateMenuReviewByIdxAtDb = async (users_idx, review_idx, content, image_url, client) => {
+exports.updateMenuReviewByIdxAtDb = async ({
+  users_idx,
+  review_idx,
+  content,
+  image_url,
+  client,
+}) => {
   const results = await client.query(
     `
       UPDATE reviews.lists
@@ -425,7 +443,7 @@ exports.updateMenuReviewByIdxAtDb = async (users_idx, review_idx, content, image
 };
 
 // 음식점 상세보기 조회
-exports.getRestaurantInfoByIdxFromDb = async (users_idx, restaurant_idx, client) => {
+exports.getRestaurantInfoByIdxFromDb = async ({ users_idx, restaurant_idx, client }) => {
   const results = await client.query(
     `
       WITH likes AS (
@@ -461,7 +479,7 @@ exports.getRestaurantInfoByIdxFromDb = async (users_idx, restaurant_idx, client)
 };
 
 // 음식점 수정
-exports.updateRestaurantInfoByIdxAtDb = async (
+exports.updateRestaurantInfoByIdxAtDb = async ({
   users_idx,
   restaurant_idx,
   category_idx,
@@ -470,8 +488,8 @@ exports.updateRestaurantInfoByIdxAtDb = async (
   phone,
   start_time,
   end_time,
-  client
-) => {
+  client,
+}) => {
   const results = await client.query(
     `
       UPDATE restaurants.lists
