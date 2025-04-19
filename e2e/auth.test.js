@@ -942,97 +942,118 @@ describe("POST /auth/oauth/signup", () => {
   });
 });
 
-// describe("DELETE /signout", () => {
-//   const agent = request(app);
-//   it("로컬 로그인한 회원이 로그아웃 성공한 경우 상태코드 200을 응답해야한다.", async () => {
-//     const client = await pool.connect();
-//     await service.createUserAtDb(client, "test", "Test!1@2", "test", "test@test.com", "USER", null);
-//     client.release();
+describe("DELETE /signout", () => {
+  const agent = request(app);
+  it("로컬 로그인한 회원이 로그아웃 성공한 경우 상태코드 200을 응답해야한다.", async () => {
+    await helper.createTempUserReturnIdx({
+      id: "test",
+      pw: "Test!1@2",
+      nickname: "test",
+      email: "test@test.com",
+      role: "USER",
+    });
 
-//     const responseSignin = await agent.post("/auth/signin").send({ id: "test", pw: "Test!1@2" });
-//     const cookie = responseSignin.headers["set-cookie"].find((cookie) =>
-//       cookie.startsWith("accessToken=")
-//     );
-//     expect(cookie).toBeDefined();
+    const resSignin = await agent.post("/auth/signin").send({ id: "test", pw: "Test!1@2" });
+    const resSigninCookie = resSignin.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith(`${COOKIE_NAME.ACCESS_TOKEN}=`)
+    );
 
-//     const res = await agent.delete("/auth/signout").set("Cookie", cookie);
+    const res = await agent.delete("/auth/signout").set("Cookie", resSigninCookie);
 
-//     expect(res.status).toBe(200);
-//     expect(res.body.message).toBe("요청 처리 성공");
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("요청 처리 성공");
 
-//     const resCookie = res.headers["set-cookie"].find((cookie) => cookie.startsWith("accessToken="));
-//     expect(resCookie).toBeDefined();
-//     expect(resCookie).toMatch(/accessToken=;/);
-//   });
+    const cookie = res.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith(`${COOKIE_NAME.ACCESS_TOKEN}=`)
+    );
+    expect(cookie).toBeDefined();
+    expect(cookie).toMatch(new RegExp(`${COOKIE_NAME.ACCESS_TOKEN}=;`));
+  });
 
-//   it("카카오 로그인한 회원이 로그아웃 성공한 경우 상태코드 200을 응답해야한다.", async () => {
-//     const client = await pool.connect();
-//     const oauth_idx = await service.saveOauthInfoAtDb(
-//       client,
-//       "encrypted_access_token",
-//       "enchrypted_refresh_token",
-//       Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
-//       1,
-//       "KAKAO"
-//     );
-//     await service.createUserAtDb(client, null, null, "test", "test@test.com", "USER", oauth_idx);
-//     client.release();
+  it("카카오 로그인한 회원이 로그아웃 성공한 경우 상태코드 200을 응답해야한다.", async () => {
+    const oauth_idx = await helper.createTempOauthReturnIdx({
+      provider: "KAKAO",
+      provider_user_id: 1,
+      encryptedAccessToken: "encrypted_access_token",
+      encryptedRefreshToken: "enchrypted_refresh_token",
+      refreshTokenExpiresIn: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
+    });
 
-//     nock("https://kauth.kakao.com").post("/oauth/token").reply(200, {
-//       access_token: "some_access_token",
-//       refresh_token: "some_refresh_token",
-//       refresh_token_expires_in: 123123,
-//     });
+    helper.createTempUserReturnIdx({
+      id: null,
+      pw: null,
+      nickname: "test",
+      email: "test@test.com",
+      role: "USER",
+      oauth_idx,
+    });
 
-//     nock("https://kapi.kakao.com").get("/v2/user/me").reply(200, { id: 1 });
+    nock("https://kauth.kakao.com").post("/oauth/token").reply(200, {
+      access_token: "some_access_token",
+      refresh_token: "some_refresh_token",
+      refresh_token_expires_in: 123123,
+    });
 
-//     nock("https://kapi.kakao.com").post("/v1/user/logout").reply(200);
+    nock("https://kapi.kakao.com").get("/v2/user/me").reply(200, { id: 1 });
 
-//     const responseOauthSignIn = await agent.get("/auth/oauth/kakao/redirect?code=code");
-//     const tokenCookie = responseOauthSignIn.headers["set-cookie"].find((cookie) =>
-//       cookie.startsWith("accessToken=")
-//     );
+    nock("https://kapi.kakao.com").post("/v1/user/logout").reply(200);
 
-//     jest.spyOn(algorithm, "decrypt").mockResolvedValue();
+    const resOauth = await agent.get("/auth/oauth/kakao/redirect?code=code");
+    const resOauthCookie = resOauth.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith(`${COOKIE_NAME.ACCESS_TOKEN}=`)
+    );
 
-//     const res = await agent.delete("/auth/signout").set("Cookie", tokenCookie);
+    jest.spyOn(algorithm, "decrypt").mockResolvedValue();
 
-//     expect(res.status).toBe(200);
-//     expect(res.body.message).toBe("요청 처리 성공");
+    const res = await agent.delete("/auth/signout").set("Cookie", resOauthCookie);
 
-//     const resCookie = res.headers["set-cookie"].find((cookie) => cookie.startsWith("accessToken="));
-//     expect(resCookie).toBeDefined();
-//     expect(resCookie).toMatch(/accessToken=;/);
-//   });
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("요청 처리 성공");
 
-//   it("로그인이 되어있지 않은 경우 상태코드 401을 응답해야한다.", async () => {
-//     const res = await agent.delete("/auth/signout");
+    const cookie = res.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith(`${COOKIE_NAME.ACCESS_TOKEN}=`)
+    );
+    expect(cookie).toBeDefined();
+    expect(cookie).toMatch(new RegExp(`${COOKIE_NAME.ACCESS_TOKEN}=;`));
+  });
 
-//     expect(res.status).toBe(401);
-//     expect(res.body.message).toBe("토큰 없음");
-//   });
-// });
+  it("로그인이 되어있지 않은 경우 상태코드 401을 응답해야한다.", async () => {
+    const res = await agent.delete("/auth/signout");
 
-// describe("GET /status", () => {
-//   const agent = request(app);
-//   it("상태조회 성공한 경우 상태코드 200을 응답해야한다.", async () => {
-//     const client = await pool.connect();
-//     await service.createUserAtDb(client, "test", "Test!1@2", "test", "test@test.com", "USER", null);
-//     client.release();
+    expect(res.status).toBe(401);
+    expect(res.body.message).toBe("로그인 필요");
+  });
+});
 
-//     const responseSignin = await agent.post("/auth/signin").send({ id: "test", pw: "Test!1@2" });
+describe("GET /status", () => {
+  const agent = request(app);
+  it("상태조회 성공한 경우 상태코드 200을 응답해야한다.", async () => {
+    const id = "test";
+    const pw = "Test!1@2";
+    const users_idx = await helper.createTempUserReturnIdx({
+      id,
+      pw,
+      nickname: "test",
+      email: "test@test.com",
+      role: "USER",
+    });
 
-//     const cookies = responseSignin.headers["set-cookie"].find((cookie) =>
-//       cookie.startsWith("accessToken=")
-//     );
+    const resSignin = await agent.post("/auth/signin").send({ id, pw });
+    const resSigninCookie = resSignin.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith(`${COOKIE_NAME.ACCESS_TOKEN}=`)
+    );
 
-//     const res = await agent.get("/auth/status").set("Cookie", cookies);
+    const res = await agent.get("/auth/status").set("Cookie", resSigninCookie);
 
-//     expect(res.status).toBe(200);
-//     expect(res.body.nickname).toBe("test");
-//   });
+    expect(res.status).toBe(200);
+    expect(res.body.data.nickname).toBe("test");
+    expect(res.body.data.users_idx).toBe(users_idx);
+  });
 
-//   it("유효하지 않은 인증인 경우 상태코드 401을 응답해야한다.", (done) => {
-//     agent.get("/auth/status").expect(401, done);
-//   });
-// });
+  it("유효하지 않은 인증인 경우 상태코드 401을 응답해야한다.", async () => {
+    const res = await agent.get("/auth/status");
+
+    expect(res.status).toBe(401);
+    expect(res.body.message).toBe("로그인 필요");
+  });
+});
