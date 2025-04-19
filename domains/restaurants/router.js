@@ -72,7 +72,7 @@ router.get(
 
 // 메뉴 후기 등록
 router.post(
-  "/menus/:menus_idx/reviews",
+  "/:restaurants_idx/menus/:menus_idx/reviews",
   verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN),
   upload.single("image"),
   createValidateChain(schema.createMenuReview),

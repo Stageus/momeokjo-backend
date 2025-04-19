@@ -199,11 +199,18 @@ exports.getMenuReviewInfoList = tryCatchWrapperWithDb(async (req, res, next, cli
 // 메뉴 후기 등록
 exports.createMenuReview = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { users_idx } = req[COOKIE_NAME.ACCESS_TOKEN];
-  const { menus_idx } = req.params;
+  const { restaurants_idx, menus_idx } = req.params;
   const { content } = req.body;
   const image_url = req.file?.location;
 
-  await rs.createMenuReviewAtDb({ users_idx, menus_idx, content, image_url, client });
+  await rs.createMenuReviewAtDb({
+    users_idx,
+    menus_idx,
+    content,
+    image_url,
+    restaurants_idx,
+    client,
+  });
 
   res.status(200).json({ message: "요청 처리 성공" });
 });

@@ -165,6 +165,11 @@ exports.getMenuReviewInfoList = {
 
 exports.createMenuReview = {
   param: {
+    restaurants_idx: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.INDEX,
+    },
     menus_idx: {
       isRequired: true,
       defaultValue: null,

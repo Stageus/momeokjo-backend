@@ -480,7 +480,7 @@ describe("GET /restaurants/:restaurants_idx", () => {
   });
 });
 
-describe("PUT /:restaurant_idx", () => {
+describe("PUT /restaurants/:restaurants_idx", () => {
   const agent = request(app);
   it("음식점 정보 수정에 성공한 경우 상태코드 200을 응답해야한다.", async () => {
     const id = "test";
@@ -587,7 +587,7 @@ describe("PUT /:restaurant_idx", () => {
       category_name: "테스트",
     });
 
-    const restaurant_idx = await helper.createTempRestaurantReturnIdx({
+    const restaurants_idx = await helper.createTempRestaurantReturnIdx({
       category_idx,
       users_idx,
       restaurant_name: "테스트 음식점",
@@ -600,7 +600,7 @@ describe("PUT /:restaurant_idx", () => {
       end_time: "0000",
     });
 
-    const res = await agent.put(`/restaurants/${restaurant_idx}`).send({
+    const res = await agent.put(`/restaurants/${restaurants_idx}`).send({
       category_idx,
       restaurant_name: "테스트 음식점 수정",
       address_detail: "테스트 음식점 상세 주소 수정",
@@ -627,7 +627,7 @@ describe("PUT /:restaurant_idx", () => {
       category_name: "테스트",
     });
 
-    const restaurant_idx = await helper.createTempRestaurantReturnIdx({
+    const restaurants_idx = await helper.createTempRestaurantReturnIdx({
       category_idx,
       users_idx,
       restaurant_name: "테스트 음식점",
@@ -655,7 +655,7 @@ describe("PUT /:restaurant_idx", () => {
       pw: diff_user_pw,
     });
 
-    const res = await agent.put(`/restaurants/${restaurant_idx}`).set("Cookie", cookie).send({
+    const res = await agent.put(`/restaurants/${restaurants_idx}`).set("Cookie", cookie).send({
       category_idx,
       restaurant_name: "테스트 음식점 수정",
       address_detail: "테스트 음식점 상세 주소 수정",
@@ -861,7 +861,7 @@ describe("GET /restaurants/recommands", () => {
   });
 });
 
-describe("POST /restaurants/:restaurant_idx/menus", () => {
+describe("POST /restaurants/:restaurants_idx/menus", () => {
   const agent = request(app);
   it("음식점 메뉴 등록 성공한 경우 상태코드 200을 응답해야한다.", async () => {
     const id = "test";
@@ -921,7 +921,7 @@ describe("POST /restaurants/:restaurant_idx/menus", () => {
       category_name: "테스트",
     });
 
-    const restaurant_idx = await helper.createTempRestaurantReturnIdx({
+    const restaurants_idx = await helper.createTempRestaurantReturnIdx({
       category_idx,
       users_idx,
       restaurant_name: "테스트 음식점",
@@ -935,7 +935,7 @@ describe("POST /restaurants/:restaurant_idx/menus", () => {
     });
 
     const res = await agent
-      .post(`/restaurants/${restaurant_idx}/menus`)
+      .post(`/restaurants/${restaurants_idx}/menus`)
       .set("Cookie", cookie)
       .send({ menu_name: "", price: "10000" });
 
@@ -983,7 +983,7 @@ describe("POST /restaurants/:restaurant_idx/menus", () => {
       category_name: "테스트",
     });
 
-    const restaurant_idx = await helper.createTempRestaurantReturnIdx({
+    const restaurants_idx = await helper.createTempRestaurantReturnIdx({
       category_idx,
       users_idx,
       restaurant_name: "테스트 음식점",
@@ -997,7 +997,7 @@ describe("POST /restaurants/:restaurant_idx/menus", () => {
     });
 
     const res = await agent
-      .post(`/restaurants/${restaurant_idx}/menus`)
+      .post(`/restaurants/${restaurants_idx}/menus`)
       .send({ menu_name: "테스트 메뉴", price: "10000" });
 
     expect(res.status).toBe(401);
@@ -1205,7 +1205,7 @@ describe("PUT /restaurants/menus/:menus_idx", () => {
   });
 });
 
-describe("GET /restaurants/:restaurant_idx/menus", () => {
+describe("GET /restaurants/:restaurants_idx/menus", () => {
   const agent = request(app);
   it("음식점 메뉴 리스트 조회 성공한 경우 상태코드 200과 메뉴 리스트를 응답해야한다.", async () => {
     const id = "test";
@@ -1339,7 +1339,7 @@ describe("POST /restaurants/menus/:reviews_idx/review", () => {
     });
 
     const res = await agent
-      .post(`/restaurants/menus/${menus_idx}/reviews`)
+      .post(`/restaurants/${restaurants_idx}/menus/${menus_idx}/reviews`)
       .set("Cookie", cookie)
       .field("content", "테스트 후기");
 
@@ -1386,7 +1386,7 @@ describe("POST /restaurants/menus/:reviews_idx/review", () => {
     });
 
     const res = await agent
-      .post(`/restaurants/menus/${menus_idx}/reviews`)
+      .post(`/restaurants/${restaurants_idx}/menus/${menus_idx}/reviews`)
       .set("Cookie", cookie)
       .field("content", "");
 
@@ -1394,6 +1394,7 @@ describe("POST /restaurants/menus/:reviews_idx/review", () => {
     expect(res.body.message).toBe("입력값 확인 필요");
     expect(res.body.target).toBe("content");
   });
+
   it("메뉴 없는 경우 상태코드 400를 응답해야한다.", async () => {
     const id = "test";
     const pw = "Test!1@2";
@@ -1433,7 +1434,7 @@ describe("POST /restaurants/menus/:reviews_idx/review", () => {
     });
 
     const res = await agent
-      .post(`/restaurants/menus/1/reviews`)
+      .post(`/restaurants/${restaurants_idx}/menus/1/reviews`)
       .set("Cookie", cookie)
       .field("content", "테스트 후기");
 
@@ -1479,7 +1480,7 @@ describe("POST /restaurants/menus/:reviews_idx/review", () => {
     });
 
     const res = await agent
-      .post(`/restaurants/menus/${menus_idx}/reviews`)
+      .post(`/restaurants/${restaurants_idx}/menus/${menus_idx}/reviews`)
       .field("content", "테스트 후기");
 
     expect(res.status).toBe(401);
@@ -1532,6 +1533,7 @@ describe("PUT /restaurants/menus/reviews/:reviews_idx", () => {
       menus_idx,
       content: "테스트 후기",
       image_url: "",
+      restaurants_idx,
     });
 
     const res = await agent
@@ -1586,6 +1588,7 @@ describe("PUT /restaurants/menus/reviews/:reviews_idx", () => {
       menus_idx,
       content: "테스트 후기",
       image_url: "",
+      restaurants_idx,
     });
 
     const res = await agent
@@ -1639,6 +1642,7 @@ describe("PUT /restaurants/menus/reviews/:reviews_idx", () => {
       menus_idx,
       content: "테스트 후기",
       image_url: "",
+      restaurants_idx,
     });
 
     const res = await agent
@@ -1692,6 +1696,7 @@ describe("PUT /restaurants/menus/reviews/:reviews_idx", () => {
       menus_idx,
       content: "테스트 후기",
       image_url: "",
+      restaurants_idx,
     });
 
     const res = await agent
@@ -1704,7 +1709,7 @@ describe("PUT /restaurants/menus/reviews/:reviews_idx", () => {
   });
 });
 
-describe("GET /menus/:menu_idx/reviews", () => {
+describe("GET /restaurants/menus/:menu_idx/reviews", () => {
   const agent = request(app);
   it("후기 리스트 조회 성공한 경우 상태코드 200과 후기 리스트를 응답해야한다.", async () => {
     const id = "test";
@@ -1749,6 +1754,7 @@ describe("GET /menus/:menu_idx/reviews", () => {
       menus_idx,
       content: "테스트 후기",
       image_url: "",
+      restaurants_idx,
     });
 
     const res = await agent.get(`/restaurants/menus/${menus_idx}/reviews`).set("Cookie", cookie);
@@ -1801,6 +1807,7 @@ describe("GET /menus/:menu_idx/reviews", () => {
       menus_idx,
       content: "테스트 후기",
       image_url: "",
+      restaurants_idx,
     });
 
     const res = await agent.get(`/restaurants/menus/asdfasdfasdf/reviews`).set("Cookie", cookie);

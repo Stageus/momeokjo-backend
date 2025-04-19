@@ -266,7 +266,7 @@ exports.getRestaurantMenuInfoListFromDb = async ({ users_idx, restaurants_idx, p
         FROM reviews.lists reviews
         JOIN menus.lists menus ON reviews.menus_idx = menus.idx
         LEFT JOIN tot_likes ON reviews.menus_idx = tot_likes.menus_idx
-        WHERE restaurants_idx = $2
+        WHERE reviews.restaurants_idx = $2
         AND reviews.is_deleted = false
         AND menus.is_deleted = false
         ORDER BY tot_likes.likes_count DESC
@@ -412,19 +412,27 @@ exports.getMenuReviewInfoListFromDb = async ({ users_idx, menus_idx, page, clien
 };
 
 // 메뉴 후기 등록
-exports.createMenuReviewAtDb = async ({ users_idx, menus_idx, content, image_url, client }) => {
+exports.createMenuReviewAtDb = async ({
+  users_idx,
+  menus_idx,
+  content,
+  image_url,
+  restaurants_idx,
+  client,
+}) => {
   await client.query(
     `
       INSERT INTO reviews.lists (
         users_idx,
         menus_idx,
         content,
-        image_url
+        image_url,
+        restaurants_idx
       ) VALUES (
-        $1, $2, $3, $4
+        $1, $2, $3, $4, $5
       )
     `,
-    [users_idx, menus_idx, content, image_url]
+    [users_idx, menus_idx, content, image_url, restaurants_idx]
   );
 };
 

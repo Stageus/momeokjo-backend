@@ -118,7 +118,13 @@ exports.createTempMenuReturnIdx = async ({ users_idx, restaurants_idx, menu_name
   return results.rows[0].menu_idx;
 };
 
-exports.createTempReviewReturnIdx = async ({ users_idx, menus_idx, content, image_url }) => {
+exports.createTempReviewReturnIdx = async ({
+  users_idx,
+  menus_idx,
+  content,
+  image_url,
+  restaurants_idx,
+}) => {
   const client = await pool.connect();
   const results = await client.query(
     `
@@ -126,13 +132,14 @@ exports.createTempReviewReturnIdx = async ({ users_idx, menus_idx, content, imag
         users_idx,
         menus_idx,
         content,
-        image_url
+        image_url,
+        restaurants_idx
       ) VALUES (
-        $1, $2, $3, $4
+        $1, $2, $3, $4, $5
       )
       RETURNING idx AS review_idx;
     `,
-    [users_idx, menus_idx, content, image_url]
+    [users_idx, menus_idx, content, image_url, restaurants_idx]
   );
   client.release();
 
