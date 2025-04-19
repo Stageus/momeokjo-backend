@@ -119,7 +119,7 @@ exports.updatePasswordAtDb = async ({ client, id, pw, email }) => {
   );
 };
 
-exports.checkIsExistedEmailFromDb = async (client, email) => {
+exports.checkIsExistedEmailFromDb = async ({ client, email }) => {
   const results = await client.query(
     `
       SELECT

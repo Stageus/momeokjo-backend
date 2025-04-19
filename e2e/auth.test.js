@@ -5,6 +5,8 @@ const app = require("../server");
 const pool = require("../database/db");
 const service = require("../domains/auth/service");
 const algorithm = require("../utils/algorithm");
+const COOKIE_NAME = require("../utils/cookieName");
+const helper = require("./helpers/setupForTest");
 
 afterEach(async () => {
   const client = await pool.connect();
@@ -19,12 +21,14 @@ afterAll(async () => {
   await pool.end();
 });
 
-describe("POST /verify-email", () => {
+describe("POST /auth/verify-email", () => {
   const agent = request(app);
   it("이메일이 유효하면 상태코드 200를 응답해야한다.", async () => {
     const res = await agent.post("/auth/verify-email").send({ email: "bluegyufordev@gmail.com" });
-
-    const cookie = res.headers["set-cookie"].find((cookie) => cookie.startsWith("email="));
+    console.log(res);
+    const cookie = res.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_SEND}=`)
+    );
     expect(cookie).toBeDefined();
     expect(res.status).toBe(200);
   });
@@ -38,18 +42,18 @@ describe("POST /verify-email", () => {
   });
 
   it("이미 회원가입된 이메일인 경우 상태코드 409를 응답해야한다.", async () => {
-    // 임의로 회원가입 시키기
-    const email = "bluegyufordev@gmail.com";
+    await helper.createTempUserReturnIdx({
+      id: "test",
+      pw: "Test!1@2",
+      nickname: "test",
+      email: "test@test.com",
+      role: "USER",
+    });
 
-    // 임의로 회원가입 시키기
-    const client = await pool.connect();
-    await service.createUserAtDb(client, "test", "test", "test", email, "USER", null);
-    client.release();
-
-    const res = await agent.post("/auth/verify-email").send({ email });
+    const res = await agent.post("/auth/verify-email").send({ email: "test@test.com" });
 
     expect(res.status).toBe(409);
-    expect(res.body.message).toBe("이미 회원가입에 사용된 이메일입니다.");
+    expect(res.body.message).toBe("중복 이메일 회원 있음");
   });
 });
 

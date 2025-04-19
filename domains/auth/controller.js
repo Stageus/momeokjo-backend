@@ -153,8 +153,7 @@ exports.sendEmailVerificationCode = tryCatchWrapperWithDb(async (req, res, next,
 
   // 이메일 확인
   const isExisted = await as.checkIsExistedEmailFromDb({ client, email });
-  if (isExisted)
-    throw customErrorResponse({ status: 409, message: "이미 회원가입에 사용된 이메일입니다." });
+  if (isExisted) throw customErrorResponse({ status: 409, message: "중복 이메일 회원 있음" });
 
   // 이메일 인증번호 생성
   const code = as.createVerificationCode();
@@ -170,7 +169,7 @@ exports.sendEmailVerificationCode = tryCatchWrapperWithDb(async (req, res, next,
     payload: { email },
     expiresIn: process.env.JWT_ACCESS_EXPIRES_IN,
   });
-
+  console.log(COOKIE_NAME.EMAIL_AUTH_SEND);
   // 쿠키 생성
   res.cookie(COOKIE_NAME.EMAIL_AUTH_SEND, token, accessTokenOptions);
   res.status(200).json({ message: "이메일 인증 코드 전송 성공" });
