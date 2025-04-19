@@ -13,7 +13,7 @@ const errorHandler = (err, req, res, next) => {
     } else if (constraint === "unique_menus_likes") {
       res.status(409).json({ message: "메뉴 추천 중복 등록" });
     } else if (constraint === "unique_reviews_likes") {
-      res.status(409).json({ message: "중복 후기 좋아요 등록" });
+      res.status(409).json({ message: "후기 좋아요 중복 등록" });
     } else {
       res.status(409).json({ message, target: constraint });
     }

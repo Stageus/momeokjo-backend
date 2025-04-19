@@ -801,7 +801,7 @@ describe("POST /users/likes/reviews/:reviews_idx", () => {
       end_time: "0000",
     });
 
-    const menu_idx = await helper.createTempMenuReturnIdx({
+    const menus_idx = await helper.createTempMenuReturnIdx({
       users_idx,
       restaurants_idx,
       menu_name: "테스트 메뉴",
@@ -810,7 +810,7 @@ describe("POST /users/likes/reviews/:reviews_idx", () => {
 
     const reviews_idx = await helper.createTempReviewReturnIdx({
       users_idx,
-      menu_idx,
+      menus_idx,
       content: "테스트 후기",
       image_url: "",
       restaurants_idx,
@@ -844,14 +844,14 @@ describe("POST /users/likes/reviews/:reviews_idx", () => {
     expect(res.body.target).toBe("reviews_idx");
   });
 
-  it("인증이 유효하지 않은 경우 상태코드 401을 응답해야한다.", async () => {
+  it("로그인 하지 않은 경우 상태코드 401을 응답해야한다.", async () => {
     const res = await agent.post(`/users/likes/reviews/1`);
 
     expect(res.status).toBe(401);
     expect(res.body.message).toBe("로그인 필요");
   });
 
-  it("후기가 없는 경우 상태코드 404를 응답해야한다.", async () => {
+  it("후기가 없는 경우 상태코드 400를 응답해야한다.", async () => {
     const id = "test";
     const pw = "Test!1@2";
 
@@ -868,8 +868,9 @@ describe("POST /users/likes/reviews/:reviews_idx", () => {
 
     const res = await agent.post(`/users/likes/reviews/1`).set("Cookie", cookie);
 
-    expect(res.status).toBe(404);
-    expect(res.body.message).toBe("후기 없음");
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe("입력값 확인 필요");
+    expect(res.body.target).toBe("reviews_idx");
   });
 
   it("중복 후기 좋아요한 경우 상태코드 409를 응답해야한다.", async () => {
@@ -905,7 +906,7 @@ describe("POST /users/likes/reviews/:reviews_idx", () => {
       end_time: "0000",
     });
 
-    const menu_idx = await helper.createTempMenuReturnIdx({
+    const menus_idx = await helper.createTempMenuReturnIdx({
       users_idx,
       restaurants_idx,
       menu_name: "테스트 메뉴",
@@ -914,7 +915,7 @@ describe("POST /users/likes/reviews/:reviews_idx", () => {
 
     const review_idx = await helper.createTempReviewReturnIdx({
       users_idx,
-      menu_idx,
+      menus_idx,
       content: "테스트 후기",
       image_url: "",
       restaurants_idx,
@@ -928,7 +929,7 @@ describe("POST /users/likes/reviews/:reviews_idx", () => {
     const res = await agent.post(`/users/likes/reviews/${review_idx}`).set("Cookie", cookie);
 
     expect(res.status).toBe(409);
-    expect(res.body.message).toBe("중복 후기 좋아요 등록");
+    expect(res.body.message).toBe("후기 좋아요 중복 등록");
   });
 });
 
