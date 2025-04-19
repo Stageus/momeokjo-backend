@@ -4,4 +4,5 @@ module.exports = {
   EMAIL_AUTH_SEND: "emailAuthSend",
   EMAIL_AUTH_VERIFIED: "emailAuthVerified",
   PASSWORD_RESET: "passwordReset",
+  OAUTH_INDEX: "oauthIdx",
 };
