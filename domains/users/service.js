@@ -67,7 +67,7 @@ exports.getRestaurantLikeListFromDb = async ({
       SELECT
         COALESCE(json_agg(
           json_build_object(
-            'restaurant_idx', list.idx,
+            'restaurants_idx', list.idx,
             'category_name', category.name,
             'likes_count', COALESCE(likes_count::integer , 0),
             'restaurant_name', list.name,
@@ -78,15 +78,15 @@ exports.getRestaurantLikeListFromDb = async ({
             'phone', phone,
             'start_time', start_time,
             'end_time', end_time,
-            'is_my_like', CASE WHEN list.users_idx = $1 THEN true ELSE false END
+            'is_my_like', CASE WHEN likes.users_idx = $1 THEN true ELSE false END
           )
         ), '[]'::json) AS data
       FROM restaurants.lists list
       JOIN restaurants.categories category ON category.idx = list.categories_idx
-      JOIN restaurants.likes likes ON likes.restaurants_idx = list.idx
-      JOIN total_likes total ON total.restaurants_idx = list.idx
+      LEFT JOIN restaurants.likes likes ON likes.restaurants_idx = list.idx
+      LEFT JOIN total_likes total ON total.restaurants_idx = list.idx
       WHERE likes.users_idx = $2 
-      AND likes.is_deleted = false
+      AND list.is_deleted = false
       AND likes.is_deleted = false
       OFFSET $3
       LIMIT 15;
@@ -94,7 +94,7 @@ exports.getRestaurantLikeListFromDb = async ({
     [users_idx_from_cookie, users_idx, 15 * (page - 1)]
   );
 
-  return { data: results.rows[0].data || [], total_pages: check_total.rows[0].total_pages };
+  return { data: results.rows[0]?.data ?? [], total_pages: check_total.rows[0].total_pages };
 };
 
 exports.getReviewListFromDb = async ({ client, users_idx_from_cookie, users_idx, page }) => {

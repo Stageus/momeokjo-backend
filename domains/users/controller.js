@@ -34,7 +34,7 @@ exports.getRestaurantLikeList = tryCatchWrapperWithDb(async (req, res, next, cli
   const users_idx_from_cookie = req[COOKIE_NAME.ACCESS_TOKEN]?.users_idx;
   const { users_idx } = req.params;
   const { page } = req.query;
-
+  console.log(page);
   const { data, total_pages } = await us.getRestaurantLikeListFromDb({
     client,
     users_idx_from_cookie,
