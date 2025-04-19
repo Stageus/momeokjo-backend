@@ -410,7 +410,7 @@ exports.getMenuReviewInfoListFromDb = async ({ users_idx, menu_idx, page, client
 };
 
 // 메뉴 후기 등록
-exports.createMenuReviewAtDb = async ({ users_idx, menu_idx, content, image_url, client }) => {
+exports.createMenuReviewAtDb = async ({ users_idx, menus_idx, content, image_url, client }) => {
   await client.query(
     `
       INSERT INTO reviews.lists (
@@ -422,7 +422,7 @@ exports.createMenuReviewAtDb = async ({ users_idx, menu_idx, content, image_url,
         $1, $2, $3, $4
       )
     `,
-    [users_idx, menu_idx, content, image_url]
+    [users_idx, menus_idx, content, image_url]
   );
 };
 
