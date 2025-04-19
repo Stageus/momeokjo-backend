@@ -265,76 +265,34 @@ exports.saveOauthInfoAtDb = async (
   return results.rows[0].oauth_idx;
 };
 
-// 카카오 로그인 - 대기
-exports.redirectToOauthProvider = async () => {
-  if (oauthUserResult.rows.length) {
-    const user = oauthUserResult.rows[0];
-    session.userIdx = user.idx;
-    session.nickname = user.nickname;
-    return { user, additional: false };
-  } else {
-    const existingUser = await db.query(
-      "SELECT idx, nickname FROM users.lists WHERE email=$1 AND is_deleted=false",
-      [email]
-    );
-    if (existingUser.rows.length) {
-      const users_idx = existingUser.rows[0].idx;
-      await db.query(
-        "INSERT INTO users.oauth (users_idx, provider, provider_user_id, refresh_token) VALUES ($1, $2, $3, $4)",
-        [users_idx, "kakao", provider_user_id, refreshToken]
-      );
-      session.userIdx = existingUser.rows[0].idx;
-      session.nickname = existingUser.rows[0].nickname;
-      return { user: existingUser.rows[0], additional: false };
-    } else {
-      session.oauth = {
-        provider: "kakao",
-        provider_user_id,
-        email,
-        refreshToken,
-      };
-      throw customError("추가 회원정보 입력 필요", 403);
-    }
-  }
-};
-
-exports.invalidateLocalRefreshTokenAtDb = async (client, users_idx) => {
+exports.removeLocalRefreshTokenAtDb = async ({ client, users_idx }) => {
   await client.query(
     `
       UPDATE users.local_tokens SET
         is_deleted = true
       WHERE users_idx = $1
-      AND is_deleted = false
-    `,
-    [users_idx]
-  );
-};
-
-exports.getOauthIdxFromDb = async (client, users_idx) => {
-  const results = await client.query(
-    `
-      SELECT oauth_idx
-      FROM users.lists
-      WHERE idx = $1
       AND is_deleted = false;
     `,
     [users_idx]
   );
-
-  return results.rows[0].oauth_idx;
 };
 
-exports.invalidateOauthRefreshTokenAtDb = async (client, oauth_idx) => {
+exports.getOauthAccessTokenFromDb = async ({ client, users_idx }) => {
   const results = await client.query(
     `
       SELECT
         access_token,
         provider_user_id
       FROM users.oauth
-      WHERE idx = $1
+      WHERE idx = (
+        SELECT oauth_idx
+        FROM users.lists
+        WHERE idx = $1
+          AND is_deleted = false
+      )
       AND is_deleted = false;
     `,
-    [oauth_idx]
+    [users_idx]
   );
 
   return {
@@ -343,7 +301,7 @@ exports.invalidateOauthRefreshTokenAtDb = async (client, oauth_idx) => {
   };
 };
 
-exports.requestKakaoLogout = async (accessToken, provider_user_id) => {
+exports.requestKakaoLogout = async ({ accessToken, provider_user_id }) => {
   await axios({
     method: "POST",
     url: "https://kapi.kakao.com/v1/user/logout",

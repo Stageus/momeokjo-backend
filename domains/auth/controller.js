@@ -56,19 +56,18 @@ exports.signOut = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { users_idx, provider } = req.accessToken;
 
   if (provider === "LOCAL") {
-    await as.invalidateLocalRefreshTokenAtDb(client, users_idx);
+    await as.removeLocalRefreshTokenAtDb({ client, users_idx });
   } else {
-    const oauth_idx = await as.getOauthIdxFromDb(client, users_idx);
-    const { accessToken, provider_user_id } = await as.invalidateOauthRefreshTokenAtDb(
+    const { accessToken, provider_user_id } = await as.getOauthAccessTokenFromDb({
       client,
-      oauth_idx
-    );
+      users_idx,
+    });
 
     const decryptedAccessToken = await algorithm.decrypt(accessToken);
-    await as.requestKakaoLogout(decryptedAccessToken, provider_user_id);
+    await as.requestKakaoLogout({ accessToken: decryptedAccessToken, provider_user_id });
   }
 
-  res.clearCookie("accessToken", baseCookieOptions);
+  res.clearCookie(COOKIE_NAME.ACCESS_TOKEN, baseCookieOptions);
   res.status(200).json({ message: "요청 처리 성공" });
 });
 

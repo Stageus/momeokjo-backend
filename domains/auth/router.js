@@ -4,12 +4,13 @@ const { validateRequest } = require("../../middlewares/validateRequest");
 const verifyAccessToken = require("../../middlewares/verifyAccessToken");
 const ac = require("./controller");
 const schema = require("./schema");
+const COOKIE_NAME = require("../../utils/cookieName");
 
 // 로그인
 router.post("/signin", createValidateChain(schema.signIn), validateRequest, ac.signIn);
 
 // 로그아웃
-router.delete("/signout", verifyAccessToken("accessToken"), ac.signOut);
+router.delete("/signout", verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN), ac.signOut);
 
 // 회원가입
 router.post(
