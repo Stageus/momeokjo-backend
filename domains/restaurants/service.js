@@ -251,11 +251,10 @@ exports.getRestaurantMenuInfoListFromDb = async ({ users_idx, restaurants_idx, p
 
   const results = await client.query(
     `
-      WITH likes AS (
+      WITH tot_likes AS (
         SELECT 
           COUNT(*) AS likes_count,
-          menus_idx,
-          users_idx
+          menus_idx
         FROM menus.likes
         WHERE is_deleted = false
         GROUP BY menus_idx
@@ -264,20 +263,20 @@ exports.getRestaurantMenuInfoListFromDb = async ({ users_idx, restaurants_idx, p
         SELECT
           reviews.menus_idx,
           reviews.image_url
-        FROM reviews.lists AS reviews
-        JOIN menus.lists AS menus ON reviews.menus_idx = menus.idx
-        LEFT JOIN likes ON reviews.menus_idx = likes.menus_idx
+        FROM reviews.lists reviews
+        JOIN menus.lists menus ON reviews.menus_idx = menus.idx
+        LEFT JOIN tot_likes ON reviews.menus_idx = tot_likes.menus_idx
         WHERE restaurants_idx = $2
         AND reviews.is_deleted = false
         AND menus.is_deleted = false
-        ORDER BY likes.likes_count DESC
+        ORDER BY tot_likes.likes_count DESC
         LIMIT 1
       ) 
 
       SELECT
         COALESCE(json_agg(
           json_build_object(
-            'menu_idx', idx,
+            'menu_idx', list.idx,
             'menu_name', name,
             'price', price,
             'likes_count', COALESCE(likes_count::integer, 0),
@@ -286,11 +285,12 @@ exports.getRestaurantMenuInfoListFromDb = async ({ users_idx, restaurants_idx, p
             'image_url', COALESCE(images.image_url, '')
           )
         ), '[]'::json) AS data
-      FROM menus.lists AS list
-      LEFT JOIN likes ON list.idx = likes.menus_idx
+      FROM menus.lists list
+      LEFT JOIN tot_likes ON list.idx = tot_likes.menus_idx
+      LEFT JOIN menus.likes likes ON list.idx = likes.menus_idx
       LEFT JOIN images ON list.idx = images.menus_idx
       WHERE restaurants_idx = $2
-      AND is_deleted = false
+      AND list.is_deleted = false
       OFFSET $3
       LIMIT 15
     `,
