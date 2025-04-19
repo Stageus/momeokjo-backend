@@ -30,6 +30,8 @@ const errorHandler = (err, req, res, next) => {
       res.status(404).json({ message: "메뉴 없음" });
     } else if (constraint === "likes_reviews_idx_fkey") {
       res.status(404).json({ message: "후기 없음" });
+    } else if (constraint === "lists_categories_idx_fkey") {
+      res.status(400).json({ message: "입력값 확인 필요", target: "category_idx" });
     } else {
       res.status(404).json({ message, target: constraint });
     }

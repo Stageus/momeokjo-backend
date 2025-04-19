@@ -266,109 +266,139 @@ describe("PUT /categories/:category_idx", () => {
   });
 });
 
-// describe("POST /", () => {
-//   const agent = request(app);
-//   it("음식점 등록에 성공하면 상태코드 200을 응답해야한다.", async () => {
-//     const id = "test";
-//     const pw = "Test!1@2";
-//     const users_idx = await helper.createTempUserReturnIdx({
-//       id,
-//       pw,
-//       nickname: "test",
-//       email: "test@test.com",
-//       role: "ADMIN",
-//     });
+describe("POST /", () => {
+  const agent = request(app);
+  it("음식점 등록에 성공하면 상태코드 200을 응답해야한다.", async () => {
+    const id = "test";
+    const pw = "Test!1@2";
+    const users_idx = await helper.createTempUserReturnIdx({
+      id,
+      pw,
+      nickname: "test",
+      email: "test@test.com",
+      role: "ADMIN",
+    });
 
-//     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
+    const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
 
-//     const category_idx = await helper.createTempCateoryReturnIdx({
-//       users_idx,
-//       category_name: "테스트",
-//     });
+    const category_idx = await helper.createTempCateoryReturnIdx({
+      users_idx,
+      category_name: "테스트",
+    });
 
-//     const res = await agent.post("/restaurants").set("Cookie", cookie).send({
-//       category_idx,
-//       restaurant_name: "테스트 음식점",
-//       longitude: "127.0316",
-//       latitude: "37.4979",
-//       address: "테스트 음식점 테스트로 123",
-//       address_detail: "테스트 음식점 상세 주소",
-//       phone: "01012345678",
-//       start_time: "0000",
-//       end_time: "0000",
-//     });
+    const res = await agent.post("/restaurants").set("Cookie", cookie).send({
+      category_idx,
+      restaurant_name: "테스트 음식점",
+      longitude: "127.0316",
+      latitude: "37.4979",
+      address: "테스트 음식점 테스트로 123",
+      address_detail: "테스트 음식점 상세 주소",
+      phone: "01012345678",
+      start_time: "0000",
+      end_time: "0000",
+    });
 
-//     expect(res.status).toBe(200);
-//     expect(res.body.message).toBe("요청 처리 성공");
-//   });
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("요청 처리 성공");
+  });
 
-//   it("입력값이 유효하지 않은 경우 상태코드 400을 응답해야한다.", async () => {
-//     const id = "test";
-//     const pw = "Test!1@2";
-//     const users_idx = await helper.createTempUserReturnIdx({
-//       id,
-//       pw,
-//       nickname: "test",
-//       email: "test@test.com",
-//       role: "ADMIN",
-//     });
+  it("입력값이 유효하지 않은 경우 상태코드 400을 응답해야한다.", async () => {
+    const id = "test";
+    const pw = "Test!1@2";
+    const users_idx = await helper.createTempUserReturnIdx({
+      id,
+      pw,
+      nickname: "test",
+      email: "test@test.com",
+      role: "ADMIN",
+    });
 
-//     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
+    const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
 
-//     const category_idx = await helper.createTempCateoryReturnIdx({
-//       users_idx,
-//       category_name: "테스트",
-//     });
+    const category_idx = await helper.createTempCateoryReturnIdx({
+      users_idx,
+      category_name: "테스트",
+    });
 
-//     const res = await agent.post("/restaurants").set("Cookie", cookie).send({
-//       category_idx,
-//       restaurant_name: "",
-//       longitude: "127.0316",
-//       latitude: "37.4979",
-//       address: "테스트 음식점 테스트로 123",
-//       address_detail: "테스트 음식점 상세 주소",
-//       phone: "01012345678",
-//       start_time: "0000",
-//       end_time: "0000",
-//     });
+    const res = await agent.post("/restaurants").set("Cookie", cookie).send({
+      category_idx,
+      restaurant_name: "",
+      longitude: "127.0316",
+      latitude: "37.4979",
+      address: "테스트 음식점 테스트로 123",
+      address_detail: "테스트 음식점 상세 주소",
+      phone: "01012345678",
+      start_time: "0000",
+      end_time: "0000",
+    });
 
-//     expect(res.status).toBe(400);
-//     expect(res.body.message).toBe("입력값 확인 필요");
-//     expect(res.body.target).toBe("restaurant_name");
-//   });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe("입력값 확인 필요");
+    expect(res.body.target).toBe("restaurant_name");
+  });
 
-//   it("안증이 유효하지 않은 경우 상태코드 401을 응답해야한다.", async () => {
-//     const id = "test";
-//     const pw = "Test!1@2";
-//     const users_idx = await helper.createTempUserReturnIdx({
-//       id,
-//       pw,
-//       nickname: "test",
-//       email: "test@test.com",
-//       role: "ADMIN",
-//     });
+  it("카테고리가 없는 경우 상태코드 400을 응답해야한다.", async () => {
+    const id = "test";
+    const pw = "Test!1@2";
+    await helper.createTempUserReturnIdx({
+      id,
+      pw,
+      nickname: "test",
+      email: "test@test.com",
+      role: "ADMIN",
+    });
 
-//     const category_idx = await helper.createTempCateoryReturnIdx({
-//       users_idx,
-//       category_name: "테스트",
-//     });
+    const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
 
-//     const res = await agent.post("/restaurants").send({
-//       category_idx,
-//       restaurant_name: "",
-//       longitude: "127.0316",
-//       latitude: "37.4979",
-//       address: "테스트 음식점 테스트로 123",
-//       address_detail: "테스트 음식점 상세 주소",
-//       phone: "01012345678",
-//       start_time: "0000",
-//       end_time: "0000",
-//     });
+    const res = await agent.post("/restaurants").set("Cookie", cookie).send({
+      category_idx: 1,
+      restaurant_name: "테스트 음식점",
+      longitude: "127.0316",
+      latitude: "37.4979",
+      address: "테스트 음식점 테스트로 123",
+      address_detail: "테스트 음식점 상세 주소",
+      phone: "01012345678",
+      start_time: "0000",
+      end_time: "0000",
+    });
 
-//     expect(res.status).toBe(401);
-//     expect(res.body.message).toBe("토큰 없음");
-//   });
-// });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe("입력값 확인 필요");
+    expect(res.body.target).toBe("category_idx");
+  });
+
+  it("로그인 하지 않은 경우 상태코드 401을 응답해야한다.", async () => {
+    const id = "test";
+    const pw = "Test!1@2";
+    const users_idx = await helper.createTempUserReturnIdx({
+      id,
+      pw,
+      nickname: "test",
+      email: "test@test.com",
+      role: "ADMIN",
+    });
+
+    const category_idx = await helper.createTempCateoryReturnIdx({
+      users_idx,
+      category_name: "테스트",
+    });
+
+    const res = await agent.post("/restaurants").send({
+      category_idx,
+      restaurant_name: "",
+      longitude: "127.0316",
+      latitude: "37.4979",
+      address: "테스트 음식점 테스트로 123",
+      address_detail: "테스트 음식점 상세 주소",
+      phone: "01012345678",
+      start_time: "0000",
+      end_time: "0000",
+    });
+
+    expect(res.status).toBe(401);
+    expect(res.body.message).toBe("로그인 필요");
+  });
+});
 
 // describe("GET /:restaurant_idx", () => {
 //   const agent = request(app);
