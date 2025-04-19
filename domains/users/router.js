@@ -5,11 +5,12 @@ const verifyAccessToken = require("../../middlewares/verifyAccessToken");
 const schema = require("./schema");
 const uc = require("./controller");
 const verifyAccessTokenOptional = require("../../middlewares/verifyAccessTokenOptional");
+const COOKIE_NAME = require("../../utils/cookieName");
 
 // 내 정보 수정
 router.put(
   "/",
-  verifyAccessToken("accessToken"),
+  verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.updateMyInfo),
   validateRequest,
   uc.updateMyInfo
@@ -17,8 +18,8 @@ router.put(
 
 // 사용자 정보 상세정보 조회
 router.get(
-  "/:user_idx",
-  verifyAccessTokenOptional("accessToken"),
+  "/:users_idx",
+  verifyAccessTokenOptional(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.getUserInfoByIdx),
   validateRequest,
   uc.getUserInfoByIdx
@@ -26,8 +27,8 @@ router.get(
 
 // 사용자가 즐겨찾기 등록한 음식점 리스트 조회
 router.get(
-  "/:user_idx/restaurants/likes",
-  verifyAccessToken("accessToken"),
+  "/:users_idx/restaurants/likes",
+  verifyAccessTokenOptional(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.getRestaurantLikeList),
   validateRequest,
   uc.getRestaurantLikeList
@@ -35,8 +36,8 @@ router.get(
 
 // 사용자가 작성한 후기 리스트 조회
 router.get(
-  "/:user_idx/reviews",
-  verifyAccessToken("accessToken"),
+  "/:users_idx/reviews",
+  verifyAccessTokenOptional(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.getReviewList),
   validateRequest,
   uc.getReviewList
@@ -44,8 +45,8 @@ router.get(
 
 // 음식점 즐겨찾기 등록
 router.post(
-  "/likes/restaurants/:restaurant_idx",
-  verifyAccessToken("accessToken"),
+  "/likes/restaurants/:restaurants_idx",
+  verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.createRestaurantLike),
   validateRequest,
   uc.createRestaurantLike
@@ -53,8 +54,8 @@ router.post(
 
 // 음식점 즐겨찾기 해제
 router.delete(
-  "/likes/restaurants/:restaurant_idx",
-  verifyAccessToken("accessToken"),
+  "/likes/restaurants/:restaurants_idx",
+  verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.deleteRestaurantLike),
   validateRequest,
   uc.deleteRestaurantLike
@@ -62,8 +63,8 @@ router.delete(
 
 // 메뉴 추천 등록
 router.post(
-  "/likes/menus/:menu_idx",
-  verifyAccessToken("accessToken"),
+  "/likes/menus/:menus_idx",
+  verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.createMenuLike),
   validateRequest,
   uc.createMenuLike
@@ -71,8 +72,8 @@ router.post(
 
 // 메뉴 추천 해제
 router.delete(
-  "/likes/menus/:menu_idx",
-  verifyAccessToken("accessToken"),
+  "/likes/menus/:menus_idx",
+  verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.deleteMenuLike),
   validateRequest,
   uc.deleteMenuLike
@@ -80,8 +81,8 @@ router.delete(
 
 // 후기 좋아요 등록
 router.post(
-  "/likes/reviews/:review_idx",
-  verifyAccessToken("accessToken"),
+  "/likes/reviews/:reviews_idx",
+  verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.createReviewLike),
   validateRequest,
   uc.createReviewLike
@@ -89,8 +90,8 @@ router.post(
 
 // 후기 좋아요 해제
 router.delete(
-  "/likes/reviews/:review_idx",
-  verifyAccessToken("accessToken"),
+  "/likes/reviews/:reviews_idx",
+  verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.deleteReviewLike),
   validateRequest,
   uc.deleteReviewLike
@@ -98,7 +99,8 @@ router.delete(
 
 // 음식점 신고 등록
 router.post(
-  "/:user_idx/reports/restaurants/:restaurant_idx",
+  "/reports/restaurants/:restaurants_idx",
+  verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.createRestaurantReport),
   validateRequest,
   uc.createRestaurantReport
@@ -106,7 +108,8 @@ router.post(
 
 // 메뉴 신고 등록
 router.post(
-  "/:user_idx/reports/menus/:menu_idx",
+  "/reports/menus/:menus_idx",
+  verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.createMenuReport),
   validateRequest,
   uc.createMenuReport
@@ -114,7 +117,8 @@ router.post(
 
 // 후기 신고 등록
 router.post(
-  "/:user_idx/reports/reviews/:review_idx",
+  "/reports/reviews/:reviews_idx",
+  verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.createReviewReport),
   validateRequest,
   uc.createReviewReport

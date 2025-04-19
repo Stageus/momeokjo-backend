@@ -1,5 +1,5 @@
 // 내 정보 수정
-exports.updateMyInfoAtDb = async (users_idx, nickname, client) => {
+exports.updateMyInfoAtDb = async ({ users_idx, nickname, client }) => {
   const results = await client.query(
     `
       UPDATE users.lists SET 
@@ -15,7 +15,7 @@ exports.updateMyInfoAtDb = async (users_idx, nickname, client) => {
 };
 
 // 사용자 정보 상세정보 조회
-exports.getUserInfoByIdxFromDb = async (user_idx_from_cookie, user_idx, client) => {
+exports.getUserInfoByIdxFromDb = async ({ users_idx_from_cookie, users_idx, client }) => {
   const results = await client.query(
     `
       SELECT
@@ -28,14 +28,19 @@ exports.getUserInfoByIdxFromDb = async (user_idx_from_cookie, user_idx, client) 
       WHERE idx = $2
       AND is_deleted = false;
     `,
-    [user_idx_from_cookie, user_idx]
+    [users_idx_from_cookie, users_idx]
   );
 
   return results.rows[0];
 };
 
 // 사용자가 즐겨찾기 등록한 음식점 리스트 조회
-exports.getRestaurantLikeListFromDb = async (client, user_idx_from_cookie, user_idx, page) => {
+exports.getRestaurantLikeListFromDb = async ({
+  client,
+  users_idx_from_cookie,
+  users_idx,
+  page,
+}) => {
   const check_total = await client.query(
     `
       SELECT COALESCE(CEIL(COUNT(*) / 15::float), 1) AS total_pages
@@ -45,7 +50,7 @@ exports.getRestaurantLikeListFromDb = async (client, user_idx_from_cookie, user_
       AND list.is_deleted = false
       AND likes.is_deleted = false;
       `,
-    [user_idx]
+    [users_idx]
   );
 
   const results = await client.query(
@@ -62,7 +67,7 @@ exports.getRestaurantLikeListFromDb = async (client, user_idx_from_cookie, user_
       SELECT
         COALESCE(json_agg(
           json_build_object(
-            'restaurant_idx', list.idx,
+            'restaurants_idx', list.idx,
             'category_name', category.name,
             'likes_count', COALESCE(likes_count::integer , 0),
             'restaurant_name', list.name,
@@ -73,26 +78,26 @@ exports.getRestaurantLikeListFromDb = async (client, user_idx_from_cookie, user_
             'phone', phone,
             'start_time', start_time,
             'end_time', end_time,
-            'is_my_like', CASE WHEN list.users_idx = $1 THEN true ELSE false END
+            'is_my_like', CASE WHEN likes.users_idx = $1 THEN true ELSE false END
           )
         ), '[]'::json) AS data
       FROM restaurants.lists list
       JOIN restaurants.categories category ON category.idx = list.categories_idx
-      JOIN restaurants.likes likes ON likes.restaurants_idx = list.idx
-      JOIN total_likes total ON total.restaurants_idx = list.idx
+      LEFT JOIN restaurants.likes likes ON likes.restaurants_idx = list.idx
+      LEFT JOIN total_likes total ON total.restaurants_idx = list.idx
       WHERE likes.users_idx = $2 
-      AND likes.is_deleted = false
+      AND list.is_deleted = false
       AND likes.is_deleted = false
       OFFSET $3
       LIMIT 15;
     `,
-    [user_idx_from_cookie, user_idx, 15 * (page - 1)]
+    [users_idx_from_cookie, users_idx, 15 * (page - 1)]
   );
 
-  return { data: results.rows[0].data || [], total_pages: check_total.rows[0].total_pages };
+  return { data: results.rows[0]?.data ?? [], total_pages: check_total.rows[0].total_pages };
 };
 
-exports.getReviewListFromDb = async (client, user_idx_from_cookie, user_idx, page) => {
+exports.getReviewListFromDb = async ({ client, users_idx_from_cookie, users_idx, page }) => {
   const check_total = await client.query(
     `
       SELECT COALESCE(CEIL(COUNT(reviews.*) / 15::float), 1) AS total_pages
@@ -104,7 +109,7 @@ exports.getReviewListFromDb = async (client, user_idx_from_cookie, user_idx, pag
       AND users.is_deleted = false
       AND menus.is_deleted = false;
       `,
-    [user_idx]
+    [users_idx]
   );
 
   const results = await client.query(
@@ -128,18 +133,19 @@ exports.getReviewListFromDb = async (client, user_idx_from_cookie, user_idx, pag
             'review_idx', reviews.idx,
             'menu_name', menus.name,
             'likes_count', COALESCE(likes_count::integer , 0),
-            'user_idx', reviews.users_idx,
+            'users_idx', reviews.users_idx,
             'nickname', nickname,
             'content', content,
             'image_url', image_url,
             'created_at', reviews.created_at,
-            'is_my_like', CASE WHEN reviews.users_idx = $1 THEN true ELSE false END
+            'is_my_like', CASE WHEN likes.users_idx = $1 THEN true ELSE false END
           )
         ), '[]'::json) AS data
       FROM reviews.lists reviews
       JOIN menus.lists menus ON reviews.menus_idx = menus.idx
       JOIN users.lists users ON reviews.users_idx = users.idx
       LEFT JOIN total_likes total ON total.reviews_idx = reviews.idx
+      LEFT JOIN reviews.likes likes ON likes.reviews_idx = reviews.idx
       WHERE reviews.users_idx = $2 
       AND reviews.is_deleted = false
       AND users.is_deleted = false
@@ -147,14 +153,14 @@ exports.getReviewListFromDb = async (client, user_idx_from_cookie, user_idx, pag
       OFFSET $3
       LIMIT 15;
       `,
-    [user_idx_from_cookie, user_idx, 15 * (page - 1)]
+    [users_idx_from_cookie, users_idx, 15 * (page - 1)]
   );
 
-  return { data: results.rows[0].data || [], total_pages: check_total.rows[0].total_pages };
+  return { data: results.rows[0]?.data ?? [], total_pages: check_total.rows[0].total_pages };
 };
 
 // 음식점 즐겨찾기 등록
-exports.createRestaurantLikeAtDb = async (users_idx, restaurant_idx, client) => {
+exports.createRestaurantLikeAtDb = async ({ users_idx, restaurants_idx, client }) => {
   await client.query(
     `
       INSERT INTO restaurants.likes (
@@ -165,29 +171,31 @@ exports.createRestaurantLikeAtDb = async (users_idx, restaurant_idx, client) => 
         $2
       );
     `,
-    [restaurant_idx, users_idx]
+    [restaurants_idx, users_idx]
   );
 };
 
 // 음식점 즐겨찾기 해제
-exports.deleteRestaurantLikeFromDb = async (client, restaurant_idx, users_idx) => {
+exports.deleteRestaurantLikeFromDb = async ({ client, restaurants_idx, users_idx = null }) => {
   const results = await client.query(
     `
       UPDATE restaurants.likes SET
         is_deleted = true
       WHERE restaurants_idx = $1
-        AND users_idx = $2
         AND is_deleted = false
-        RETURNING idx;
+        AND (
+          $2::INTEGER IS NULL OR users_idx = $2
+        )
+      RETURNING idx;
     `,
-    [restaurant_idx, users_idx]
+    [restaurants_idx, users_idx]
   );
 
   return results.rowCount > 0;
 };
 
 // 메뉴 추천 등록
-exports.createMenuLikeAtDb = async (users_idx, menu_idx, client) => {
+exports.createMenuLikeAtDb = async ({ users_idx, menus_idx, client }) => {
   await client.query(
     `
       INSERT INTO menus.likes (
@@ -198,29 +206,42 @@ exports.createMenuLikeAtDb = async (users_idx, menu_idx, client) => {
         $2
       );
     `,
-    [menu_idx, users_idx]
+    [menus_idx, users_idx]
   );
 };
 
 // 메뉴 추천 해제
-exports.deleteMenuLikeFromDb = async (client, users_idx, menu_idx) => {
+exports.deleteMenuLikeFromDb = async ({ client, menus_idx, users_idx }) => {
   const results = await client.query(
     `
       UPDATE menus.likes SET
         is_deleted = true
       WHERE menus_idx = $1
-      AND users_idx = $2
-      AND is_deleted = false
+        AND users_idx = $2
+        AND is_deleted = false
       RETURNING idx;
     `,
-    [menu_idx, users_idx]
+    [menus_idx, users_idx]
   );
 
   return results.rowCount > 0;
 };
 
+// 메뉴 추천 해제
+exports.deleteMenuLikeFromDbWithArray = async ({ client, menus_idx_list }) => {
+  await client.query(
+    `
+      UPDATE menus.likes SET
+        is_deleted = true
+      WHERE menus_idx = ANY($1::int[])
+        AND is_deleted = false;
+    `,
+    [menus_idx_list]
+  );
+};
+
 // 후기 좋아요 등록
-exports.createReviewLikeAtDb = async (users_idx, review_idx, client) => {
+exports.createReviewLikeAtDb = async ({ users_idx, reviews_idx, client }) => {
   await client.query(
     `
       INSERT INTO reviews.likes (
@@ -231,29 +252,41 @@ exports.createReviewLikeAtDb = async (users_idx, review_idx, client) => {
         $2
       );
     `,
-    [review_idx, users_idx]
+    [reviews_idx, users_idx]
   );
 };
 
-// 후괴 좋아요 해제
-exports.deleteReviewLikeFromDb = async (client, review_idx, user_idx) => {
+// 후기 좋아요 해제
+exports.deleteReviewLikeFromDb = async ({ client, reviews_idx, users_idx }) => {
   const results = await client.query(
     `
-    UPDATE reviews.likes SET
-      is_deleted = true
-    WHERE reviews_idx = $1
-    AND users_idx = $2
-    AND is_deleted = false
-    RETURNING idx;
+      UPDATE reviews.likes SET
+        is_deleted = true
+      WHERE reviews_idx = $1
+        AND users_idx = $2
+        AND is_deleted = false
+      RETURNING idx;
     `,
-    [review_idx, user_idx]
+    [reviews_idx, users_idx]
   );
 
   return results.rowCount > 0;
 };
 
+exports.deleteReviewLikeFromDbWithArray = async ({ client, reviews_idx_list }) => {
+  await client.query(
+    `
+      UPDATE reviews.likes SET
+        is_deleted = true
+      WHERE reviews_idx = ANY($1::int[])
+      AND is_deleted = false;
+    `,
+    [reviews_idx_list]
+  );
+};
+
 // 음식점 신고 등록
-exports.createRestaurantReportAtDb = async (client, restaurant_idx, user_idx) => {
+exports.createRestaurantReportAtDb = async ({ client, restaurants_idx, users_idx }) => {
   await client.query(
     `
       INSERT INTO restaurants.reports (
@@ -264,28 +297,26 @@ exports.createRestaurantReportAtDb = async (client, restaurant_idx, user_idx) =>
         $2
       );
     `,
-    [restaurant_idx, user_idx]
+    [restaurants_idx, users_idx]
   );
 };
 
 // 총 음식점 신고 횟수 조회
-exports.checkTotalRestaurantReportByIdx = async (client, restaurant_idx) => {
+exports.getTotalRestaurantReportByIdx = async ({ client, restaurants_idx }) => {
   const results = await client.query(
     `
-      SELECT COUNT(report.*) AS total_count
-      FROM restaurants.reports AS report
-      JOIN restaurants.lists AS list ON report.restaurants_idx = list.idx
-      WHERE report.restaurants_idx = $1
-      AND list.is_deleted = false;
+      SELECT COUNT(*) AS total_count
+      FROM restaurants.reports
+      WHERE restaurants_idx = $1;
     `,
-    [restaurant_idx]
+    [restaurants_idx]
   );
 
-  return results.rows[0].total_count ?? 0;
+  return results.rows[0]?.total_count ?? 0;
 };
 
 // 음식점 비활성화
-exports.deleteRestaurantFromDb = async (client, restaurant_idx) => {
+exports.deleteRestaurantFromDb = async ({ client, restaurants_idx }) => {
   await client.query(
     `
       UPDATE restaurants.lists SET
@@ -293,54 +324,86 @@ exports.deleteRestaurantFromDb = async (client, restaurant_idx) => {
       WHERE idx = $1
       AND is_deleted = false;
     `,
-    [restaurant_idx]
+    [restaurants_idx]
   );
 };
 
 // 메뉴 비활성화
-exports.deleteMenuFromDb = async (client, type, idx) => {
-  let query = `
+exports.deleteMenuFromDbByRestaurantsIdx = async ({ client, restaurants_idx }) => {
+  const results = await client.query(
+    `
       UPDATE menus.lists SET
         is_deleted = true
-      WHERE is_deleted = false
-    `;
+      WHERE restaurants_idx = $1
+        AND is_deleted = false
+      RETURNING idx;
+    `,
+    [restaurants_idx]
+  );
 
-  if (type === "restaurant") {
-    query += ` AND restaurants_idx = $1`;
-  } else {
-    query += ` AND idx = $1`;
-  }
+  return results.rows.map(({ idx }) => parseInt(idx));
+};
 
-  query += ` RETURNING idx`;
+exports.deleteMenuFromDbByMenusIdx = async ({ client, menus_idx }) => {
+  const results = await client.query(
+    `
+      UPDATE menus.lists SET
+        is_deleted = true
+      WHERE idx = $1
+        AND is_deleted = false
+      RETURNING idx;
+    `,
+    [menus_idx]
+  );
 
-  const results = await client.query(query, [idx]);
-
-  return results.rows.map(({ idx }) => idx).join(",");
+  return results.rows.map(({ idx }) => parseInt(idx));
 };
 
 // 후기 비활성화
-exports.deleteReviewFromDb = async (client, type, index) => {
-  let query = `
+exports.deleteReviewFromDbByRestaurantsIdx = async ({ client, restaurants_idx }) => {
+  const results = await client.query(
+    `
       UPDATE reviews.lists SET
         is_deleted = true
-      WHERE is_deleted = false
-    `;
+      WHERE restaurants_idx = $1
+        AND is_deleted = false;
+    `,
+    [restaurants_idx]
+  );
 
-  if (type === "menu") {
-    query += ` AND menus_idx = ANY(STRING_TO_ARRAY($1, ',')::BIGINT[])`;
-  } else {
-    query += ` AND idx = ANY(STRING_TO_ARRAY($1, ',')::BIGINT[])`;
-  }
+  return results.rows?.map(({ idx }) => parseInt(idx)) ?? [];
+};
 
-  query += ` RETURNING idx`;
+exports.deleteReviewFromDbByMenusIdx = async ({ client, menus_idx }) => {
+  const results = await client.query(
+    `
+      UPDATE reviews.lists SET
+        is_deleted = true
+      WHERE menus_idx = $1
+        AND is_deleted = false;
+    `,
+    [menus_idx]
+  );
 
-  const results = await client.query(query, [index]);
+  return results.rows.map(({ idx }) => parseInt(idx));
+};
 
-  return results.rows.map(({ idx }) => idx).join(",");
+exports.deleteReviewFromDbByReviewsIdx = async ({ client, reviews_idx }) => {
+  const results = await client.query(
+    `
+      UPDATE reviews.lists SET
+        is_deleted = true
+      WHERE idx = $1
+        AND is_deleted = false;
+    `,
+    [reviews_idx]
+  );
+
+  return results.rows?.map(({ idx }) => parseInt(idx)) ?? [];
 };
 
 // 메뉴 신고 등록
-exports.createMenuReportAtDb = async (client, menu_idx, user_idx) => {
+exports.createMenuReportAtDb = async ({ client, menus_idx, users_idx }) => {
   await client.query(
     `
       INSERT INTO menus.reports (
@@ -351,28 +414,26 @@ exports.createMenuReportAtDb = async (client, menu_idx, user_idx) => {
         $2
       );
     `,
-    [menu_idx, user_idx]
+    [menus_idx, users_idx]
   );
 };
 
 // 총 메뉴 신고 횟수 조회
-exports.checkTotalMenuReportByIdx = async (client, menu_idx) => {
+exports.checkTotalMenuReportByIdx = async ({ client, menus_idx }) => {
   const results = await client.query(
     `
-      SELECT COUNT(report.*) AS total_count
-      FROM menus.reports AS report
-      JOIN menus.lists AS list ON report.menus_idx = list.idx
-      WHERE report.menus_idx = $1
-      AND list.is_deleted = false;
+      SELECT COUNT(*) AS total_count
+      FROM menus.reports
+      WHERE menus_idx = $1;
     `,
-    [menu_idx]
+    [menus_idx]
   );
 
-  return results.rows[0].total_count ?? 0;
+  return results.rows[0]?.total_count ?? 0;
 };
 
 // 후기 신고 등록
-exports.createReviewReportAtDb = async (client, review_idx, user_idx) => {
+exports.createReviewReportAtDb = async ({ client, reviews_idx, users_idx }) => {
   await client.query(
     `
       INSERT INTO reviews.reports (
@@ -383,22 +444,20 @@ exports.createReviewReportAtDb = async (client, review_idx, user_idx) => {
         $2
       );
     `,
-    [review_idx, user_idx]
+    [reviews_idx, users_idx]
   );
 };
 
 // 총 후기 신고 횟수 조회
-exports.checkTotalReviewReportByIdx = async (client, review_idx) => {
+exports.checkTotalReviewReportByIdx = async ({ client, reviews_idx }) => {
   const results = await client.query(
     `
-      SELECT COUNT(report.*) AS total_count
-      FROM reviews.reports AS report
-      JOIN reviews.lists AS list ON report.reviews_idx = list.idx
-      WHERE report.reviews_idx = $1
-      AND list.is_deleted = false;
+      SELECT COUNT(*) AS total_count
+      FROM reviews.reports
+      WHERE reviews_idx = $1;
     `,
-    [review_idx]
+    [reviews_idx]
   );
 
-  return results.rows[0].total_count ?? 0;
+  return results.rows[0]?.total_count ?? 0;
 };

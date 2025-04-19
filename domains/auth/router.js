@@ -4,17 +4,18 @@ const { validateRequest } = require("../../middlewares/validateRequest");
 const verifyAccessToken = require("../../middlewares/verifyAccessToken");
 const ac = require("./controller");
 const schema = require("./schema");
+const COOKIE_NAME = require("../../utils/cookieName");
 
 // 로그인
 router.post("/signin", createValidateChain(schema.signIn), validateRequest, ac.signIn);
 
 // 로그아웃
-router.delete("/signout", verifyAccessToken("accessToken"), ac.signOut);
+router.delete("/signout", verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN), ac.signOut);
 
 // 회원가입
 router.post(
   "/signup",
-  verifyAccessToken("emailVerified"),
+  verifyAccessToken(COOKIE_NAME.EMAIL_AUTH_VERIFIED),
   createValidateChain(schema.signUp),
   validateRequest,
   ac.signUp
@@ -23,8 +24,8 @@ router.post(
 // oauth 회원가입
 router.post(
   "/oauth/signup",
-  verifyAccessToken("oauthIdx"),
-  verifyAccessToken("emailVerified"),
+  verifyAccessToken(COOKIE_NAME.OAUTH_INDEX),
+  verifyAccessToken(COOKIE_NAME.EMAIL_AUTH_VERIFIED),
   createValidateChain(schema.signUpWithOauth),
   validateRequest,
   ac.signUpWithOauth
@@ -44,7 +45,7 @@ router.post(
 // 비밀번호 초기화
 router.put(
   "/resetpw",
-  verifyAccessToken("resetPw"),
+  verifyAccessToken(COOKIE_NAME.PASSWORD_RESET),
   createValidateChain(schema.resetPw),
   validateRequest,
   ac.resetPassword
@@ -61,7 +62,7 @@ router.post(
 // 이메일 인증번호 확인
 router.post(
   "/verify-email/confirm",
-  verifyAccessToken("email"),
+  verifyAccessToken(COOKIE_NAME.EMAIL_AUTH_SEND),
   createValidateChain(schema.checkEmailVerificationCode),
   validateRequest,
   ac.checkEmailVerificationCode
@@ -74,6 +75,6 @@ router.get("/oauth/kakao", ac.signInWithKakaoAuth);
 router.get("/oauth/kakao/redirect", ac.checkOauthAndRedirect);
 
 // 로그인 상태 조회
-router.get("/status", verifyAccessToken("accessToken"), ac.getStatus);
+router.get("/status", verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN), ac.getStatus);
 
 module.exports = router;

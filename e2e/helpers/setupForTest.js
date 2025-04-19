@@ -1,6 +1,7 @@
 const request = require("supertest");
 const pool = require("../../database/db");
 const app = require("../../server");
+const COOKIE_NAME = require("../../utils/cookieName");
 
 exports.createTempUserReturnIdx = async ({ id, pw, nickname, email, role, oauth_idx = null }) => {
   const client = await pool.connect();
@@ -22,7 +23,9 @@ exports.createTempUserReturnIdx = async ({ id, pw, nickname, email, role, oauth_
 
 exports.getCookieSavedAccessTokenAfterSignin = async ({ id, pw }) => {
   const res = await request(app).post("/auth/signin").send({ id, pw });
-  const cookie = res.headers["set-cookie"].find((cookie) => cookie.startsWith("accessToken="));
+  const cookie = res.headers["set-cookie"].find((cookie) =>
+    cookie.startsWith(`${COOKIE_NAME.ACCESS_TOKEN}=`)
+  );
 
   return cookie;
 };
@@ -77,7 +80,7 @@ exports.createTempRestaurantReturnIdx = async ({
         ST_SetSRID(ST_MakePoint($4, $5), 4326), 
         $6, $7, $8, $9, $10
       )
-      RETURNING idx AS restaurant_idx
+      RETURNING idx AS restaurants_idx
     `,
     [
       category_idx,
@@ -94,10 +97,10 @@ exports.createTempRestaurantReturnIdx = async ({
   );
   client.release();
 
-  return results.rows[0].restaurant_idx;
+  return results.rows[0].restaurants_idx;
 };
 
-exports.createTempMenuReturnIdx = async ({ users_idx, restaurant_idx, menu_name, price }) => {
+exports.createTempMenuReturnIdx = async ({ users_idx, restaurants_idx, menu_name, price }) => {
   const client = await pool.connect();
   const results = await client.query(
     `
@@ -111,14 +114,20 @@ exports.createTempMenuReturnIdx = async ({ users_idx, restaurant_idx, menu_name,
       )
       RETURNING idx AS menu_idx;
     `,
-    [users_idx, restaurant_idx, menu_name, price]
+    [users_idx, restaurants_idx, menu_name, price]
   );
   client.release();
 
   return results.rows[0].menu_idx;
 };
 
-exports.createTempReviewReturnIdx = async ({ users_idx, menu_idx, content, image_url }) => {
+exports.createTempReviewReturnIdx = async ({
+  users_idx,
+  menus_idx,
+  content,
+  image_url,
+  restaurants_idx,
+}) => {
   const client = await pool.connect();
   const results = await client.query(
     `
@@ -126,20 +135,21 @@ exports.createTempReviewReturnIdx = async ({ users_idx, menu_idx, content, image
         users_idx,
         menus_idx,
         content,
-        image_url
+        image_url,
+        restaurants_idx
       ) VALUES (
-        $1, $2, $3, $4
+        $1, $2, $3, $4, $5
       )
       RETURNING idx AS review_idx;
     `,
-    [users_idx, menu_idx, content, image_url]
+    [users_idx, menus_idx, content, image_url, restaurants_idx]
   );
   client.release();
 
   return results.rows[0]?.review_idx;
 };
 
-exports.createTempRestaurantLikes = async ({ restaurant_idx, users_idx }) => {
+exports.createTempRestaurantLikes = async ({ restaurants_idx, users_idx }) => {
   const client = await pool.connect();
   await client.query(
     `
@@ -151,7 +161,7 @@ exports.createTempRestaurantLikes = async ({ restaurant_idx, users_idx }) => {
         $2
       );
     `,
-    [restaurant_idx, users_idx]
+    [restaurants_idx, users_idx]
   );
   client.release();
 };
@@ -188,4 +198,54 @@ exports.createTempReviewLikes = async ({ review_idx, users_idx }) => {
     [review_idx, users_idx]
   );
   client.release();
+};
+
+exports.getTempCodeFromDb = async ({ email }) => {
+  const client = await pool.connect();
+  const results = await client.query(
+    `
+      SELECT
+        code
+      FROM users.codes
+      WHERE email = $1
+      ORDER BY created_at DESC
+      LIMIT 1;
+    `,
+    [email]
+  );
+  client.release();
+
+  return results.rows[0].code;
+};
+
+exports.createTempOauthReturnIdx = async ({
+  provider,
+  provider_user_id,
+  encryptedRefreshToken,
+  encryptedAccessToken,
+  refreshTokenExpiresIn,
+}) => {
+  const client = await pool.connect();
+  const results = await client.query(
+    `
+    INSERT INTO users.oauth (
+      provider,
+      provider_user_id,
+      refresh_token,
+      access_token,
+      refresh_expires_in
+    ) VALUES (
+      $1,
+      $2,
+      $3,
+      $4,
+      $5
+    )
+    RETURNING idx AS oauth_idx;
+  `,
+    [provider, provider_user_id, encryptedRefreshToken, encryptedAccessToken, refreshTokenExpiresIn]
+  );
+  client.release();
+
+  return results.rows[0].oauth_idx;
 };

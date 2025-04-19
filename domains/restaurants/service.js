@@ -1,13 +1,13 @@
 // 음식점 리스트 조회
-exports.getRestaurantInfoListFromDb = async (
+exports.getRestaurantInfoListFromDb = async ({
   users_idx,
   category_idx,
   range,
   page,
   user_longitude,
   user_latitude,
-  client
-) => {
+  client,
+}) => {
   const check_total = await client.query(
     `
       SELECT 
@@ -30,9 +30,10 @@ exports.getRestaurantInfoListFromDb = async (
 
   const results = await client.query(
     `
-      WITH likes AS (
-        SELECT COUNT(*) AS likes_count,
-        restaurants_idx
+      WITH tot_likes AS (
+        SELECT 
+          COUNT(*) AS likes_count,
+          restaurants_idx
         FROM restaurants.likes
         WHERE is_deleted = false
         GROUP BY restaurants_idx
@@ -41,7 +42,7 @@ exports.getRestaurantInfoListFromDb = async (
       SELECT 
         COALESCE(json_agg(
           json_build_object(
-            'restaurant_idx', list.idx,
+            'restaurants_idx', list.idx,
             'category_name', category.name,
             'likes_count', COALESCE(likes_count::integer , 0),
             'restaurant_name', list.name,
@@ -52,12 +53,14 @@ exports.getRestaurantInfoListFromDb = async (
             'phone', phone,
             'start_time', start_time,
             'end_time', end_time,
-            'is_mine', CASE WHEN list.users_idx = $1 THEN true ELSE false END
+            'is_mine', CASE WHEN list.users_idx = $1 THEN true ELSE false END,
+            'is_my_likes', CASE WHEN likes.users_idx = $1 THEN true ELSE false END
           )
         ), '[]'::json) AS data
       FROM restaurants.lists AS list
       JOIN restaurants.categories AS category ON list.categories_idx = category.idx
-      LEFT JOIN likes ON list.idx = likes.restaurants_idx
+      LEFT JOIN tot_likes ON list.idx = tot_likes.restaurants_idx
+      LEFT JOIN restaurants.likes likes ON list.idx = likes.restaurants_idx
       WHERE list.is_deleted = false
       AND category.is_deleted = false
       AND (
@@ -81,7 +84,7 @@ exports.getRestaurantInfoListFromDb = async (
 };
 
 // 음식점 등록
-exports.createRestaurantInfoAtDb = async (
+exports.createRestaurantInfoAtDb = async ({
   category_idx,
   users_idx,
   restaurant_name,
@@ -92,8 +95,8 @@ exports.createRestaurantInfoAtDb = async (
   phone,
   start_time,
   end_time,
-  client
-) => {
+  client,
+}) => {
   await client.query(
     `
       INSERT INTO restaurants.lists (
@@ -130,7 +133,7 @@ exports.createRestaurantInfoAtDb = async (
 };
 
 // 음식점 카테고리 리스트 조회
-exports.getRestaurantCategoryListFromDb = async (include_deleted, client) => {
+exports.getRestaurantCategoryListFromDb = async ({ include_deleted, client }) => {
   const results = await client.query(
     `
       SELECT
@@ -146,7 +149,7 @@ exports.getRestaurantCategoryListFromDb = async (include_deleted, client) => {
 };
 
 // 음식점 카테고리 등록
-exports.createRestaurantCategoryAtDb = async (users_idx, category_name, client) => {
+exports.createRestaurantCategoryAtDb = async ({ users_idx, category_name, client }) => {
   await client.query(
     `
       INSERT INTO restaurants.categories (
@@ -162,7 +165,7 @@ exports.createRestaurantCategoryAtDb = async (users_idx, category_name, client) 
 };
 
 // 음식점 카테고리 수정
-exports.updateRestaurantCategoryByIdxAtDb = async (category_idx, category_name, client) => {
+exports.updateRestaurantCategoryByIdxAtDb = async ({ category_idx, category_name, client }) => {
   const results = await client.query(
     `
       UPDATE restaurants.categories
@@ -178,17 +181,17 @@ exports.updateRestaurantCategoryByIdxAtDb = async (category_idx, category_name, 
 };
 
 // 음식점 랜덤 조회
-exports.getRecommendRestaurantFromDb = async (
+exports.getRecommendRestaurantFromDb = async ({
   users_idx,
   category_idx,
   range,
   user_longitude,
   user_latitude,
-  client
-) => {
+  client,
+}) => {
   const results = await client.query(
     `
-    WITH likes AS (
+    WITH tot_likes AS (
       SELECT COUNT(*) AS likes_count,
       restaurants_idx
       FROM restaurants.likes
@@ -197,7 +200,7 @@ exports.getRecommendRestaurantFromDb = async (
     )
 
     SELECT
-          list.idx AS restaurant_idx,
+          list.idx AS restaurants_idx,
           category.name AS category_name,
           COALESCE(likes_count::integer , 0) AS likes_count,
           list.name AS restaurant_name,
@@ -208,10 +211,12 @@ exports.getRecommendRestaurantFromDb = async (
           phone,
           start_time,
           end_time,
-          CASE WHEN list.users_idx = $1 THEN true ELSE false END AS is_mine
+          CASE WHEN list.users_idx = $1 THEN true ELSE false END AS is_mine,
+          CASE WHEN likes.users_idx = $1 THEN true ELSE false END AS is_my_like
       FROM restaurants.lists AS list
       JOIN restaurants.categories AS category ON list.categories_idx = category.idx
-      LEFT JOIN likes ON list.idx = likes.restaurants_idx
+      LEFT JOIN tot_likes ON list.idx = tot_likes.restaurants_idx
+      LEFT JOIN restaurants.likes likes ON list.idx = likes.restaurants_idx
       WHERE list.is_deleted = false
       AND category.is_deleted = false
       AND (
@@ -232,7 +237,7 @@ exports.getRecommendRestaurantFromDb = async (
 };
 
 // 음식점 메뉴 리스트 조회
-exports.getRestaurantMenuInfoListFromDb = async (users_idx, restaurant_idx, page, client) => {
+exports.getRestaurantMenuInfoListFromDb = async ({ users_idx, restaurants_idx, page, client }) => {
   const check_total = await client.query(
     `
       SELECT
@@ -241,14 +246,15 @@ exports.getRestaurantMenuInfoListFromDb = async (users_idx, restaurant_idx, page
       WHERE restaurants_idx = $1
       AND is_deleted = false
     `,
-    [restaurant_idx]
+    [restaurants_idx]
   );
 
   const results = await client.query(
     `
-      WITH likes AS (
-        SELECT COUNT(*) AS likes_count,
-        menus_idx
+      WITH tot_likes AS (
+        SELECT 
+          COUNT(*) AS likes_count,
+          menus_idx
         FROM menus.likes
         WHERE is_deleted = false
         GROUP BY menus_idx
@@ -257,36 +263,38 @@ exports.getRestaurantMenuInfoListFromDb = async (users_idx, restaurant_idx, page
         SELECT
           reviews.menus_idx,
           reviews.image_url
-        FROM reviews.lists AS reviews
-        JOIN menus.lists AS menus ON reviews.menus_idx = menus.idx
-        LEFT JOIN likes ON reviews.menus_idx = likes.menus_idx
-        WHERE restaurants_idx = $2
+        FROM reviews.lists reviews
+        JOIN menus.lists menus ON reviews.menus_idx = menus.idx
+        LEFT JOIN tot_likes ON reviews.menus_idx = tot_likes.menus_idx
+        WHERE reviews.restaurants_idx = $2
         AND reviews.is_deleted = false
         AND menus.is_deleted = false
-        ORDER BY likes.likes_count DESC
+        ORDER BY tot_likes.likes_count DESC
         LIMIT 1
       ) 
 
       SELECT
         COALESCE(json_agg(
           json_build_object(
-            'menu_idx', idx,
+            'menu_idx', list.idx,
             'menu_name', name,
             'price', price,
             'likes_count', COALESCE(likes_count::integer, 0),
-            'is_mine', CASE WHEN users_idx = $1 THEN true ELSE false END,
+            'is_mine', CASE WHEN list.users_idx = $1 THEN true ELSE false END,
+            'is_my_like', CASE WHEN likes.users_idx = $1 THEN true ELSE false END,
             'image_url', COALESCE(images.image_url, '')
           )
         ), '[]'::json) AS data
-      FROM menus.lists AS list
-      LEFT JOIN likes ON list.idx = likes.menus_idx
+      FROM menus.lists list
+      LEFT JOIN tot_likes ON list.idx = tot_likes.menus_idx
+      LEFT JOIN menus.likes likes ON list.idx = likes.menus_idx
       LEFT JOIN images ON list.idx = images.menus_idx
       WHERE restaurants_idx = $2
-      AND is_deleted = false
+      AND list.is_deleted = false
       OFFSET $3
       LIMIT 15
     `,
-    [users_idx, restaurant_idx, (page - 1) * 15]
+    [users_idx, restaurants_idx, (page - 1) * 15]
   );
 
   return {
@@ -296,7 +304,13 @@ exports.getRestaurantMenuInfoListFromDb = async (users_idx, restaurant_idx, page
 };
 
 // 음식점 메뉴 등록
-exports.createRestaurantMenuAtDb = async (users_idx, restaurant_idx, menu_name, price, client) => {
+exports.createRestaurantMenuAtDb = async ({
+  users_idx,
+  restaurants_idx,
+  menu_name,
+  price,
+  client,
+}) => {
   await client.query(
     `
       INSERT INTO menus.lists (
@@ -306,14 +320,20 @@ exports.createRestaurantMenuAtDb = async (users_idx, restaurant_idx, menu_name, 
         price
       ) VALUES (
         $1, $2, $3, $4
-      )
+      );
     `,
-    [users_idx, restaurant_idx, menu_name, price]
+    [users_idx, restaurants_idx, menu_name, price]
   );
 };
 
 // 음식점 메뉴 수정
-exports.updateRestaurantMenuByIdxAtDb = async (users_idx, menu_idx, menu_name, price, client) => {
+exports.updateRestaurantMenuByIdxAtDb = async ({
+  users_idx,
+  menus_idx,
+  menu_name,
+  price,
+  client,
+}) => {
   const results = await client.query(
     `
       UPDATE menus.lists
@@ -321,16 +341,16 @@ exports.updateRestaurantMenuByIdxAtDb = async (users_idx, menu_idx, menu_name, p
       WHERE idx = $3
       AND users_idx = $4
       AND is_deleted = false
-      RETURNING idx AS menu_idx;
+      RETURNING idx;
     `,
-    [menu_name, price, menu_idx, users_idx]
+    [menu_name, price, menus_idx, users_idx]
   );
 
-  return results.rows[0]?.menu_idx;
+  return results.rowCount > 0;
 };
 
 // 메뉴 후기 리스트 조회
-exports.getMenuReviewInfoListFromDb = async (users_idx, menu_idx, page, client) => {
+exports.getMenuReviewInfoListFromDb = async ({ users_idx, menus_idx, page, client }) => {
   const check_total = await client.query(
     `
       SELECT
@@ -343,12 +363,12 @@ exports.getMenuReviewInfoListFromDb = async (users_idx, menu_idx, page, client) 
       AND menus.is_deleted = false
       AND users.is_deleted = false
     `,
-    [menu_idx]
+    [menus_idx]
   );
 
   const results = await client.query(
     `
-      WITH likes AS (
+      WITH tot_likes AS (
         SELECT COUNT(*) AS likes_count,
         reviews_idx
         FROM reviews.likes
@@ -359,20 +379,22 @@ exports.getMenuReviewInfoListFromDb = async (users_idx, menu_idx, page, client) 
       SELECT
         COALESCE(json_agg(
           json_build_object(
-            'review_idx', reviews.idx,
-            'user_idx', reviews.users_idx,
+            'reviews_idx', reviews.idx,
+            'users_idx', reviews.users_idx,
             'user_name', users.nickname,
             'menu_name', menus.name,
             'content', reviews.content,
             'image_url', COALESCE(reviews.image_url, ''),
             'is_mine', CASE WHEN reviews.users_idx = $1 THEN true ELSE false END,
-            'likes_count', COALESCE(likes.likes_count::integer, 0)
+            'is_my_like', CASE WHEN likes.users_idx = $1 THEN true ELSE false END,
+            'likes_count', COALESCE(tot_likes.likes_count::integer, 0)
           ) ORDER BY reviews.created_at DESC
         ), '[]'::json) AS data
       FROM reviews.lists reviews
       JOIN menus.lists menus ON reviews.menus_idx = menus.idx
       JOIN users.lists users ON reviews.users_idx = users.idx
-      LEFT JOIN likes ON reviews.idx = likes.reviews_idx
+      LEFT JOIN tot_likes ON reviews.idx = tot_likes.reviews_idx
+      LEFT JOIN reviews.likes likes ON reviews.idx = likes.reviews_idx
       WHERE reviews.menus_idx = $2
       AND reviews.is_deleted = false
       AND menus.is_deleted = false
@@ -380,7 +402,7 @@ exports.getMenuReviewInfoListFromDb = async (users_idx, menu_idx, page, client) 
       OFFSET $3
       LIMIT 15
     `,
-    [users_idx, menu_idx, (page - 1) * 15]
+    [users_idx, menus_idx, (page - 1) * 15]
   );
 
   return {
@@ -390,24 +412,38 @@ exports.getMenuReviewInfoListFromDb = async (users_idx, menu_idx, page, client) 
 };
 
 // 메뉴 후기 등록
-exports.createMenuReviewAtDb = async (users_idx, menu_idx, content, image_url, client) => {
+exports.createMenuReviewAtDb = async ({
+  users_idx,
+  menus_idx,
+  content,
+  image_url,
+  restaurants_idx,
+  client,
+}) => {
   await client.query(
     `
       INSERT INTO reviews.lists (
         users_idx,
         menus_idx,
         content,
-        image_url
+        image_url,
+        restaurants_idx
       ) VALUES (
-        $1, $2, $3, $4
+        $1, $2, $3, $4, $5
       )
     `,
-    [users_idx, menu_idx, content, image_url]
+    [users_idx, menus_idx, content, image_url, restaurants_idx]
   );
 };
 
 // 메뉴 후기 수정
-exports.updateMenuReviewByIdxAtDb = async (users_idx, review_idx, content, image_url, client) => {
+exports.updateMenuReviewByIdxAtDb = async ({
+  users_idx,
+  reviews_idx,
+  content,
+  image_url,
+  client,
+}) => {
   const results = await client.query(
     `
       UPDATE reviews.lists
@@ -416,19 +452,19 @@ exports.updateMenuReviewByIdxAtDb = async (users_idx, review_idx, content, image
       WHERE idx = $3
       AND is_deleted = false
       AND users_idx = $4
-      RETURNING idx AS review_idx;
+      RETURNING idx;
     `,
-    [content, image_url, review_idx, users_idx]
+    [content, image_url, reviews_idx, users_idx]
   );
 
-  return results.rows[0]?.review_idx;
+  return results.rowCount > 0;
 };
 
 // 음식점 상세보기 조회
-exports.getRestaurantInfoByIdxFromDb = async (users_idx, restaurant_idx, client) => {
+exports.getRestaurantInfoByIdxFromDb = async ({ users_idx, restaurants_idx, client }) => {
   const results = await client.query(
     `
-      WITH likes AS (
+      WITH tot_likes AS (
         SELECT COUNT(*) AS likes_count,
         restaurants_idx
         FROM restaurants.likes
@@ -437,7 +473,7 @@ exports.getRestaurantInfoByIdxFromDb = async (users_idx, restaurant_idx, client)
       )
       
       SELECT 
-        list.idx AS restaurant_idx,
+        list.idx AS restaurants_idx,
         category.name AS category_name,
         COALESCE(likes_count::integer , 0) AS likes_count,
         list.name AS restaurant_name,
@@ -446,32 +482,34 @@ exports.getRestaurantInfoByIdxFromDb = async (users_idx, restaurant_idx, client)
         phone,
         start_time,
         end_time,
-        CASE WHEN list.users_idx = $1 THEN true ELSE false END AS is_mine
+        CASE WHEN list.users_idx = $1 THEN true ELSE false END AS is_mine,
+        CASE WHEN likes.users_idx = $1 THEN true ELSE false END AS is_my_like
       FROM restaurants.lists AS list
       JOIN restaurants.categories AS category ON list.categories_idx = category.idx
-      LEFT JOIN likes ON list.idx = likes.restaurants_idx
+      LEFT JOIN tot_likes ON list.idx = tot_likes.restaurants_idx
+      LEFT JOIN restaurants.likes likes ON list.idx = likes.restaurants_idx
       WHERE list.idx = $2
       AND list.is_deleted = false
       AND category.is_deleted = false
     `,
-    [users_idx, restaurant_idx]
+    [users_idx, restaurants_idx]
   );
 
   return results.rows[0] || {};
 };
 
 // 음식점 수정
-exports.updateRestaurantInfoByIdxAtDb = async (
+exports.updateRestaurantInfoByIdxAtDb = async ({
   users_idx,
-  restaurant_idx,
+  restaurants_idx,
   category_idx,
   restaurant_name,
   address_detail,
   phone,
   start_time,
   end_time,
-  client
-) => {
+  client,
+}) => {
   const results = await client.query(
     `
       UPDATE restaurants.lists
@@ -485,7 +523,7 @@ exports.updateRestaurantInfoByIdxAtDb = async (
       WHERE idx = $7
       AND users_idx = $8
       AND is_deleted = false
-      RETURNING idx AS restaurant_idx;
+      RETURNING idx;
     `,
     [
       category_idx,
@@ -494,10 +532,10 @@ exports.updateRestaurantInfoByIdxAtDb = async (
       phone,
       start_time,
       end_time,
-      restaurant_idx,
+      restaurants_idx,
       users_idx,
     ]
   );
 
-  return results.rows[0]?.restaurant_idx;
+  return results.rowCount > 0;
 };

@@ -1,7 +1,7 @@
 const { transporter } = require("../../utils/nodemailer");
 const axios = require("axios");
 
-exports.checkIsUserFromDb = async (client, id, pw) => {
+exports.checkIsUserFromDb = async ({ client, id, pw }) => {
   const results = await client.query(
     `
       SELECT
@@ -17,13 +17,13 @@ exports.checkIsUserFromDb = async (client, id, pw) => {
   );
 
   return {
-    isUser: results.rows[0]?.is_user || false,
+    isUser: results.rows[0]?.is_user ?? false,
     users_idx: results.rows[0]?.idx,
     role: results.rows[0]?.role,
   };
 };
 
-exports.checkLocalRefreshTokenFromDb = async (client, users_idx) => {
+exports.checkLocalRefreshTokenFromDb = async ({ client, users_idx }) => {
   const results = await client.query(
     `
       SELECT
@@ -39,12 +39,17 @@ exports.checkLocalRefreshTokenFromDb = async (client, users_idx) => {
   );
 
   return {
-    isExpired: results.rows[0]?.is_expired || true,
-    refreshToken: results.rows[0]?.refresh_token || "",
+    isExpired: results.rows[0]?.is_expired ?? true,
+    refreshToken: results.rows[0]?.refresh_token,
   };
 };
 
-exports.saveNewRefreshTokenAtDb = async (client, users_idx, refreshToken, refresh_expired_at) => {
+exports.saveNewRefreshTokenAtDb = async ({
+  client,
+  users_idx,
+  refreshToken,
+  refresh_expired_at,
+}) => {
   await client.query(
     `
     INSERT INTO users.local_tokens (
@@ -61,17 +66,19 @@ exports.saveNewRefreshTokenAtDb = async (client, users_idx, refreshToken, refres
   );
 };
 
-exports.createUserAtDb = async (client, id, pw, nickname, email, role, oauth_idx) => {
+exports.createUserAtDb = async ({ client, id, pw, nickname, email, role, oauth_idx = null }) => {
   await client.query(
     "INSERT INTO users.lists (id, pw, nickname, email, role, oauth_idx) VALUES ($1, $2, $3, $4, $5, $6);",
     [id, pw, nickname, email, role, oauth_idx]
   );
 };
 
-exports.getUserIdFromDb = async (client, email) => {
+exports.getUserIdFromDb = async ({ client, email }) => {
   const results = await client.query(
     `
-      SELECT id
+      SELECT 
+      TRUE AS is_user,
+      id
       FROM users.lists
       WHERE email = $1
       AND is_deleted = false;
@@ -79,11 +86,11 @@ exports.getUserIdFromDb = async (client, email) => {
     [email]
   );
 
-  return { isUser: results.rowCount > 0, id: results.rows[0]?.id };
+  return { isUser: results.rows[0]?.is_user ?? false, id: results.rows[0]?.id };
 };
 
 //
-exports.checkUserWithIdAndEmailFromDb = async (client, id, email) => {
+exports.checkUserWithIdAndEmailFromDb = async ({ client, id, email }) => {
   const results = await client.query(
     `
     SELECT
@@ -92,7 +99,7 @@ exports.checkUserWithIdAndEmailFromDb = async (client, id, email) => {
         FROM users.lists
         WHERE id = $1
         AND email = $2
-      ) AS is_existed
+      ) AS is_existed;
   `,
     [id, email]
   );
@@ -100,7 +107,7 @@ exports.checkUserWithIdAndEmailFromDb = async (client, id, email) => {
   return results.rows[0].is_existed;
 };
 
-exports.updatePasswordAtDb = async (client, id, pw, email) => {
+exports.updatePasswordAtDb = async ({ client, id, pw, email }) => {
   await client.query(
     `
       UPDATE users.lists SET pw = $2
@@ -112,7 +119,7 @@ exports.updatePasswordAtDb = async (client, id, pw, email) => {
   );
 };
 
-exports.checkIsExistedEmailFromDb = async (client, email) => {
+exports.checkIsExistedEmailFromDb = async ({ client, email }) => {
   const results = await client.query(
     `
       SELECT
@@ -121,33 +128,33 @@ exports.checkIsExistedEmailFromDb = async (client, email) => {
           FROM users.lists
           WHERE email = $1
           AND is_deleted = false
-      ) AS is_exist_email;
+      ) AS is_exist;
     `,
     [email]
   );
 
-  return results.rows[0].is_exist_email;
+  return results.rows[0].is_exist;
 };
 
 exports.createVerificationCode = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-exports.saveVerificationCodeAtDb = async (client, email, code) => {
+exports.saveVerificationCodeAtDb = async ({ client, email, code }) => {
   await client.query(
     `
-        INSERT INTO users.codes(
+      INSERT INTO users.codes(
         email,
         code
       ) VALUES (
-       $1, $2
+        $1, $2
       )
     `,
     [email, code]
   );
 };
 
-exports.sendEmailVerificationCode = async (email, code) => {
+exports.sendEmailVerificationCode = async ({ email, code }) => {
   await transporter.sendMail({
     from: process.env.EMAIL_USER,
     to: email,
@@ -156,20 +163,21 @@ exports.sendEmailVerificationCode = async (email, code) => {
   });
 };
 
-exports.getVerifyCodeFromDb = async (client, email) => {
+exports.checkVerifyCodeFromDb = async ({ client, email, code }) => {
   const results = await client.query(
     `
       SELECT
-        code
+        TRUE AS is_code
       FROM users.codes
       WHERE email = $1
+        AND code = $2
       ORDER BY created_at DESC
-      LIMIT 1
+      LIMIT 1;
     `,
-    [email]
+    [email, code]
   );
 
-  return results.rows[0].code;
+  return results.rows[0]?.is_code ?? false;
 };
 
 // 카카오에 토큰 발급 요청
@@ -204,7 +212,7 @@ exports.getProviderIdFromKakao = async (accessToken) => {
 };
 
 // 사용자 회원가입 이력 확인
-exports.checkOauthUserAtDb = async (client, provider_user_id, provider) => {
+exports.checkOauthUserAtDb = async ({ client, provider_user_id, provider }) => {
   const results = await client.query(
     `
       SELECT
@@ -223,20 +231,20 @@ exports.checkOauthUserAtDb = async (client, provider_user_id, provider) => {
   );
 
   return {
-    isExisted: results.rows[0]?.is_existed || false,
-    users_idx: results.rows[0]?.users_idx || undefined,
+    isExisted: results.rows[0]?.is_existed ?? false,
+    users_idx: results.rows[0]?.users_idx,
   };
 };
 
 // oauth 인증정보 데이터베이스에 저장
-exports.saveOauthInfoAtDb = async (
+exports.saveOauthInfoAtDb = async ({
   client,
   encryptedAccessToken,
   encryptedRefreshToken,
   refreshTokenExpiresIn,
   provider_user_id,
-  provider
-) => {
+  provider,
+}) => {
   const results = await client.query(
     `
         INSERT INTO users.oauth (
@@ -260,76 +268,34 @@ exports.saveOauthInfoAtDb = async (
   return results.rows[0].oauth_idx;
 };
 
-// 카카오 로그인 - 대기
-exports.redirectToOauthProvider = async () => {
-  if (oauthUserResult.rows.length) {
-    const user = oauthUserResult.rows[0];
-    session.userIdx = user.idx;
-    session.nickname = user.nickname;
-    return { user, additional: false };
-  } else {
-    const existingUser = await db.query(
-      "SELECT idx, nickname FROM users.lists WHERE email=$1 AND is_deleted=false",
-      [email]
-    );
-    if (existingUser.rows.length) {
-      const users_idx = existingUser.rows[0].idx;
-      await db.query(
-        "INSERT INTO users.oauth (users_idx, provider, provider_user_id, refresh_token) VALUES ($1, $2, $3, $4)",
-        [users_idx, "kakao", provider_user_id, refreshToken]
-      );
-      session.userIdx = existingUser.rows[0].idx;
-      session.nickname = existingUser.rows[0].nickname;
-      return { user: existingUser.rows[0], additional: false };
-    } else {
-      session.oauth = {
-        provider: "kakao",
-        provider_user_id,
-        email,
-        refreshToken,
-      };
-      throw customError("추가 회원정보 입력 필요", 403);
-    }
-  }
-};
-
-exports.invalidateLocalRefreshTokenAtDb = async (client, users_idx) => {
+exports.removeLocalRefreshTokenAtDb = async ({ client, users_idx }) => {
   await client.query(
     `
       UPDATE users.local_tokens SET
         is_deleted = true
       WHERE users_idx = $1
-      AND is_deleted = false
-    `,
-    [users_idx]
-  );
-};
-
-exports.getOauthIdxFromDb = async (client, users_idx) => {
-  const results = await client.query(
-    `
-      SELECT oauth_idx
-      FROM users.lists
-      WHERE idx = $1
       AND is_deleted = false;
     `,
     [users_idx]
   );
-
-  return results.rows[0].oauth_idx;
 };
 
-exports.invalidateOauthRefreshTokenAtDb = async (client, oauth_idx) => {
+exports.getOauthAccessTokenFromDb = async ({ client, users_idx }) => {
   const results = await client.query(
     `
       SELECT
         access_token,
         provider_user_id
       FROM users.oauth
-      WHERE idx = $1
+      WHERE idx = (
+        SELECT oauth_idx
+        FROM users.lists
+        WHERE idx = $1
+          AND is_deleted = false
+      )
       AND is_deleted = false;
     `,
-    [oauth_idx]
+    [users_idx]
   );
 
   return {
@@ -338,7 +304,7 @@ exports.invalidateOauthRefreshTokenAtDb = async (client, oauth_idx) => {
   };
 };
 
-exports.requestKakaoLogout = async (accessToken, provider_user_id) => {
+exports.requestKakaoLogout = async ({ accessToken, provider_user_id }) => {
   await axios({
     method: "POST",
     url: "https://kapi.kakao.com/v1/user/logout",
@@ -352,7 +318,7 @@ exports.requestKakaoLogout = async (accessToken, provider_user_id) => {
   });
 };
 
-exports.getUserNicknameFromDb = async (client, users_idx) => {
+exports.getUserNicknameFromDb = async ({ client, users_idx }) => {
   const results = await client.query(
     `
       SELECT

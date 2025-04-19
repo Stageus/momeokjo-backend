@@ -139,14 +139,15 @@ CREATE TABLE menus.reports
 
 CREATE TABLE reviews.lists
 (
-  idx         serial       PRIMARY KEY,
-  menus_idx   bigint       NOT NULL REFERENCES menus.lists(idx),
-  users_idx   bigint       NOT NULL REFERENCES users.lists(idx),
-  content     text         NOT NULL,
-  image_url   varchar(255) ,
-  is_deleted  boolean      NOT NULL DEFAULT false,
-  created_at  timestamp    NOT NULL DEFAULT current_timestamp,
-  updated_at  timestamp    NOT NULL DEFAULT current_timestamp
+  idx             serial       PRIMARY KEY,
+  restaurants_idx bigint       NOT NULL REFERENCES restaurants.lists(idx),
+  menus_idx       bigint       NOT NULL REFERENCES menus.lists(idx),
+  users_idx       bigint       NOT NULL REFERENCES users.lists(idx),
+  content         text         NOT NULL,
+  image_url       varchar(255) ,
+  is_deleted      boolean      NOT NULL DEFAULT false,
+  created_at      timestamp    NOT NULL DEFAULT current_timestamp,
+  updated_at      timestamp    NOT NULL DEFAULT current_timestamp
 );
 
 CREATE TABLE reviews.likes

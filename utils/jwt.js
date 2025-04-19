@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const customErrorResponse = require("./customErrorResponse");
 
-exports.createAccessToken = (payload, expiresIn) => {
+exports.createAccessToken = ({ payload, expiresIn }) => {
   try {
     if (!payload || typeof payload !== "object" || Object.keys(payload).length === 0)
       throw new Error("payload 확인 필요");
@@ -18,7 +18,7 @@ exports.createAccessToken = (payload, expiresIn) => {
   }
 };
 
-exports.createRefreshToken = (payload, expiresIn) => {
+exports.createRefreshToken = ({ payload, expiresIn }) => {
   try {
     if (!payload || typeof payload !== "object" || Object.keys(payload).length === 0)
       throw new Error("payload 확인 필요");
@@ -31,11 +31,14 @@ exports.createRefreshToken = (payload, expiresIn) => {
 
     return token;
   } catch (err) {
-    throw customErrorResponse(500, err.message || "refresh 토큰 생성 중 오류 발생");
+    throw customErrorResponse({
+      status: 500,
+      message: err.message || "refresh 토큰 생성 중 오류 발생",
+    });
   }
 };
 
-exports.verifyToken = (token, isRefresh = false) => {
+exports.verifyToken = ({ token, isRefresh = false }) => {
   try {
     if (!token || typeof token !== "string") throw new Error("token 확인 필요");
 
@@ -50,6 +53,6 @@ exports.verifyToken = (token, isRefresh = false) => {
 
     return { isValid: true, results: decoded };
   } catch (err) {
-    throw customErrorResponse(500, err.message || "토큰 디코딩 중 오류 발생");
+    throw customErrorResponse({ status: 500, message: err.message || "토큰 디코딩 중 오류 발생" });
   }
 };
