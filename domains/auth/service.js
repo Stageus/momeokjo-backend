@@ -1,7 +1,7 @@
 const { transporter } = require("../../utils/nodemailer");
 const axios = require("axios");
 
-exports.checkIsUserFromDb = async (client, id, pw) => {
+exports.checkIsUserFromDb = async ({ client, id, pw }) => {
   const results = await client.query(
     `
       SELECT
@@ -17,13 +17,13 @@ exports.checkIsUserFromDb = async (client, id, pw) => {
   );
 
   return {
-    isUser: results.rows[0]?.is_user || false,
+    isUser: results.rows[0]?.is_user ?? false,
     users_idx: results.rows[0]?.idx,
     role: results.rows[0]?.role,
   };
 };
 
-exports.checkLocalRefreshTokenFromDb = async (client, users_idx) => {
+exports.checkLocalRefreshTokenFromDb = async ({ client, users_idx }) => {
   const results = await client.query(
     `
       SELECT
@@ -39,12 +39,17 @@ exports.checkLocalRefreshTokenFromDb = async (client, users_idx) => {
   );
 
   return {
-    isExpired: results.rows[0]?.is_expired || true,
-    refreshToken: results.rows[0]?.refresh_token || "",
+    isExpired: results.rows[0]?.is_expired ?? true,
+    refreshToken: results.rows[0]?.refresh_token,
   };
 };
 
-exports.saveNewRefreshTokenAtDb = async (client, users_idx, refreshToken, refresh_expired_at) => {
+exports.saveNewRefreshTokenAtDb = async ({
+  client,
+  users_idx,
+  refreshToken,
+  refresh_expired_at,
+}) => {
   await client.query(
     `
     INSERT INTO users.local_tokens (
