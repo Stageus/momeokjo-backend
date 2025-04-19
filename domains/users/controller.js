@@ -144,7 +144,7 @@ exports.createRestaurantReport = tryCatchWrapperWithDbTransaction(
       await us.deleteRestaurantLikeFromDb({ client, restaurants_idx });
 
       const menus_idx_list = await us.deleteMenuFromDbByRestaurantsIdx({ client, restaurants_idx });
-      await us.deleteMenuLikeFromDb({ client, menus_idx_list });
+      await us.deleteMenuLikeFromDbWithArray({ client, menus_idx_list });
 
       const reviews_idx_list = await us.deleteReviewFromDbByRestaurantsIdx({
         client,

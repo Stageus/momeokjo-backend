@@ -762,7 +762,7 @@ describe("DELETE /users/likes/menus/:menu_idx", () => {
     const res = await agent.delete(`/users/likes/menus/${menu_idx + 1}`).set("Cookie", cookie);
 
     expect(res.status).toBe(404);
-    expect(res.body.message).toBe("메뉴 추천 내역 없음");
+    expect(res.body.message).toBe("메뉴 추천 등록 내역 없음");
   });
 });
 

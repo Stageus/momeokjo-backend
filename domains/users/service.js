@@ -210,14 +210,30 @@ exports.createMenuLikeAtDb = async ({ users_idx, menus_idx, client }) => {
 };
 
 // 메뉴 추천 해제
-exports.deleteMenuLikeFromDb = async ({ client, menus_idx_list }) => {
+exports.deleteMenuLikeFromDb = async ({ client, menus_idx, users_idx }) => {
+  const results = await client.query(
+    `
+      UPDATE menus.likes SET
+        is_deleted = true
+      WHERE menus_idx = $1
+        AND users_idx = $2
+        AND is_deleted = false
+      RETURNING idx;
+    `,
+    [menus_idx, users_idx]
+  );
+
+  return results.rowCount > 0;
+};
+
+// 메뉴 추천 해제
+exports.deleteMenuLikeFromDbWithArray = async ({ client, menus_idx_list }) => {
   await client.query(
     `
       UPDATE menus.likes SET
         is_deleted = true
       WHERE menus_idx = ANY($1::int[])
-        AND is_deleted = false
-      RETURNING idx;
+        AND is_deleted = false;
     `,
     [menus_idx_list]
   );
@@ -241,6 +257,18 @@ exports.createReviewLikeAtDb = async ({ users_idx, reviews_idx, client }) => {
 
 // 후기 좋아요 해제
 exports.deleteReviewLikeFromDb = async ({ client, reviews_idx_list }) => {
+  await client.query(
+    `
+      UPDATE reviews.likes SET
+        is_deleted = true
+      WHERE reviews_idx = ANY($1::int[])
+      AND is_deleted = false;
+    `,
+    [reviews_idx_list]
+  );
+};
+
+exports.deleteReviewLikeFromDbWithArray = async ({ client, reviews_idx_list }) => {
   await client.query(
     `
       UPDATE reviews.likes SET
