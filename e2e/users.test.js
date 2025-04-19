@@ -165,12 +165,19 @@ describe("GET /users/:users_idx", () => {
     expect(res.body.data).toStrictEqual(expect.any(Object));
   });
 
-  it("입력값이 유효하지 않은 경우 상태코드 400을 응답해야한다.", (done) => {
-    agent.get(`/users/asdfasdf`).expect(400, done);
+  it("입력값이 유효하지 않은 경우 상태코드 400을 응답해야한다.", async () => {
+    const res = await agent.get(`/users/asdfasdf`);
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe("입력값 확인 필요");
+    expect(res.body.target).toBe("users_idx");
   });
 
-  it("사용자가 없는 경우 상태코드 404를 응답해야한다.", (done) => {
-    agent.get("/users/1").expect(404, done);
+  it("사용자가 없는 경우 상태코드 404를 응답해야한다.", async () => {
+    const res = await agent.get("/users/1");
+
+    expect(res.status).toBe(404);
+    expect(res.body.message).toBe("일치하는 사용자 없음");
   });
 });
 
