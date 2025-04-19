@@ -138,13 +138,14 @@ exports.getReviewListFromDb = async ({ client, users_idx_from_cookie, users_idx,
             'content', content,
             'image_url', image_url,
             'created_at', reviews.created_at,
-            'is_my_like', CASE WHEN reviews.users_idx = $1 THEN true ELSE false END
+            'is_my_like', CASE WHEN likes.users_idx = $1 THEN true ELSE false END
           )
         ), '[]'::json) AS data
       FROM reviews.lists reviews
       JOIN menus.lists menus ON reviews.menus_idx = menus.idx
       JOIN users.lists users ON reviews.users_idx = users.idx
       LEFT JOIN total_likes total ON total.reviews_idx = reviews.idx
+      LEFT JOIN reviews.likes likes ON likes.reviews_idx = reviews.idx
       WHERE reviews.users_idx = $2 
       AND reviews.is_deleted = false
       AND users.is_deleted = false
@@ -155,7 +156,7 @@ exports.getReviewListFromDb = async ({ client, users_idx_from_cookie, users_idx,
     [users_idx_from_cookie, users_idx, 15 * (page - 1)]
   );
 
-  return { data: results.rows[0].data || [], total_pages: check_total.rows[0].total_pages };
+  return { data: results.rows[0]?.data ?? [], total_pages: check_total.rows[0].total_pages };
 };
 
 // 음식점 즐겨찾기 등록

@@ -28,7 +28,7 @@ router.get(
 // 사용자가 즐겨찾기 등록한 음식점 리스트 조회
 router.get(
   "/:users_idx/restaurants/likes",
-  verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN),
+  verifyAccessTokenOptional(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.getRestaurantLikeList),
   validateRequest,
   uc.getRestaurantLikeList
@@ -37,7 +37,7 @@ router.get(
 // 사용자가 작성한 후기 리스트 조회
 router.get(
   "/:users_idx/reviews",
-  verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN),
+  verifyAccessTokenOptional(COOKIE_NAME.ACCESS_TOKEN),
   createValidateChain(schema.getReviewList),
   validateRequest,
   uc.getReviewList
