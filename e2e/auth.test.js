@@ -393,27 +393,34 @@ describe("POST /findid", () => {
     const id = "test";
     const email = "test@test.com";
 
-    const client = await pool.connect();
-    await service.createUserAtDb(client, id, "Test!1@2", "test", email, "USER", null);
-    client.release();
+    await helper.createTempUserReturnIdx({
+      id,
+      pw: "Test!1@2",
+      nickname: "test",
+      email,
+      role: "USER",
+    });
 
     const res = await agent.post("/auth/findid").send({ email });
 
     expect(res.status).toBe(200);
-    expect(res.body.message).toBe("아이디 조회 성공");
-    expect(res.body.id).toBe(id);
+    expect(res.body.message).toBe("요청 처리 성공");
+    expect(res.body.data.id).toBe(id);
   });
 
   it("이메일을 입력하지 않은 경우 상태코드 400을 응답해야한다.", async () => {
-    const res = await agent.post("/auth/findid").send();
+    const res = await agent.post("/auth/findid").send({ email: "" });
 
     expect(res.status).toBe(400);
     expect(res.body.message).toBe("입력값 확인 필요");
     expect(res.body.target).toBe("email");
   });
 
-  it("아이디 찾기 결과 없는 경우 상태코드 404를 응답해야한다.", (done) => {
-    agent.post("/auth/findid").send({ email: "test@test.com" }).expect(404, done);
+  it("해당하는 사용자 없는 경우 상태코드 404를 응답해야한다.", async () => {
+    const res = await agent.post("/auth/findid").send({ email: "test@test.com" });
+
+    expect(res.status).toBe(404);
+    expect(res.body.message).toBe("해당하는 사용자 없음");
   });
 });
 

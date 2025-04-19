@@ -3,11 +3,7 @@ const { tryCatchWrapper, tryCatchWrapperWithDb } = require("../../utils/customWr
 const customErrorResponse = require("../../utils/customErrorResponse");
 const jwt = require("../../utils/jwt");
 const algorithm = require("../../utils/algorithm");
-const {
-  baseCookieOptions,
-  accessTokenOptions,
-  refreshTokenOptions,
-} = require("../../config/cookies");
+const { baseCookieOptions, accessTokenOptions } = require("../../config/cookies");
 const COOKIE_NAME = require("../../utils/cookieName");
 
 // 로그인
@@ -112,7 +108,7 @@ exports.getUserId = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { isUser, id } = await as.getUserIdFromDb({ client, email });
   if (!isUser) throw customErrorResponse({ status: 404, message: "해당하는 사용자 없음" });
 
-  res.status(200).json({ message: "아이디 조회 성공", data: { id } });
+  res.status(200).json({ message: "요청 처리 성공", data: { id } });
 });
 
 // 비밀번호 찾기
