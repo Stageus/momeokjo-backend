@@ -90,7 +90,7 @@ exports.getUserIdFromDb = async ({ client, email }) => {
 };
 
 //
-exports.checkUserWithIdAndEmailFromDb = async (client, id, email) => {
+exports.checkUserWithIdAndEmailFromDb = async ({ client, id, email }) => {
   const results = await client.query(
     `
     SELECT
