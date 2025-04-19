@@ -207,3 +207,35 @@ exports.getTempCodeFromDb = async ({ email }) => {
 
   return results.rows[0].code;
 };
+
+exports.createTempOauthReturnIdx = async ({
+  provider,
+  provider_user_id,
+  encryptedRefreshToken,
+  encryptedAccessToken,
+  refreshTokenExpiresIn,
+}) => {
+  const client = await pool.connect();
+  const results = await client.query(
+    `
+    INSERT INTO users.oauth (
+      provider,
+      provider_user_id,
+      refresh_token,
+      access_token,
+      refresh_expires_in
+    ) VALUES (
+      $1,
+      $2,
+      $3,
+      $4,
+      $5
+    )
+    RETURNING idx AS oauth_idx;
+  `,
+    [provider, provider_user_id, encryptedRefreshToken, encryptedAccessToken, refreshTokenExpiresIn]
+  );
+  client.release();
+
+  return results.rows[0].oauth_idx;
+};

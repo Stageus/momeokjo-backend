@@ -580,71 +580,78 @@ describe("PUT /resetpw", () => {
   });
 });
 
-// describe("GET /auth/oauth/kakao", () => {
-//   it("카카오 로그인 페이지로 리다이렉트를 해야한다.", (done) => {
-//     process.env.KAKAO_REST_API_KEY = "some_key";
-//     process.env.KAKAO_REDIRECT_URI = "some_uri";
+describe("GET /auth/oauth/kakao", () => {
+  it("카카오 로그인 페이지로 리다이렉트를 해야한다.", (done) => {
+    process.env.KAKAO_REST_API_KEY = "some_key";
+    process.env.KAKAO_REDIRECT_URI = "some_uri";
 
-//     const url = `https://kauth.kakao.com/oauth/authorize?client_id=${process.env.KAKAO_REST_API_KEY}&redirect_uri=${process.env.KAKAO_REDIRECT_URI}&response_type=code`;
+    const url = `https://kauth.kakao.com/oauth/authorize?client_id=${process.env.KAKAO_REST_API_KEY}&redirect_uri=${process.env.KAKAO_REDIRECT_URI}&response_type=code`;
 
-//     request(app).get("/auth/oauth/kakao").expect("Location", url).expect(302, done);
-//   });
-// });
+    request(app).get("/auth/oauth/kakao").expect("Location", url).expect(302, done);
+  });
+});
 
-// describe("GET /auth/oauth/kakao/redirect", () => {
-//   const agent = request(app);
-//   it("카카오 로그인 성공한 신규 회원인 경우 회원가입 페이지로 리다이렉트를 해야한다.", async () => {
-//     nock("https://kauth.kakao.com").post("/oauth/token").reply(200, {
-//       access_token: "some_access_token",
-//       refresh_token: "some_refresh_token",
-//       refresh_token_expires_in: 123123,
-//     });
+describe("GET /auth/oauth/kakao/redirect", () => {
+  const agent = request(app);
+  it("카카오 로그인 성공한 신규 회원인 경우 회원가입 페이지로 리다이렉트를 해야한다.", async () => {
+    nock("https://kauth.kakao.com").post("/oauth/token").reply(200, {
+      access_token: "some_access_token",
+      refresh_token: "some_refresh_token",
+      refresh_token_expires_in: 123123,
+    });
 
-//     nock("https://kapi.kakao.com").get("/v2/user/me").reply(200, { id: 1 });
+    nock("https://kapi.kakao.com").get("/v2/user/me").reply(200, { id: 1 });
 
-//     const res = await agent.get("/auth/oauth/kakao/redirect?code=code");
+    const res = await agent.get("/auth/oauth/kakao/redirect?code=code");
 
-//     const cookie = res.headers["set-cookie"].find((cookie) => cookie.startsWith("oauthIdx="));
-//     expect(cookie).toBeDefined();
+    const cookie = res.headers["set-cookie"].find((cookie) => cookie.startsWith("oauthIdx="));
+    expect(cookie).toBeDefined();
 
-//     expect(res.status).toBe(302);
-//     expect(res.headers["location"]).toContain("/signup");
-//   });
+    expect(res.status).toBe(302);
+    expect(res.headers["location"]).toContain("/signup");
+  });
 
-//   it("카카오 로그인에 성공한 기존 회원인 경우 음식점 추천 페이지로 리다이렉트를 해야한다.", async () => {
-//     const client = await pool.connect();
-//     const oauth_idx = await service.saveOauthInfoAtDb(
-//       client,
-//       "encrypted_access_token",
-//       "enchrypted_refresh_token",
-//       Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
-//       1,
-//       "KAKAO"
-//     );
-//     await service.createUserAtDb(client, null, null, "test", "test@test.com", "USER", oauth_idx);
-//     client.release();
+  it("카카오 로그인에 성공한 기존 회원인 경우 음식점 추천 페이지로 리다이렉트를 해야한다.", async () => {
+    const oauth_idx = await helper.createTempOauthReturnIdx({
+      provider: "KAKAO",
+      provider_user_id: 1,
+      encryptedRefreshToken: "enchrypted_refresh_token",
+      encryptedAccessToken: "encrypted_access_token",
+      refreshTokenExpiresIn: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
+    });
 
-//     nock("https://kauth.kakao.com").post("/oauth/token").reply(200, {
-//       access_token: "some_access_token",
-//       refresh_token: "some_refresh_token",
-//       refresh_token_expires_in: 123123,
-//     });
+    helper.createTempUserReturnIdx({
+      id: null,
+      pw: null,
+      email: "test@test.com",
+      nickname: "test",
+      role: "USER",
+      oauth_idx,
+    });
 
-//     nock("https://kapi.kakao.com").get("/v2/user/me").reply(200, { id: 1 });
+    nock("https://kauth.kakao.com").post("/oauth/token").reply(200, {
+      access_token: "some_access_token",
+      refresh_token: "some_refresh_token",
+      refresh_token_expires_in: 123123,
+    });
 
-//     const res = await agent.get("/auth/oauth/kakao/redirect?code=code");
+    nock("https://kapi.kakao.com").get("/v2/user/me").reply(200, { id: 1 });
 
-//     const cookie = res.headers["set-cookie"].find((cookie) => cookie.startsWith("accessToken="));
-//     expect(cookie).toBeDefined();
+    const res = await agent.get("/auth/oauth/kakao/redirect?code=code");
 
-//     expect(res.status).toBe(302);
-//     expect(res.headers["location"]).toBe("http://localhost:3000/");
-//   });
+    const cookie = res.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith(`${COOKIE_NAME.ACCESS_TOKEN}=`)
+    );
+    expect(cookie).toBeDefined();
 
-//   it("카카오 로그인에 실패한 경우 상태코드 400을 응답해야한다.", (done) => {
-//     agent.get("/auth/oauth/kakao/redirect").expect(400, done);
-//   });
-// });
+    expect(res.status).toBe(302);
+    expect(res.headers["location"]).toBe("http://localhost:3000/");
+  });
+
+  it("카카오 로그인에 실패한 경우 상태코드 400을 응답해야한다.", (done) => {
+    agent.get("/auth/oauth/kakao/redirect").expect(400, done);
+  });
+});
 
 // describe("POST /auth/oauth/signup", () => {
 //   const agent = request(app);
