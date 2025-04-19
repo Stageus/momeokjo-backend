@@ -73,10 +73,12 @@ exports.createUserAtDb = async ({ client, id, pw, nickname, email, role, oauth_i
   );
 };
 
-exports.getUserIdFromDb = async (client, email) => {
+exports.getUserIdFromDb = async ({ client, email }) => {
   const results = await client.query(
     `
-      SELECT id
+      SELECT 
+      TRUE AS is_user,
+      id
       FROM users.lists
       WHERE email = $1
       AND is_deleted = false;
@@ -84,7 +86,7 @@ exports.getUserIdFromDb = async (client, email) => {
     [email]
   );
 
-  return { isUser: results.rowCount > 0, id: results.rows[0]?.id };
+  return { isUser: results.rows[0]?.is_user ?? false, id: results.rows[0]?.id };
 };
 
 //

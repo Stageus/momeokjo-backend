@@ -110,18 +110,18 @@ exports.signUpWithOauth = tryCatchWrapperWithDb(async (req, res, next, client) =
 exports.getUserId = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { email } = req.body;
 
-  const { isUser, id } = await as.getUserIdFromDb(client, email);
-  if (!isUser) throw customErrorResponse(404, "계정 없음");
+  const { isUser, id } = await as.getUserIdFromDb({ client, email });
+  if (!isUser) throw customErrorResponse({ status: 404, message: "해당하는 사용자 없음" });
 
-  res.status(200).json({ message: "아이디 조회 성공", id });
+  res.status(200).json({ message: "아이디 조회 성공", data: { id } });
 });
 
 // 비밀번호 찾기
 exports.createRequestPasswordReset = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { id, email } = req.body;
 
-  const isExistedUser = await as.checkUserWithIdAndEmailFromDb(client, id, email);
-  if (!isExistedUser) throw customErrorResponse(404, "계정 없음");
+  const isExisted = await as.checkUserWithIdAndEmailFromDb(client, id, email);
+  if (!isExisted) throw customErrorResponse(404, "계정 없음");
 
   const token = jwt.createAccessToken({ id, email }, process.env.JWT_ACCESS_EXPIRES_IN);
   res.cookie("resetPw", token, accessTokenOptions);
