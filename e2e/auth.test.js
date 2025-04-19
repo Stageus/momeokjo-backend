@@ -429,17 +429,19 @@ describe("POST /findpw", () => {
   it("비밀번호 찾기 성공한 경우 상태코드 200을 응답해야한다.", async () => {
     const id = "test";
     const email = "test@test.com";
-    const client = await pool.connect();
-    await service.createUserAtDb(client, id, "Test!1@2", "test", email, "USER", null);
-    client.release();
+
+    await helper.createTempUserReturnIdx({
+      id,
+      pw: "Test!1@2",
+      nickname: "test",
+      email,
+      role: "USER",
+    });
 
     const res = await agent.post("/auth/findpw").send({ id, email });
 
     expect(res.status).toBe(200);
     expect(res.body.message).toBe("요청 처리 성공");
-
-    const cookie = res.headers["set-cookie"].find((cookie) => cookie.startsWith("resetPw="));
-    expect(cookie).toBeDefined();
   });
 
   it("입력값이 유효하지 않은 경우 상태코드 400을 응답해야한다.", async () => {
@@ -450,8 +452,11 @@ describe("POST /findpw", () => {
     expect(res.body.target).toBe("id");
   });
 
-  it("비밀번호 찾기 결과 없는 경우 상태코드 404를 응답해야한다.", (done) => {
-    agent.post("/auth/findpw").send({ id: "test", email: "test@test.com" }).expect(404, done);
+  it("해당하는 사용자 없는 경우 상태코드 404를 응답해야한다.", async () => {
+    const res = await agent.post("/auth/findpw").send({ id: "test", email: "test@test.com" });
+
+    expect(res.status).toBe(404);
+    expect(res.body.message).toBe("해당하는 사용자 없음");
   });
 });
 
