@@ -24,7 +24,9 @@ afterAll(async () => {
 describe("POST /auth/verify-email", () => {
   const agent = request(app);
   it("이메일이 유효하면 상태코드 200를 응답해야한다.", async () => {
-    const res = await agent.post("/auth/verify-email").send({ email: "bluegyufordev@gmail.com" });
+    jest.spyOn(service, "sendEmailVerificationCode").mockResolvedValue();
+
+    const res = await agent.post("/auth/verify-email").send({ email: "test@gtest.com" });
 
     const cookie = res.headers["set-cookie"].find((cookie) =>
       cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_SEND}=`)
@@ -60,6 +62,8 @@ describe("POST /auth/verify-email", () => {
 describe("POST /verify-email/confirm", () => {
   const agent = request(app);
   it("유효한 인증번호를 전송한 경우 상태코드 200을 응답해야한다.", async () => {
+    jest.spyOn(service, "sendEmailVerificationCode").mockResolvedValue();
+
     const email = "test@test.com";
     const resEmail = await agent.post("/auth/verify-email").send({ email });
     const resEmailCookie = resEmail.headers["set-cookie"].find((cookie) =>
@@ -83,6 +87,8 @@ describe("POST /verify-email/confirm", () => {
   });
 
   it("인증번호를 입력하지 않은 경우 상태코드 400을 응답해야한다.", async () => {
+    jest.spyOn(service, "sendEmailVerificationCode").mockResolvedValue();
+
     const email = "test@test.com";
     const resEmail = await agent.post("/auth/verify-email").send({ email });
     const resEmailCookie = resEmail.headers["set-cookie"].find((cookie) =>
@@ -100,6 +106,8 @@ describe("POST /verify-email/confirm", () => {
   });
 
   it("인증번호 전송 내역이 없으면 상태코드 400을 응답해야한다.", async () => {
+    jest.spyOn(service, "sendEmailVerificationCode").mockResolvedValue();
+
     const resEmail = await agent.post("/auth/verify-email").send({ email: "test@test.com" });
     const resEmailCookie = resEmail.headers["set-cookie"].find((cookie) =>
       cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_SEND}=`)
@@ -126,6 +134,8 @@ describe("POST /verify-email/confirm", () => {
 describe("POST /signup", () => {
   const agent = request(app);
   it("회원가입에 성공한 경우 상태코드 200을 응답해야한다.", async () => {
+    jest.spyOn(service, "sendEmailVerificationCode").mockResolvedValue();
+
     const email = "test@test.com";
     const resEmail = await agent.post("/auth/verify-email").send({ email });
     const resEmailCookie = resEmail.headers["set-cookie"].find((cookie) =>
@@ -152,6 +162,8 @@ describe("POST /signup", () => {
   });
 
   it("id 입력값이 유효하지 않은 경우 상태코드 400을 응답해야한다.", async () => {
+    jest.spyOn(service, "sendEmailVerificationCode").mockResolvedValue();
+
     const email = "test@test.com";
     const resEmail = await agent.post("/auth/verify-email").send({ email });
     const resEmailCookie = resEmail.headers["set-cookie"].find((cookie) =>
@@ -179,6 +191,8 @@ describe("POST /signup", () => {
   });
 
   it("nickname 입력값이 유효하지 않은 경우 상태코드 400을 응답해야한다.", async () => {
+    jest.spyOn(service, "sendEmailVerificationCode").mockResolvedValue();
+
     const email = "test@test.com";
     const resEmail = await agent.post("/auth/verify-email").send({ email });
     const resEmailCookie = resEmail.headers["set-cookie"].find((cookie) =>
@@ -206,6 +220,8 @@ describe("POST /signup", () => {
   });
 
   it("인증번호가 없는 경우 상태코드 400을 응답해야한다.", async () => {
+    jest.spyOn(service, "sendEmailVerificationCode").mockResolvedValue();
+
     const email = "test@test.com";
     const resEmail = await agent.post("/auth/verify-email").send({ email });
     const resEmailCookie = resEmail.headers["set-cookie"].find((cookie) =>
@@ -242,6 +258,8 @@ describe("POST /signup", () => {
   });
 
   it("중복된 아이디를 가진 회원이 있는 경우 상태코드 409를 응답해야한다.", async () => {
+    jest.spyOn(service, "sendEmailVerificationCode").mockResolvedValue();
+
     const email = "test@test.com";
     const resEmail = await agent.post("/auth/verify-email").send({ email });
     const resEmailCookie = resEmail.headers["set-cookie"].find((cookie) =>
@@ -277,6 +295,8 @@ describe("POST /signup", () => {
   });
 
   it("중복된 닉네임을 가진 회원이 있는 경우 상태코드 409를 응답해야한다.", async () => {
+    jest.spyOn(service, "sendEmailVerificationCode").mockResolvedValue();
+
     const email = "test@test.com";
     const resEmail = await agent.post("/auth/verify-email").send({ email });
     const resEmailCookie = resEmail.headers["set-cookie"].find((cookie) =>
@@ -312,6 +332,8 @@ describe("POST /signup", () => {
   });
 
   it("중복된 이메일을 가진 회원이 있는 경우 상태코드 409를 응답해야한다.", async () => {
+    jest.spyOn(service, "sendEmailVerificationCode").mockResolvedValue();
+
     const email = "test@test.com";
     const resEmail = await agent.post("/auth/verify-email").send({ email });
     const resEmailCookie = resEmail.headers["set-cookie"].find((cookie) =>
@@ -427,21 +449,31 @@ describe("POST /findid", () => {
 describe("POST /findpw", () => {
   const agent = request(app);
   it("비밀번호 찾기 성공한 경우 상태코드 200을 응답해야한다.", async () => {
-    const id = "test";
-    const email = "test@test.com";
+    jest.spyOn(service, "sendEmailVerificationCode").mockResolvedValue();
 
-    await helper.createTempUserReturnIdx({
-      id,
-      pw: "Test!1@2",
-      nickname: "test",
-      email,
-      role: "USER",
-    });
+    const email = "bluegyufordev@gmail.com";
+    const resEmail = await agent.post("/auth/verify-email").send({ email });
+    const resEmailCookie = resEmail.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_SEND}=`)
+    );
 
-    const res = await agent.post("/auth/findpw").send({ id, email });
+    const code = await helper.getTempCodeFromDb({ email });
+
+    const resVerify = await agent
+      .post("/auth/verify-email/confirm")
+      .set("Cookie", resEmailCookie)
+      .send({ code });
+    const resVerifyCookie = resVerify.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_VERIFIED}=`)
+    );
+
+    const res = await agent
+      .post("/auth/signup")
+      .set("Cookie", resVerifyCookie)
+      .send({ id: "test", pw: "Test!1@2", nickname: "test", code });
 
     expect(res.status).toBe(200);
-    expect(res.body.message).toBe("요청 처리 성공");
+    expect(res.body.message).toBe("회원가입 성공");
   });
 
   it("입력값이 유효하지 않은 경우 상태코드 400을 응답해야한다.", async () => {
