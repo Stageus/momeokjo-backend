@@ -30,9 +30,10 @@ exports.getRestaurantInfoListFromDb = async ({
 
   const results = await client.query(
     `
-      WITH likes AS (
-        SELECT COUNT(*) AS likes_count,
-        restaurants_idx
+      WITH tot_likes AS (
+        SELECT 
+          COUNT(*) AS likes_count,
+          restaurants_idx
         FROM restaurants.likes
         WHERE is_deleted = false
         GROUP BY restaurants_idx
@@ -52,12 +53,14 @@ exports.getRestaurantInfoListFromDb = async ({
             'phone', phone,
             'start_time', start_time,
             'end_time', end_time,
-            'is_mine', CASE WHEN list.users_idx = $1 THEN true ELSE false END
+            'is_mine', CASE WHEN list.users_idx = $1 THEN true ELSE false END,
+            'is_my_likes', CASE WHEN likes.users_idx = $1 THEN true ELSE false END
           )
         ), '[]'::json) AS data
       FROM restaurants.lists AS list
       JOIN restaurants.categories AS category ON list.categories_idx = category.idx
-      LEFT JOIN likes ON list.idx = likes.restaurants_idx
+      LEFT JOIN tot_likes ON list.idx = tot_likes.restaurants_idx
+      LEFT JOIN restaurants.likes likes ON list.idx = likes.restaurants_idx
       WHERE list.is_deleted = false
       AND category.is_deleted = false
       AND (
@@ -247,8 +250,10 @@ exports.getRestaurantMenuInfoListFromDb = async ({ users_idx, restaurants_idx, p
   const results = await client.query(
     `
       WITH likes AS (
-        SELECT COUNT(*) AS likes_count,
-        menus_idx
+        SELECT 
+          COUNT(*) AS likes_count,
+          menus_idx,
+          users_idx
         FROM menus.likes
         WHERE is_deleted = false
         GROUP BY menus_idx
@@ -274,7 +279,8 @@ exports.getRestaurantMenuInfoListFromDb = async ({ users_idx, restaurants_idx, p
             'menu_name', name,
             'price', price,
             'likes_count', COALESCE(likes_count::integer, 0),
-            'is_mine', CASE WHEN users_idx = $1 THEN true ELSE false END,
+            'is_mine', CASE WHEN list.users_idx = $1 THEN true ELSE false END,
+            'is_my_like', CASE WHEN likes.users_idx = $1 THEN true ELSE false END,
             'image_url', COALESCE(images.image_url, '')
           )
         ), '[]'::json) AS data
@@ -286,7 +292,7 @@ exports.getRestaurantMenuInfoListFromDb = async ({ users_idx, restaurants_idx, p
       OFFSET $3
       LIMIT 15
     `,
-    [users_idx, restaurant_idx, (page - 1) * 15]
+    [users_idx, restaurants_idx, (page - 1) * 15]
   );
 
   return {
@@ -446,7 +452,7 @@ exports.updateMenuReviewByIdxAtDb = async ({
 exports.getRestaurantInfoByIdxFromDb = async ({ users_idx, restaurants_idx, client }) => {
   const results = await client.query(
     `
-      WITH likes AS (
+      WITH tot_likes AS (
         SELECT COUNT(*) AS likes_count,
         restaurants_idx
         FROM restaurants.likes
@@ -464,10 +470,12 @@ exports.getRestaurantInfoByIdxFromDb = async ({ users_idx, restaurants_idx, clie
         phone,
         start_time,
         end_time,
-        CASE WHEN list.users_idx = $1 THEN true ELSE false END AS is_mine
+        CASE WHEN list.users_idx = $1 THEN true ELSE false END AS is_mine,
+        CASE WHEN likes.users_idx = $1 THEN true ELSE false END AS is_my_like
       FROM restaurants.lists AS list
       JOIN restaurants.categories AS category ON list.categories_idx = category.idx
-      LEFT JOIN likes ON list.idx = likes.restaurants_idx
+      LEFT JOIN tot_likes ON list.idx = tot_likes.restaurants_idx
+      LEFT JOIN restaurants.likes likes ON list.idx = likes.restaurants_idx
       WHERE list.idx = $2
       AND list.is_deleted = false
       AND category.is_deleted = false
