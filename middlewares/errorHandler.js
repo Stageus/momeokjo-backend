@@ -11,7 +11,7 @@ const errorHandler = (err, req, res, next) => {
     } else if (constraint === "unique_restaurants_likes") {
       res.status(409).json({ message: "음식점 즐겨찾기 중복 등록" });
     } else if (constraint === "unique_menus_likes") {
-      res.status(409).json({ message: "중복 메뉴 추천 등록" });
+      res.status(409).json({ message: "메뉴 추천 중복 등록" });
     } else if (constraint === "unique_reviews_likes") {
       res.status(409).json({ message: "중복 후기 좋아요 등록" });
     } else {

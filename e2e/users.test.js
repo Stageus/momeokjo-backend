@@ -585,8 +585,9 @@ describe("POST /users/likes/menus/:menu_idx", () => {
 
     const res = await agent.post(`/users/likes/menus/1`).set("Cookie", cookie);
 
-    expect(res.status).toBe(404);
-    expect(res.body.message).toBe("메뉴 없음");
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe("입력값 확인 필요");
+    expect(res.body.target).toBe("menus_idx");
   });
 
   it("중복 메뉴 추천한 경우 상태코드 409를 응답해야한다.", async () => {
@@ -634,7 +635,7 @@ describe("POST /users/likes/menus/:menu_idx", () => {
     const res = await agent.post(`/users/likes/menus/${menu_idx}`).set("Cookie", cookie);
 
     expect(res.status).toBe(409);
-    expect(res.body.message).toBe("중복 메뉴 추천 등록");
+    expect(res.body.message).toBe("메뉴 추천 중복 등록");
   });
 });
 
