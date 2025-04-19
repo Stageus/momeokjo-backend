@@ -99,174 +99,172 @@ describe("POST /categories", () => {
   });
 });
 
-// describe("GET /categories", () => {
-//   const agent = request(app);
-//   it("조회 성공한 경우 상태코드 200과 카테고리 리스트를 응답해야한다.", async () => {
-//     const users_idx = await helper.createTempUserReturnIdx({
-//       id: "test",
-//       pw: "Test!1@2",
-//       nickname: "test",
-//       email: "test@test.com",
-//       role: "ADMIN",
-//     });
+describe("GET /categories", () => {
+  const agent = request(app);
+  it("조회 성공한 경우 상태코드 200과 카테고리 리스트를 응답해야한다.", async () => {
+    const users_idx = await helper.createTempUserReturnIdx({
+      id: "test",
+      pw: "Test!1@2",
+      nickname: "test",
+      email: "test@test.com",
+      role: "ADMIN",
+    });
 
-//     await helper.createTempCateoryReturnIdx({ users_idx, category_name: "테스트" });
+    await helper.createTempCateoryReturnIdx({ users_idx, category_name: "테스트" });
 
-//     const res = await agent.get("/restaurants/categories");
+    const res = await agent.get("/restaurants/categories");
 
-//     expect(res.status).toBe(200);
-//     expect(res.body.message).toBe("요청 처리 성공");
-//     expect(res.body.data).toStrictEqual(expect.any(Array));
-//   });
-// });
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("요청 처리 성공");
+    expect(res.body.data).toStrictEqual(expect.any(Array));
+  });
+});
 
-// describe("PUT /categories/:category_idx", () => {
-//   const agent = request(app);
-//   it("카테고리 수정 성공한 경우 상태코드 200을 응답해야한다.", async () => {
-//     const id = "test";
-//     const pw = "Test!1@2";
+describe("PUT /categories/:category_idx", () => {
+  const agent = request(app);
+  it("카테고리 수정 성공한 경우 상태코드 200을 응답해야한다.", async () => {
+    const id = "test";
+    const pw = "Test!1@2";
 
-//     const users_idx = await helper.createTempUserReturnIdx({
-//       id,
-//       pw,
-//       nickname: "test",
-//       email: "test@test.com",
-//       role: "ADMIN",
-//     });
+    const users_idx = await helper.createTempUserReturnIdx({
+      id,
+      pw,
+      nickname: "test",
+      email: "test@test.com",
+      role: "ADMIN",
+    });
 
-//     const category_idx = await helper.createTempCateoryReturnIdx({
-//       users_idx,
-//       category_name: "테스트",
-//     });
+    const category_idx = await helper.createTempCateoryReturnIdx({
+      users_idx,
+      category_name: "테스트",
+    });
 
-//     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
+    const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
 
-//     const res = await agent
-//       .put(`/restaurants/categories/${category_idx}`)
-//       .set("Cookie", cookie)
-//       .send({ category_name: "수정 카테고리" });
+    const res = await agent
+      .put(`/restaurants/categories/${category_idx}`)
+      .set("Cookie", cookie)
+      .send({ category_name: "수정 카테고리" });
 
-//     expect(res.status).toBe(200);
-//     expect(res.body.message).toBe("요청 처리 성공");
-//   });
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("요청 처리 성공");
+  });
 
-//   it("입력값이 유효하지 않은 경우 상태코드 400을 응답해야한다.", async () => {
-//     const id = "test";
-//     const pw = "Test!1@2";
+  it("입력값이 유효하지 않은 경우 상태코드 400을 응답해야한다.", async () => {
+    const id = "test";
+    const pw = "Test!1@2";
 
-//     const users_idx = await helper.createTempUserReturnIdx({
-//       id,
-//       pw,
-//       nickname: "test",
-//       email: "test@test.com",
-//       role: "ADMIN",
-//     });
+    const users_idx = await helper.createTempUserReturnIdx({
+      id,
+      pw,
+      nickname: "test",
+      email: "test@test.com",
+      role: "ADMIN",
+    });
 
-//     const category_idx = await helper.createTempCateoryReturnIdx({
-//       users_idx,
-//       category_name: "테스트",
-//     });
+    const category_idx = await helper.createTempCateoryReturnIdx({
+      users_idx,
+      category_name: "테스트",
+    });
 
-//     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
+    const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
 
-//     const res = await agent
-//       .put(`/restaurants/categories/${category_idx}`)
-//       .set("Cookie", cookie)
-//       .send({ category_name: "" });
+    const res = await agent
+      .put(`/restaurants/categories/${category_idx}`)
+      .set("Cookie", cookie)
+      .send({ category_name: "" });
 
-//     expect(res.status).toBe(400);
-//     expect(res.body.message).toBe("입력값 확인 필요");
-//     expect(res.body.target).toBe("category_name");
-//   });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe("입력값 확인 필요");
+    expect(res.body.target).toBe("category_name");
+  });
 
-//   it("로그인 하지 않은 경우 상태코드 401을 응답해야한다.", async () => {
-//     const id = "test";
-//     const pw = "Test!1@2";
+  it("로그인 하지 않은 경우 상태코드 401을 응답해야한다.", async () => {
+    const id = "test";
+    const pw = "Test!1@2";
 
-//     const users_idx = await helper.createTempUserReturnIdx({
-//       id,
-//       pw,
-//       nickname: "test",
-//       email: "test@test.com",
-//       role: "ADMIN",
-//     });
+    const users_idx = await helper.createTempUserReturnIdx({
+      id,
+      pw,
+      nickname: "test",
+      email: "test@test.com",
+      role: "ADMIN",
+    });
 
-//     const category_idx = await helper.createTempCateoryReturnIdx({
-//       users_idx,
-//       category_name: "테스트",
-//     });
+    const category_idx = await helper.createTempCateoryReturnIdx({
+      users_idx,
+      category_name: "테스트",
+    });
 
-//     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
+    const res = await agent
+      .put(`/restaurants/categories/${category_idx}`)
+      .send({ category_name: "수정 카테고리" });
 
-//     const res = await agent
-//       .put(`/restaurants/categories/${category_idx}`)
-//       .send({ category_name: "수정 카테고리" });
+    expect(res.status).toBe(401);
+    expect(res.body.message).toBe("로그인 필요");
+  });
 
-//     expect(res.status).toBe(401);
-//     expect(res.body.message).toBe("로그인 필요");
-//   });
+  it("수정 권한이 없는 경우 403을 응답해야한다.", async () => {
+    const id = "test";
+    const pw = "Test!1@2";
 
-//   it("수정 권한이 없는 경우 403을 응답해야한다.", async () => {
-//     const id = "test";
-//     const pw = "Test!1@2";
+    const admin_users_idx = await helper.createTempUserReturnIdx({
+      id: "test",
+      pw: "Test!1@2",
+      nickname: "test",
+      email: "test@test.com",
+      role: "ADMIN",
+    });
 
-//     const admin_users_idx = await helper.createTempUserReturnIdx({
-//       id: "test",
-//       pw: "Test!1@2",
-//       nickname: "test",
-//       email: "test@test.com",
-//       role: "ADMIN",
-//     });
+    const category_idx = await helper.createTempCateoryReturnIdx({
+      users_idx: admin_users_idx,
+      category_name: "테스트",
+    });
 
-//     const category_idx = await helper.createTempCateoryReturnIdx({
-//       users_idx: admin_users_idx,
-//       category_name: "테스트",
-//     });
+    const user_id = "test1";
+    const user_pw = "Test!1@2";
+    await helper.createTempUserReturnIdx({
+      id: user_id,
+      pw: user_pw,
+      nickname: "test1",
+      email: "test1@test.com",
+      role: "USER",
+    });
 
-//     const user_id = "test1";
-//     const user_pw = "Test!1@2";
-//     await helper.createTempUserReturnIdx({
-//       id: user_id,
-//       pw: user_pw,
-//       nickname: "test1",
-//       email: "test1@test.com",
-//       role: "USER",
-//     });
+    const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id: user_id, pw: user_pw });
 
-//     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id: user_id, pw: user_pw });
+    const res = await agent
+      .put(`/restaurants/categories/${category_idx}`)
+      .set("Cookie", cookie)
+      .send({ category_name: "수정 카테고리" });
 
-//     const res = await agent
-//       .put(`/restaurants/categories/${category_idx}`)
-//       .set("Cookie", cookie)
-//       .send({ category_name: "수정 카테고리" });
+    expect(res.status).toBe(403);
+    expect(res.body.message).toBe("권한 없음");
+  });
 
-//     expect(res.status).toBe(403);
-//     expect(res.body.message).toBe("권한 없음");
-//   });
+  it("수정 대상이 없는 경우 상태코드 404를 응답해야한다.", async () => {
+    const id = "test";
+    const pw = "Test!1@2";
 
-//   it("수정 대상이 없는 경우 상태코드 404를 응답해야한다.", async () => {
-//     const id = "test";
-//     const pw = "Test!1@2";
+    await helper.createTempUserReturnIdx({
+      id,
+      pw,
+      nickname: "test",
+      email: "test@test.com",
+      role: "ADMIN",
+    });
 
-//     await helper.createTempUserReturnIdx({
-//       id,
-//       pw,
-//       nickname: "test",
-//       email: "test@test.com",
-//       role: "ADMIN",
-//     });
+    const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
 
-//     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
+    const res = await agent
+      .put(`/restaurants/categories/1`)
+      .set("Cookie", cookie)
+      .send({ category_name: "수정 카테고리" });
 
-//     const res = await agent
-//       .put(`/restaurants/categories/1`)
-//       .set("Cookie", cookie)
-//       .send({ category_name: "수정 카테고리" });
-
-//     expect(res.status).toBe(404);
-//     expect(res.body.message).toBe("수정 대상 없음");
-//   });
-// });
+    expect(res.status).toBe(404);
+    expect(res.body.message).toBe("카테고리 수정 대상 없음");
+  });
+});
 
 // describe("POST /", () => {
 //   const agent = request(app);

@@ -94,7 +94,7 @@ exports.updateRestaurantCategoryByIdx = tryCatchWrapperWithDb(async (req, res, n
     client,
   });
 
-  if (!updated_idx) throw customErrorResponse({ status: 404, message: "수정 대상 없음" });
+  if (!updated_idx) throw customErrorResponse({ status: 404, message: "카테고리 수정 대상 없음" });
 
   res.status(200).json({ message: "요청 처리 성공" });
 });
