@@ -176,19 +176,21 @@ exports.sendEmailVerificationCode = tryCatchWrapperWithDb(async (req, res, next,
 });
 
 exports.checkEmailVerificationCode = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { email } = req.email;
+  const { email } = req[COOKIE_NAME.EMAIL_AUTH_SEND];
   const { code } = req.body;
 
   // 인증번호 확인
-  const codeFromDB = await as.getVerifyCodeFromDb(client, email);
-  if (code !== codeFromDB) {
-    throw customErrorResponse(404, "인증번호 전송내역 없음");
-  }
+  const isCode = await as.checkVerifyCodeFromDb({ client, email, code });
+  if (!isCode)
+    throw customErrorResponse({ status: 400, message: "입력값 확인 필요", target: "code" });
 
-  const token = jwt.createAccessToken({ email }, process.env.JWT_ACCESS_EXPIRES_IN);
+  const token = jwt.createAccessToken({
+    payload: { email },
+    expiresIn: process.env.JWT_ACCESS_EXPIRES_IN,
+  });
 
-  res.clearCookie("email", baseCookieOptions);
-  res.cookie("emailVerified", token, accessTokenOptions);
+  res.clearCookie(COOKIE_NAME.EMAIL_AUTH_SEND, baseCookieOptions);
+  res.cookie(COOKIE_NAME.EMAIL_AUTH_VERIFIED, token, accessTokenOptions);
   res.status(200).json({ message: "요청 처리 성공" });
 });
 

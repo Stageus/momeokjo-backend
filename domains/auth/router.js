@@ -62,7 +62,7 @@ router.post(
 // 이메일 인증번호 확인
 router.post(
   "/verify-email/confirm",
-  verifyAccessToken("email"),
+  verifyAccessToken(COOKIE_NAME.EMAIL_AUTH_SEND),
   createValidateChain(schema.checkEmailVerificationCode),
   validateRequest,
   ac.checkEmailVerificationCode
