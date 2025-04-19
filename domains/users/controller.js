@@ -81,7 +81,8 @@ exports.deleteRestaurantLike = tryCatchWrapperWithDb(async (req, res, next, clie
   const { restaurants_idx } = req.params;
 
   const isUpdated = await us.deleteRestaurantLikeFromDb({ client, restaurants_idx, users_idx });
-  if (!isUpdated) throw customErrorResponse(404, "음식점 즐겨찾기 없음");
+  if (!isUpdated)
+    throw customErrorResponse({ status: 404, message: "음식점 즐겨찾기 등록 내역 없음" });
 
   res.status(200).json({ message: "요청 처리 성공" });
 });
@@ -102,7 +103,7 @@ exports.deleteMenuLike = tryCatchWrapperWithDb(async (req, res, next, client) =>
   const { menus_idx } = req.params;
 
   const isUpdated = await us.deleteMenuLikeFromDb({ client, users_idx, menus_idx });
-  if (!isUpdated) throw customErrorResponse({ status: 404, message: "메뉴 추천 내역 없음" });
+  if (!isUpdated) throw customErrorResponse({ status: 404, message: "메뉴 추천 등록 내역 없음" });
 
   res.status(200).json({ message: "요청 처리 성공" });
 });
@@ -123,7 +124,7 @@ exports.deleteReviewLike = tryCatchWrapperWithDb(async (req, res, next, client) 
   const { reviews_idx } = req.params;
 
   const isUpdated = await us.deleteReviewLikeFromDb({ client, reviews_idx, users_idx });
-  if (!isUpdated) throw customErrorResponse({ status: 404, message: "후기 좋아요 내역 없음" });
+  if (!isUpdated) throw customErrorResponse({ status: 404, message: "메뉴 추천 등록 내역 없음" });
 
   res.status(200).json({ message: "요청 처리 성공" });
 });

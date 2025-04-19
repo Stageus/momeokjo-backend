@@ -25,7 +25,7 @@ const errorHandler = (err, req, res, next) => {
     } else if (constraint === "local_tokens_users_idx_fkey") {
       res.status(400).json({ message: "입력값 확인 필요", target: "users_idx" });
     } else if (constraint === "likes_restaurants_idx_fkey") {
-      res.status(400).json({ message: "입력값 확인 필요", target: "restaurant_idx" });
+      res.status(400).json({ message: "입력값 확인 필요", target: "restaurants_idx" });
     } else if (constraint === "likes_menus_idx_fkey") {
       res.status(400).json({ message: "입력값 확인 필요", target: "menus_idx" });
     } else if (constraint === "likes_reviews_idx_fkey") {

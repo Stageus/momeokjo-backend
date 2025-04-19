@@ -33,7 +33,6 @@ describe("PUT /users", () => {
       nickname: "test",
       email: "test@test.com",
       role: "USER",
-      oauth_idx: null,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -66,7 +65,7 @@ describe("PUT /users", () => {
     expect(res.body.target).toBe("nickname");
   });
 
-  it("인증이 유효하지 않은 경우 상태코드 401을 응답해야한다.", async () => {
+  it("로그인 하지 않은 경우 상태코드 401을 응답해야한다.", async () => {
     const id = "test";
     const pw = "Test!1@2";
 
@@ -158,7 +157,7 @@ describe("GET /users/:users_idx", () => {
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
-    console.log(cookie);
+
     const res = await agent.get(`/users/${users_idx}`).set("Cookie", cookie);
 
     expect(res.status).toBe(200);
@@ -240,6 +239,27 @@ describe("POST /users/likes/restaurants/:restaurants_idx", () => {
     expect(res.body.target).toBe("restaurants_idx");
   });
 
+  it("음식점 없는 경우 상태코드 400을 응답해야한다.", async () => {
+    const id = "test";
+    const pw = "Test!1@2";
+
+    await helper.createTempUserReturnIdx({
+      id,
+      pw,
+      nickname: "test",
+      email: "test@test.com",
+      role: "USER",
+      oauth_idx: null,
+    });
+
+    const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
+
+    const res = await agent.post(`/users/likes/restaurants/1`).set("Cookie", cookie);
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe("입력값 확인 필요");
+  });
+
   it("인증이 유효하지 않은 경우 상태코드 401을 응답해야한다.", async () => {
     const id = "test";
     const pw = "Test!1@2";
@@ -275,27 +295,6 @@ describe("POST /users/likes/restaurants/:restaurants_idx", () => {
 
     expect(res.status).toBe(401);
     expect(res.body.message).toBe("로그인 필요");
-  });
-
-  it("음식점 없는 경우 상태코드 404를 응답해야한다.", async () => {
-    const id = "test";
-    const pw = "Test!1@2";
-
-    await helper.createTempUserReturnIdx({
-      id,
-      pw,
-      nickname: "test",
-      email: "test@test.com",
-      role: "USER",
-      oauth_idx: null,
-    });
-
-    const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
-
-    const res = await agent.post(`/users/likes/restaurants/1`).set("Cookie", cookie);
-
-    expect(res.status).toBe(404);
-    expect(res.body.message).toBe("음식점 없음");
   });
 
   it("중복 즐겨찾기한 경우 상태코드 409를 응답해야한다.", async () => {
