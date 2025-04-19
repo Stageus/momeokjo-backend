@@ -350,36 +350,40 @@ describe("POST /signup", () => {
 describe("POST /signin", () => {
   const agent = request(app);
   it("로그인 성공한 경우 상태코드 200을 응답해야한다.", async () => {
-    const client = await pool.connect();
-    await service.createUserAtDb(client, "test", "Test!1@2", "test", "test@test.com", "USER", null);
-    client.release();
+    const id = "test";
+    const pw = "Test!1@2";
 
-    const res = await agent.post("/auth/signin").send({ id: "test", pw: "Test!1@2" });
+    await helper.createTempUserReturnIdx({
+      id,
+      pw,
+      nickname: "test",
+      email: "test@test.com",
+      role: "USER",
+    });
 
-    const cookies = res.headers["set-cookie"];
-    const hasAccessTokenCookie = cookies.find((cookie) => cookie.startsWith("accessToken="));
-    expect(hasAccessTokenCookie).toBeDefined();
-
-    const hasRefreshTokenCookie = cookies.find((cookie) => cookie.startsWith("refreshToken="));
-    expect(hasRefreshTokenCookie).toBeDefined();
+    const res = await agent.post("/auth/signin").send({ id, pw });
+    const cookie = res.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith(`${COOKIE_NAME.ACCESS_TOKEN}=`)
+    );
+    expect(cookie).toBeDefined();
 
     expect(res.status).toBe(200);
     expect(res.body.message).toBe("요청 처리 성공");
   });
 
   it("입력값이 유효하지 않은 경우 상태코드 400을 응답해야한다.", async () => {
-    const res = await agent.post("/auth/signin").send({ id: "", pw: "" });
+    const res = await agent.post("/auth/signin").send({ id: "", pw: "Test!1@2" });
 
     expect(res.status).toBe(400);
     expect(res.body.message).toBe("입력값 확인 필요");
     expect(res.body.target).toBe("id");
   });
 
-  it("회원이 아닌 경우 상태코드 404를 응답해야한다.", async () => {
+  it("회원이 없는 경우 상태코드 404를 응답해야한다.", async () => {
     const res = await agent.post("/auth/signin").send({ id: "test", pw: "Test!1@2" });
 
     expect(res.status).toBe(404);
-    expect(res.body.message).toBe("계정 없음");
+    expect(res.body.message).toBe("등록된 계정 없음");
   });
 });
 

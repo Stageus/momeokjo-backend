@@ -46,8 +46,6 @@ exports.signIn = tryCatchWrapperWithDb(async (req, res, next, client) => {
   });
 
   res.cookie(COOKIE_NAME.ACCESS_TOKEN, accessToken, accessTokenOptions);
-  res.cookie(COOKIE_NAME.REFRESH_TOKEN, newRefreshToken || refreshToken, refreshTokenOptions);
-
   res.status(200).json({ message: "요청 처리 성공" });
 });
 
