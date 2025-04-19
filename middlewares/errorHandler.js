@@ -1,6 +1,6 @@
 const errorHandler = (err, req, res, next) => {
-  const { status, message, code, constraint } = err;
-
+  const { status, message, code, constraint, target } = err;
+  console.log(err);
   if (code === "23505") {
     if (constraint === "lists_id_key") {
       res.status(409).json({ message: "중복 아이디 회원 있음", target: "id" });
@@ -35,7 +35,7 @@ const errorHandler = (err, req, res, next) => {
     }
   }
 
-  res.status(status || 500).json({ message: message || "서버에 오류 발생" });
+  res.status(status || 500).json({ message: message || "서버에 오류 발생", target });
 };
 
 module.exports = errorHandler;

@@ -31,7 +31,10 @@ exports.createRefreshToken = ({ payload, expiresIn }) => {
 
     return token;
   } catch (err) {
-    throw customErrorResponse(500, err.message || "refresh 토큰 생성 중 오류 발생");
+    throw customErrorResponse({
+      status: 500,
+      message: err.message || "refresh 토큰 생성 중 오류 발생",
+    });
   }
 };
 
@@ -50,6 +53,6 @@ exports.verifyToken = ({ token, isRefresh = false }) => {
 
     return { isValid: true, results: decoded };
   } catch (err) {
-    throw customErrorResponse(500, err.message || "토큰 디코딩 중 오류 발생");
+    throw customErrorResponse({ status: 500, message: err.message || "토큰 디코딩 중 오류 발생" });
   }
 };

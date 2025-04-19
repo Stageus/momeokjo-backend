@@ -11,7 +11,7 @@ const verifyAccessTokenOptional = (tokenKey) =>
       return next();
     }
 
-    const { isValid, results } = verifyToken(token);
+    const { isValid, results } = verifyToken({ token });
 
     if (!isValid) {
       req[tokenKey] = null;

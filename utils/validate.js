@@ -50,7 +50,10 @@ const createChain = (type, obj) => {
 
     return chainOfKeys;
   } catch (err) {
-    throw customErrorResponse(500, err.message || "validator chain 생성 중 오류 발생");
+    throw customErrorResponse({
+      status: 500,
+      message: err.message || "validator chain 생성 중 오류 발생",
+    });
   }
 };
 
