@@ -329,7 +329,7 @@ exports.createRestaurantMenuAtDb = async ({
 // 음식점 메뉴 수정
 exports.updateRestaurantMenuByIdxAtDb = async ({
   users_idx,
-  menu_idx,
+  menus_idx,
   menu_name,
   price,
   client,
@@ -341,12 +341,12 @@ exports.updateRestaurantMenuByIdxAtDb = async ({
       WHERE idx = $3
       AND users_idx = $4
       AND is_deleted = false
-      RETURNING idx AS menu_idx;
+      RETURNING idx;
     `,
-    [menu_name, price, menu_idx, users_idx]
+    [menu_name, price, menus_idx, users_idx]
   );
 
-  return results.rows[0]?.menu_idx;
+  return results.rowCount > 0;
 };
 
 // 메뉴 후기 리스트 조회

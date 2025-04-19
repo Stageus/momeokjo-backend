@@ -160,17 +160,17 @@ exports.createRestaurantMenu = tryCatchWrapperWithDb(async (req, res, next, clie
 // 음식점 메뉴 수정
 exports.updateRestaurantMenuByIdx = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { users_idx } = req[COOKIE_NAME.ACCESS_TOKEN];
-  const { menu_idx } = req.params;
+  const { menus_idx } = req.params;
   const { menu_name, price } = req.body;
 
-  const return_menu_idx = await rs.updateRestaurantMenuByIdxAtDb({
+  const isUpdated = await rs.updateRestaurantMenuByIdxAtDb({
     users_idx,
-    menu_idx,
+    menus_idx,
     menu_name,
     price,
     client,
   });
-  if (!return_menu_idx) throw customErrorResponse({ status: 404, message: "조회 결과 없음" });
+  if (!isUpdated) throw customErrorResponse({ status: 404, message: "메뉴 수정 대상 없음" });
 
   res.status(200).json({ message: "요청 처리 성공" });
 });

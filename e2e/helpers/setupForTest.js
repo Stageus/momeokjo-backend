@@ -97,7 +97,7 @@ exports.createTempRestaurantReturnIdx = async ({
   return results.rows[0].restaurant_idx;
 };
 
-exports.createTempMenuReturnIdx = async ({ users_idx, restaurant_idx, menu_name, price }) => {
+exports.createTempMenuReturnIdx = async ({ users_idx, restaurants_idx, menu_name, price }) => {
   const client = await pool.connect();
   const results = await client.query(
     `
@@ -111,7 +111,7 @@ exports.createTempMenuReturnIdx = async ({ users_idx, restaurant_idx, menu_name,
       )
       RETURNING idx AS menu_idx;
     `,
-    [users_idx, restaurant_idx, menu_name, price]
+    [users_idx, restaurants_idx, menu_name, price]
   );
   client.release();
 
