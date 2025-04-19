@@ -66,7 +66,7 @@ exports.saveNewRefreshTokenAtDb = async ({
   );
 };
 
-exports.createUserAtDb = async (client, id, pw, nickname, email, role, oauth_idx) => {
+exports.createUserAtDb = async ({ client, id, pw, nickname, email, role, oauth_idx = null }) => {
   await client.query(
     "INSERT INTO users.lists (id, pw, nickname, email, role, oauth_idx) VALUES ($1, $2, $3, $4, $5, $6);",
     [id, pw, nickname, email, role, oauth_idx]
@@ -161,20 +161,21 @@ exports.sendEmailVerificationCode = async (email, code) => {
   });
 };
 
-exports.getVerifyCodeFromDb = async (client, email) => {
+exports.checkVerifyCodeFromDb = async ({ client, email, code }) => {
   const results = await client.query(
     `
       SELECT
-        code
+        TRUE AS is_code
       FROM users.codes
       WHERE email = $1
+        AND code = $2
       ORDER BY created_at DESC
       LIMIT 1
     `,
-    [email]
+    [email, code]
   );
 
-  return results.rows[0].code;
+  return results.rows[0]?.is_code ?? false;
 };
 
 // 카카오에 토큰 발급 요청

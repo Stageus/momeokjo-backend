@@ -15,7 +15,7 @@ router.delete("/signout", verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN), ac.signOu
 // 회원가입
 router.post(
   "/signup",
-  verifyAccessToken("emailVerified"),
+  verifyAccessToken(COOKIE_NAME.EMAIL_AUTH_VERIFIED),
   createValidateChain(schema.signUp),
   validateRequest,
   ac.signUp

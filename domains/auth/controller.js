@@ -15,7 +15,7 @@ exports.signIn = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { id, pw } = req.body;
 
   const { isUser, users_idx, role } = await as.checkIsUserFromDb({ client, id, pw });
-  if (!isUser) throw customErrorResponse(404, "등록된 계정 없음");
+  if (!isUser) throw customErrorResponse({ status: 404, message: "등록된 계정 없음" });
 
   const { isExpired, refreshToken } = await as.checkLocalRefreshTokenFromDb({ client, users_idx });
 
@@ -53,7 +53,7 @@ exports.signIn = tryCatchWrapperWithDb(async (req, res, next, client) => {
 
 // 로그아웃
 exports.signOut = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { users_idx, provider } = req.accessToken;
+  const { users_idx, provider } = req[COOKIE_NAME.ACCESS_TOKEN];
 
   if (provider === "LOCAL") {
     await as.removeLocalRefreshTokenAtDb({ client, users_idx });
@@ -73,33 +73,30 @@ exports.signOut = tryCatchWrapperWithDb(async (req, res, next, client) => {
 
 // 회원가입
 exports.signUp = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { email } = req.emailVerified;
+  const { email } = req[COOKIE_NAME.EMAIL_AUTH_VERIFIED];
   const { id, pw, nickname, code } = req.body;
 
   // 인증번호 확인
-  const codeFromDB = await as.getVerifyCodeFromDb(client, email);
-  if (code !== codeFromDB) {
-    throw customErrorResponse(404, "인증번호 전송내역 없음");
-  }
+  const isCode = await as.checkVerifyCodeFromDb({ client, email, code });
+  if (!isCode)
+    throw customErrorResponse({ status: 400, message: "입력값 확인 필요", target: "code" });
 
-  await as.createUserAtDb(client, id, pw, nickname, email, "USER", null);
+  await as.createUserAtDb({ client, id, pw, nickname, email, role: "USER" });
 
   // 쿠키 삭제
-  res.clearCookie("emailVerified", baseCookieOptions);
+  res.clearCookie(COOKIE_NAME.EMAIL_AUTH_VERIFIED, baseCookieOptions);
   res.status(200).json({ message: "회원가입 성공" });
 });
 
 // oauth 회원가입
 exports.signUpWithOauth = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { oauth_idx } = req.oauthIdx;
-  const { email } = req.emailVerified;
+  const { email } = req[COOKIE_NAME.EMAIL_AUTH_VERIFIED];
   const { nickname, code } = req.body;
 
   // 인증번호 확인
-  const codeFromDB = await as.getVerifyCodeFromDb(client, email);
-  if (code !== codeFromDB) {
-    throw customErrorResponse(404, "인증번호 전송내역 없음");
-  }
+  const isCode = await as.checkVerifyCodeFromDb({ client, email, code });
+  if (!isCode) throw customErrorResponse({ status: 404, message: "인증번호 전송내역 없음" });
 
   await as.createUserAtDb(client, null, null, nickname, email, "USER", oauth_idx);
 
