@@ -25,7 +25,7 @@ describe("POST /auth/verify-email", () => {
   const agent = request(app);
   it("이메일이 유효하면 상태코드 200를 응답해야한다.", async () => {
     const res = await agent.post("/auth/verify-email").send({ email: "bluegyufordev@gmail.com" });
-    console.log(res);
+
     const cookie = res.headers["set-cookie"].find((cookie) =>
       cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_SEND}=`)
     );
@@ -60,21 +60,22 @@ describe("POST /auth/verify-email", () => {
 describe("POST /verify-email/confirm", () => {
   const agent = request(app);
   it("유효한 인증번호를 전송한 경우 상태코드 200을 응답해야한다.", async () => {
-    const email = "bluegyufordev@gmail.com";
-    const responseSendEmail = await agent.post("/auth/verify-email").send({ email });
-    const responseSendEmailCookies = responseSendEmail.headers["set-cookie"];
-    expect(responseSendEmailCookies).toBeDefined();
+    const email = "test@test.com";
+    const resEmail = await agent.post("/auth/verify-email").send({ email });
+    const resEmailCookie = resEmail.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_SEND}=`)
+    );
 
-    const client = await pool.connect();
-    const code = await service.getVerifyCodeFromDb(client, email);
-    client.release();
+    const code = await helper.getTempCodeFromDb({ email });
 
     const res = await agent
       .post("/auth/verify-email/confirm")
-      .set("Cookie", responseSendEmailCookies.join("; "))
+      .set("Cookie", resEmailCookie)
       .send({ code });
 
-    const cookie = res.headers["set-cookie"].find((cookie) => cookie.startsWith("emailVerified="));
+    const cookie = res.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_VERIFIED}=`)
+    );
     expect(cookie).toBeDefined();
 
     expect(res.status).toBe(200);
@@ -82,37 +83,43 @@ describe("POST /verify-email/confirm", () => {
   });
 
   it("인증번호를 입력하지 않은 경우 상태코드 400을 응답해야한다.", async () => {
-    const email = "bluegyufordev@gmail.com";
-    const responseSendEmail = await agent.post("/auth/verify-email").send({ email });
-    const responseSendEmailCookies = responseSendEmail.headers["set-cookie"];
-    expect(responseSendEmailCookies).toBeDefined();
+    const email = "test@test.com";
+    const resEmail = await agent.post("/auth/verify-email").send({ email });
+    const resEmailCookie = resEmail.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_SEND}=`)
+    );
 
     const res = await agent
       .post("/auth/verify-email/confirm")
-      .set("Cookie", responseSendEmailCookies.join("; "));
+      .set("Cookie", resEmailCookie)
+      .send({ code: "" });
 
     expect(res.status).toBe(400);
     expect(res.body.message).toBe("입력값 확인 필요");
     expect(res.body.target).toBe("code");
   });
 
-  it("인가되지 않은 요청은 상태코드 401을 응답해야한다.", (done) => {
-    agent.post("/auth/verify-email/confirm").send({ code: "123456" }).expect(401, done);
-  });
+  it("인증번호 전송 내역이 없으면 상태코드 400을 응답해야한다.", async () => {
+    const resEmail = await agent.post("/auth/verify-email").send({ email: "test@test.com" });
+    const resEmailCookie = resEmail.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_SEND}=`)
+    );
 
-  it("인증번호 전송 내역이 없으면 상태코드 404를 응답해야한다.", async () => {
-    const responseEmail = await agent
-      .post("/auth/verify-email")
-      .send({ email: "bluegyufordev@gmail.com" });
-
-    const cookies = responseEmail.headers["set-cookie"];
     const res = await agent
       .post("/auth/verify-email/confirm")
-      .set("Cookie", cookies.join("; "))
+      .set("Cookie", resEmailCookie)
       .send({ code: "123456" });
 
-    expect(res.status).toBe(404);
-    expect(res.body.message).toBe("인증번호 전송내역 없음");
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe("입력값 확인 필요");
+    expect(res.body.target).toBe("code");
+  });
+
+  it("인가되지 않은 요청은 상태코드 401을 응답해야한다.", async () => {
+    const res = await agent.post("/auth/verify-email/confirm").send({ code: "123456" });
+
+    expect(res.status).toBe(401);
+    expect(res.body.message).toBe("인증번호 이메일 전송되지 않음");
   });
 });
 

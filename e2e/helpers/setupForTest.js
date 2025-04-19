@@ -189,3 +189,21 @@ exports.createTempReviewLikes = async ({ review_idx, users_idx }) => {
   );
   client.release();
 };
+
+exports.getTempCodeFromDb = async ({ email }) => {
+  const client = await pool.connect();
+  const results = await client.query(
+    `
+      SELECT
+        code
+      FROM users.codes
+      WHERE email = $1
+      ORDER BY created_at DESC
+      LIMIT 1;
+    `,
+    [email]
+  );
+  client.release();
+
+  return results.rows[0].code;
+};

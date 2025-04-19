@@ -169,7 +169,7 @@ exports.sendEmailVerificationCode = tryCatchWrapperWithDb(async (req, res, next,
     payload: { email },
     expiresIn: process.env.JWT_ACCESS_EXPIRES_IN,
   });
-  console.log(COOKIE_NAME.EMAIL_AUTH_SEND);
+
   // 쿠키 생성
   res.cookie(COOKIE_NAME.EMAIL_AUTH_SEND, token, accessTokenOptions);
   res.status(200).json({ message: "이메일 인증 코드 전송 성공" });
