@@ -178,12 +178,12 @@ exports.updateRestaurantMenuByIdx = tryCatchWrapperWithDb(async (req, res, next,
 // 메뉴 후기 리스트 조회
 exports.getMenuReviewInfoList = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const users_idx = req[COOKIE_NAME.ACCESS_TOKEN]?.users_idx;
-  const { menu_idx } = req.params;
+  const { menus_idx } = req.params;
   const { page } = req.query;
 
   const { total_pages, data } = await rs.getMenuReviewInfoListFromDb({
     users_idx,
-    menu_idx,
+    menus_idx,
     page,
     client,
   });
