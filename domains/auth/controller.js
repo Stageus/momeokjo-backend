@@ -200,7 +200,10 @@ exports.signInWithKakaoAuth = tryCatchWrapper((req, res, next) => {
   const REDIRECT_URI = process.env.KAKAO_REDIRECT_URI;
 
   if (!REST_API_KEY || !REDIRECT_URI)
-    throw customErrorResponse(500, "환경변수 REST_API_KEY, REDIRECT_URI 확인 필요");
+    throw customErrorResponse({
+      status: 500,
+      message: "환경변수 REST_API_KEY, REDIRECT_URI 확인 필요",
+    });
 
   const url = `https://kauth.kakao.com/oauth/authorize?client_id=${REST_API_KEY}&redirect_uri=${REDIRECT_URI}&response_type=code`;
 
