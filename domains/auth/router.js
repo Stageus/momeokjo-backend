@@ -75,6 +75,6 @@ router.get("/oauth/kakao", ac.signInWithKakaoAuth);
 router.get("/oauth/kakao/redirect", ac.checkOauthAndRedirect);
 
 // 로그인 상태 조회
-router.get("/status", verifyAccessToken("accessToken"), ac.getStatus);
+router.get("/status", verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN), ac.getStatus);
 
 module.exports = router;

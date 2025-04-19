@@ -237,9 +237,9 @@ exports.checkOauthAndRedirect = tryCatchWrapperWithDb(async (req, res, next, cli
 });
 
 exports.getStatus = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const { users_idx, provider } = req.accessToken;
+  const { users_idx } = req[COOKIE_NAME.ACCESS_TOKEN];
 
-  const nickname = await as.getUserNicknameFromDb(client, users_idx);
+  const nickname = await as.getUserNicknameFromDb({ client, users_idx });
 
-  res.status(200).json({ message: "요청 처리 성공", user_idx: users_idx, nickname });
+  res.status(200).json({ message: "요청 처리 성공", data: { users_idx, nickname } });
 });

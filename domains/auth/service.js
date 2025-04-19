@@ -318,7 +318,7 @@ exports.requestKakaoLogout = async ({ accessToken, provider_user_id }) => {
   });
 };
 
-exports.getUserNicknameFromDb = async (client, users_idx) => {
+exports.getUserNicknameFromDb = async ({ client, users_idx }) => {
   const results = await client.query(
     `
       SELECT
