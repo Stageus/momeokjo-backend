@@ -265,9 +265,10 @@ describe("POST /users/likes/restaurants/:restaurants_idx", () => {
 
     expect(res.status).toBe(400);
     expect(res.body.message).toBe("입력값 확인 필요");
+    expect(res.body.target).toBe("restaurants_idx");
   });
 
-  it("인증이 유효하지 않은 경우 상태코드 401을 응답해야한다.", async () => {
+  it("로그인 하지 않은 경우 상태코드 401을 응답해야한다.", async () => {
     const id = "test";
     const pw = "Test!1@2";
 
@@ -344,7 +345,7 @@ describe("POST /users/likes/restaurants/:restaurants_idx", () => {
       .set("Cookie", cookie);
 
     expect(res.status).toBe(409);
-    expect(res.body.message).toBe("중복 음식점 즐겨찾기 등록");
+    expect(res.body.message).toBe("음식점 즐겨찾기 중복 등록");
   });
 });
 

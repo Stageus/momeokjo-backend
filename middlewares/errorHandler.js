@@ -9,7 +9,7 @@ const errorHandler = (err, req, res, next) => {
     } else if (constraint === "lists_email_key") {
       res.status(409).json({ message: "중복 이메일 회원 있음", target: "email" });
     } else if (constraint === "unique_restaurants_likes") {
-      res.status(409).json({ message: "중복 음식점 즐겨찾기 등록" });
+      res.status(409).json({ message: "음식점 즐겨찾기 중복 등록" });
     } else if (constraint === "unique_menus_likes") {
       res.status(409).json({ message: "중복 메뉴 추천 등록" });
     } else if (constraint === "unique_reviews_likes") {
