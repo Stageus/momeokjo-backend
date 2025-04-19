@@ -24,8 +24,8 @@ router.post(
 // oauth 회원가입
 router.post(
   "/oauth/signup",
-  verifyAccessToken("oauthIdx"),
-  verifyAccessToken("emailVerified"),
+  verifyAccessToken(COOKIE_NAME.OAUTH_INDEX),
+  verifyAccessToken(COOKIE_NAME.EMAIL_AUTH_VERIFIED),
   createValidateChain(schema.signUpWithOauth),
   validateRequest,
   ac.signUpWithOauth
