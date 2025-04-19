@@ -968,7 +968,7 @@ describe("DELETE /users/likes/reviews/:review_idx", () => {
       end_time: "0000",
     });
 
-    const menu_idx = await helper.createTempMenuReturnIdx({
+    const menus_idx = await helper.createTempMenuReturnIdx({
       users_idx,
       restaurants_idx,
       menu_name: "테스트 메뉴",
@@ -977,7 +977,7 @@ describe("DELETE /users/likes/reviews/:review_idx", () => {
 
     const review_idx = await helper.createTempReviewReturnIdx({
       users_idx,
-      menu_idx,
+      menus_idx,
       content: "테스트 후기",
       image_url: "",
       restaurants_idx,
@@ -1041,6 +1041,6 @@ describe("DELETE /users/likes/reviews/:review_idx", () => {
     const res = await agent.delete(`/users/likes/reviews/1`).set("Cookie", cookie);
 
     expect(res.status).toBe(404);
-    expect(res.body.message).toBe("후기 좋아요 내역 없음");
+    expect(res.body.message).toBe("후기 좋아요 등록 내역 없음");
   });
 });

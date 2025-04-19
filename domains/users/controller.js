@@ -124,7 +124,7 @@ exports.deleteReviewLike = tryCatchWrapperWithDb(async (req, res, next, client) 
   const { reviews_idx } = req.params;
 
   const isUpdated = await us.deleteReviewLikeFromDb({ client, reviews_idx, users_idx });
-  if (!isUpdated) throw customErrorResponse({ status: 404, message: "메뉴 추천 등록 내역 없음" });
+  if (!isUpdated) throw customErrorResponse({ status: 404, message: "후기 좋아요 등록 내역 없음" });
 
   res.status(200).json({ message: "요청 처리 성공" });
 });

@@ -256,16 +256,20 @@ exports.createReviewLikeAtDb = async ({ users_idx, reviews_idx, client }) => {
 };
 
 // 후기 좋아요 해제
-exports.deleteReviewLikeFromDb = async ({ client, reviews_idx_list }) => {
-  await client.query(
+exports.deleteReviewLikeFromDb = async ({ client, reviews_idx, users_idx }) => {
+  const results = await client.query(
     `
       UPDATE reviews.likes SET
         is_deleted = true
-      WHERE reviews_idx = ANY($1::int[])
-      AND is_deleted = false;
+      WHERE reviews_idx = $1
+        AND users_idx = $2
+        AND is_deleted = false
+      RETURNING idx;
     `,
-    [reviews_idx_list]
+    [reviews_idx, users_idx]
   );
+
+  return results.rowCount > 0;
 };
 
 exports.deleteReviewLikeFromDbWithArray = async ({ client, reviews_idx_list }) => {
