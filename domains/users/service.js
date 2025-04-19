@@ -15,7 +15,7 @@ exports.updateMyInfoAtDb = async ({ users_idx, nickname, client }) => {
 };
 
 // 사용자 정보 상세정보 조회
-exports.getUserInfoByIdxFromDb = async ({ users_idx_from_cookie, user_idx, client }) => {
+exports.getUserInfoByIdxFromDb = async ({ users_idx_from_cookie, users_idx, client }) => {
   const results = await client.query(
     `
       SELECT
@@ -28,14 +28,19 @@ exports.getUserInfoByIdxFromDb = async ({ users_idx_from_cookie, user_idx, clien
       WHERE idx = $2
       AND is_deleted = false;
     `,
-    [users_idx_from_cookie, user_idx]
+    [users_idx_from_cookie, users_idx]
   );
 
   return results.rows[0];
 };
 
 // 사용자가 즐겨찾기 등록한 음식점 리스트 조회
-exports.getRestaurantLikeListFromDb = async ({ client, user_idx_from_cookie, users_idx, page }) => {
+exports.getRestaurantLikeListFromDb = async ({
+  client,
+  users_idx_from_cookie,
+  users_idx,
+  page,
+}) => {
   const check_total = await client.query(
     `
       SELECT COALESCE(CEIL(COUNT(*) / 15::float), 1) AS total_pages
@@ -86,13 +91,13 @@ exports.getRestaurantLikeListFromDb = async ({ client, user_idx_from_cookie, use
       OFFSET $3
       LIMIT 15;
     `,
-    [user_idx_from_cookie, users_idx, 15 * (page - 1)]
+    [users_idx_from_cookie, users_idx, 15 * (page - 1)]
   );
 
   return { data: results.rows[0].data || [], total_pages: check_total.rows[0].total_pages };
 };
 
-exports.getReviewListFromDb = async ({ client, user_idx_from_cookie, users_idx, page }) => {
+exports.getReviewListFromDb = async ({ client, users_idx_from_cookie, users_idx, page }) => {
   const check_total = await client.query(
     `
       SELECT COALESCE(CEIL(COUNT(reviews.*) / 15::float), 1) AS total_pages
@@ -128,7 +133,7 @@ exports.getReviewListFromDb = async ({ client, user_idx_from_cookie, users_idx, 
             'review_idx', reviews.idx,
             'menu_name', menus.name,
             'likes_count', COALESCE(likes_count::integer , 0),
-            'user_idx', reviews.users_idx,
+            'users_idx', reviews.users_idx,
             'nickname', nickname,
             'content', content,
             'image_url', image_url,
@@ -147,7 +152,7 @@ exports.getReviewListFromDb = async ({ client, user_idx_from_cookie, users_idx, 
       OFFSET $3
       LIMIT 15;
       `,
-    [user_idx_from_cookie, users_idx, 15 * (page - 1)]
+    [users_idx_from_cookie, users_idx, 15 * (page - 1)]
   );
 
   return { data: results.rows[0].data || [], total_pages: check_total.rows[0].total_pages };
@@ -242,7 +247,7 @@ exports.deleteReviewLikeFromDb = async ({ client, reviews_idx_list }) => {
 };
 
 // 음식점 신고 등록
-exports.createRestaurantReportAtDb = async ({ client, restaurant_idx, user_idx }) => {
+exports.createRestaurantReportAtDb = async ({ client, restaurant_idx, users_idx }) => {
   await client.query(
     `
       INSERT INTO restaurants.reports (
@@ -253,7 +258,7 @@ exports.createRestaurantReportAtDb = async ({ client, restaurant_idx, user_idx }
         $2
       );
     `,
-    [restaurant_idx, user_idx]
+    [restaurant_idx, users_idx]
   );
 };
 
@@ -359,7 +364,7 @@ exports.deleteReviewFromDbByReviewsIdx = async ({ client, reviews_idx }) => {
 };
 
 // 메뉴 신고 등록
-exports.createMenuReportAtDb = async (client, menu_idx, user_idx) => {
+exports.createMenuReportAtDb = async (client, menu_idx, users_idx) => {
   await client.query(
     `
       INSERT INTO menus.reports (
@@ -370,7 +375,7 @@ exports.createMenuReportAtDb = async (client, menu_idx, user_idx) => {
         $2
       );
     `,
-    [menu_idx, user_idx]
+    [menu_idx, users_idx]
   );
 };
 
@@ -389,7 +394,7 @@ exports.checkTotalMenuReportByIdx = async (client, menu_idx) => {
 };
 
 // 후기 신고 등록
-exports.createReviewReportAtDb = async ({ client, review_idx, user_idx }) => {
+exports.createReviewReportAtDb = async ({ client, review_idx, users_idx }) => {
   await client.query(
     `
       INSERT INTO reviews.reports (
@@ -400,7 +405,7 @@ exports.createReviewReportAtDb = async ({ client, review_idx, user_idx }) => {
         $2
       );
     `,
-    [review_idx, user_idx]
+    [review_idx, users_idx]
   );
 };
 

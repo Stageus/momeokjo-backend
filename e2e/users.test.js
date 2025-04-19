@@ -21,7 +21,7 @@ afterAll(async () => {
   await pool.end();
 });
 
-describe("PUT /", () => {
+describe("PUT /users", () => {
   const agent = request(app);
   it("내 정보 수정에 성공하면 상태코드 200을 응답해야한다.", async () => {
     const id = "test";
@@ -82,7 +82,7 @@ describe("PUT /", () => {
     const res = await agent.put("/users").send({ nickname: "test1" });
 
     expect(res.status).toBe(401);
-    expect(res.body.message).toBe("토큰 없음");
+    expect(res.body.message).toBe("로그인 필요");
   });
 
   it("수정 대상 없는 경우 상태코드 404를 응답해야한다.", async () => {
@@ -108,7 +108,7 @@ describe("PUT /", () => {
     const res = await agent.put("/users").set("Cookie", cookie).send({ nickname: "test1" });
 
     expect(res.status).toBe(404);
-    expect(res.body.message).toBe("수정 대상 없음");
+    expect(res.body.message).toBe("사용자 정보 수정 대상 없음");
   });
 
   it("중복 닉네임이 있는 경우 상태코드 409를 응답해야한다.", async () => {
@@ -142,7 +142,7 @@ describe("PUT /", () => {
   });
 });
 
-describe("GET /:user_idx", () => {
+describe("GET /users/:users_idx", () => {
   const agent = request(app);
   it("사용자 정보 조회 성공한 경우 상태코드 200과 사용자 정보를 응답해야한다.", async () => {
     const id = "test";
@@ -158,7 +158,7 @@ describe("GET /:user_idx", () => {
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
-
+    console.log(cookie);
     const res = await agent.get(`/users/${users_idx}`).set("Cookie", cookie);
 
     expect(res.status).toBe(200);
@@ -175,7 +175,7 @@ describe("GET /:user_idx", () => {
   });
 });
 
-describe("POST /likes/restaurants/:restaurant_idx", () => {
+describe("POST /users/likes/restaurants/:restaurants_idx", () => {
   const agent = request(app);
   it("음식점 즐겨찾기 등록 성공한 경우 상태코드 200을 응답해야한다.", async () => {
     const id = "test";
@@ -197,7 +197,7 @@ describe("POST /likes/restaurants/:restaurant_idx", () => {
       category_name: "테스트 카테고리",
     });
 
-    const restaurant_idx = await helper.createTempRestaurantReturnIdx({
+    const restaurants_idx = await helper.createTempRestaurantReturnIdx({
       category_idx,
       users_idx,
       restaurant_name: "테스트 음식점",
@@ -211,7 +211,7 @@ describe("POST /likes/restaurants/:restaurant_idx", () => {
     });
 
     const res = await agent
-      .post(`/users/likes/restaurants/${restaurant_idx}`)
+      .post(`/users/likes/restaurants/${restaurants_idx}`)
       .set("Cookie", cookie);
 
     expect(res.status).toBe(200);
@@ -237,7 +237,7 @@ describe("POST /likes/restaurants/:restaurant_idx", () => {
 
     expect(res.status).toBe(400);
     expect(res.body.message).toBe("입력값 확인 필요");
-    expect(res.body.target).toBe("restaurant_idx");
+    expect(res.body.target).toBe("restaurants_idx");
   });
 
   it("인증이 유효하지 않은 경우 상태코드 401을 응답해야한다.", async () => {
@@ -258,7 +258,7 @@ describe("POST /likes/restaurants/:restaurant_idx", () => {
       category_name: "테스트 카테고리",
     });
 
-    const restaurant_idx = await helper.createTempRestaurantReturnIdx({
+    const restaurants_idx = await helper.createTempRestaurantReturnIdx({
       category_idx,
       users_idx,
       restaurant_name: "테스트 음식점",
@@ -271,10 +271,10 @@ describe("POST /likes/restaurants/:restaurant_idx", () => {
       end_time: "0000",
     });
 
-    const res = await agent.post(`/users/likes/restaurants/${restaurant_idx}`);
+    const res = await agent.post(`/users/likes/restaurants/${restaurants_idx}`);
 
     expect(res.status).toBe(401);
-    expect(res.body.message).toBe("토큰 없음");
+    expect(res.body.message).toBe("로그인 필요");
   });
 
   it("음식점 없는 경우 상태코드 404를 응답해야한다.", async () => {
@@ -318,7 +318,7 @@ describe("POST /likes/restaurants/:restaurant_idx", () => {
       category_name: "테스트 카테고리",
     });
 
-    const restaurant_idx = await helper.createTempRestaurantReturnIdx({
+    const restaurants_idx = await helper.createTempRestaurantReturnIdx({
       category_idx,
       users_idx,
       restaurant_name: "테스트 음식점",
@@ -331,10 +331,10 @@ describe("POST /likes/restaurants/:restaurant_idx", () => {
       end_time: "0000",
     });
 
-    await helper.createTempRestaurantLikes({ restaurant_idx, users_idx });
+    await helper.createTempRestaurantLikes({ restaurants_idx, users_idx });
 
     const res = await agent
-      .post(`/users/likes/restaurants/${restaurant_idx}`)
+      .post(`/users/likes/restaurants/${restaurants_idx}`)
       .set("Cookie", cookie);
 
     expect(res.status).toBe(409);
@@ -342,7 +342,7 @@ describe("POST /likes/restaurants/:restaurant_idx", () => {
   });
 });
 
-describe("DELETE /likes/restaurants/:restaurant_idx", () => {
+describe("DELETE /users/likes/restaurants/:restaurants_idx", () => {
   const agent = request(app);
   it("음식점 즐겨찾기 취소 성공한 경우 상태코드 200을 응답해야한다.", async () => {
     const id = "test";
@@ -364,7 +364,7 @@ describe("DELETE /likes/restaurants/:restaurant_idx", () => {
       category_name: "테스트 카테고리",
     });
 
-    const restaurant_idx = await helper.createTempRestaurantReturnIdx({
+    const restaurants_idx = await helper.createTempRestaurantReturnIdx({
       category_idx,
       users_idx,
       restaurant_name: "테스트 음식점",
@@ -377,10 +377,10 @@ describe("DELETE /likes/restaurants/:restaurant_idx", () => {
       end_time: "0000",
     });
 
-    await helper.createTempRestaurantLikes({ restaurant_idx, users_idx });
+    await helper.createTempRestaurantLikes({ restaurants_idx, users_idx });
 
     const res = await agent
-      .delete(`/users/likes/restaurants/${restaurant_idx}`)
+      .delete(`/users/likes/restaurants/${restaurants_idx}`)
       .set("Cookie", cookie);
 
     expect(res.status).toBe(200);
@@ -406,14 +406,14 @@ describe("DELETE /likes/restaurants/:restaurant_idx", () => {
 
     expect(res.status).toBe(400);
     expect(res.body.message).toBe("입력값 확인 필요");
-    expect(res.body.target).toBe("restaurant_idx");
+    expect(res.body.target).toBe("restaurants_idx");
   });
 
   it("인증이 유효하지 않은 경우 상태코드 401을 응답해야한다.", async () => {
     const res = await agent.delete(`/users/likes/restaurants/1`);
 
     expect(res.status).toBe(401);
-    expect(res.body.message).toBe("토큰 없음");
+    expect(res.body.message).toBe("로그인 필요");
   });
 
   it("음식점 즐겨찾기 내역이 없는 경우 상태코드 404를 응답해야한다.", async () => {
@@ -436,7 +436,7 @@ describe("DELETE /likes/restaurants/:restaurant_idx", () => {
       category_name: "테스트 카테고리",
     });
 
-    const restaurant_idx = await helper.createTempRestaurantReturnIdx({
+    const restaurants_idx = await helper.createTempRestaurantReturnIdx({
       category_idx,
       users_idx,
       restaurant_name: "테스트 음식점",
@@ -450,7 +450,7 @@ describe("DELETE /likes/restaurants/:restaurant_idx", () => {
     });
 
     const res = await agent
-      .delete(`/users/likes/restaurants/${restaurant_idx}`)
+      .delete(`/users/likes/restaurants/${restaurants_idx}`)
       .set("Cookie", cookie);
 
     expect(res.status).toBe(404);
@@ -480,7 +480,7 @@ describe("POST /users/likes/menus/:menu_idx", () => {
       category_name: "테스트 카테고리",
     });
 
-    const restaurant_idx = await helper.createTempRestaurantReturnIdx({
+    const restaurants_idx = await helper.createTempRestaurantReturnIdx({
       category_idx,
       users_idx,
       restaurant_name: "테스트 음식점",
@@ -495,7 +495,7 @@ describe("POST /users/likes/menus/:menu_idx", () => {
 
     const menu_idx = await helper.createTempMenuReturnIdx({
       users_idx,
-      restaurant_idx,
+      restaurants_idx,
       menu_name: "테스트 메뉴",
       price: "10000",
     });
@@ -524,7 +524,7 @@ describe("POST /users/likes/menus/:menu_idx", () => {
 
     expect(res.status).toBe(400);
     expect(res.body.message).toBe("입력값 확인 필요");
-    expect(res.body.target).toBe("menu_idx");
+    expect(res.body.target).toBe("menus_idx");
   });
 
   it("인증이 유효하지 않은 경우 상태코드 401을 응답해야한다.", async () => {
@@ -540,7 +540,7 @@ describe("POST /users/likes/menus/:menu_idx", () => {
     const res = await agent.post(`/users/likes/menus/1`);
 
     expect(res.status).toBe(401);
-    expect(res.body.message).toBe("토큰 없음");
+    expect(res.body.message).toBe("로그인 필요");
   });
 
   it("메뉴 없는 경우 상태코드 404를 응답해야한다.", async () => {
@@ -602,7 +602,7 @@ describe("POST /users/likes/menus/:menu_idx", () => {
       category_name: "테스트 카테고리",
     });
 
-    const restaurant_idx = await helper.createTempRestaurantReturnIdx({
+    const restaurants_idx = await helper.createTempRestaurantReturnIdx({
       category_idx,
       users_idx,
       restaurant_name: "테스트 음식점",
@@ -617,7 +617,7 @@ describe("POST /users/likes/menus/:menu_idx", () => {
 
     const menu_idx = await helper.createTempMenuReturnIdx({
       users_idx,
-      restaurant_idx,
+      restaurants_idx,
       menu_name: "테스트 메뉴",
       price: "10000",
     });
@@ -653,7 +653,7 @@ describe("DELETE /users/likes/menus/:menu_idx", () => {
       category_name: "테스트 카테고리",
     });
 
-    const restaurant_idx = await helper.createTempRestaurantReturnIdx({
+    const restaurants_idx = await helper.createTempRestaurantReturnIdx({
       category_idx,
       users_idx,
       restaurant_name: "테스트 음식점",
@@ -668,7 +668,7 @@ describe("DELETE /users/likes/menus/:menu_idx", () => {
 
     const menu_idx = await helper.createTempMenuReturnIdx({
       users_idx,
-      restaurant_idx,
+      restaurants_idx,
       menu_name: "테스트 메뉴",
       price: "10000",
     });
@@ -699,14 +699,14 @@ describe("DELETE /users/likes/menus/:menu_idx", () => {
 
     expect(res.status).toBe(400);
     expect(res.body.message).toBe("입력값 확인 필요");
-    expect(res.body.target).toBe("menu_idx");
+    expect(res.body.target).toBe("menus_idx");
   });
 
   it("인증이 유효하지 않은 경우 상태코드 401을 응답해야한다.", async () => {
     const res = await agent.delete(`/users/likes/menus/1`);
 
     expect(res.status).toBe(401);
-    expect(res.body.message).toBe("토큰 없음");
+    expect(res.body.message).toBe("로그인 필요");
   });
 
   it("메뉴 추천 내역 없는 경우 상태코드 404를 응답해야한다.", async () => {
@@ -729,7 +729,7 @@ describe("DELETE /users/likes/menus/:menu_idx", () => {
       category_name: "테스트 카테고리",
     });
 
-    const restaurant_idx = await helper.createTempRestaurantReturnIdx({
+    const restaurants_idx = await helper.createTempRestaurantReturnIdx({
       category_idx,
       users_idx,
       restaurant_name: "테스트 음식점",
@@ -744,7 +744,7 @@ describe("DELETE /users/likes/menus/:menu_idx", () => {
 
     const menu_idx = await helper.createTempMenuReturnIdx({
       users_idx,
-      restaurant_idx,
+      restaurants_idx,
       menu_name: "테스트 메뉴",
       price: "10000",
     });
@@ -758,7 +758,7 @@ describe("DELETE /users/likes/menus/:menu_idx", () => {
   });
 });
 
-describe("POST /users/likes/reviews/:review_idx", () => {
+describe("POST /users/likes/reviews/:reviews_idx", () => {
   const agent = request(app);
   it("후기 좋아요 등록 성공한 경우 상태코드 200을 응답해야한다.", async () => {
     const id = "test";
@@ -780,7 +780,7 @@ describe("POST /users/likes/reviews/:review_idx", () => {
       category_name: "테스트 카테고리",
     });
 
-    const restaurant_idx = await helper.createTempRestaurantReturnIdx({
+    const restaurants_idx = await helper.createTempRestaurantReturnIdx({
       category_idx,
       users_idx,
       restaurant_name: "테스트 음식점",
@@ -795,19 +795,20 @@ describe("POST /users/likes/reviews/:review_idx", () => {
 
     const menu_idx = await helper.createTempMenuReturnIdx({
       users_idx,
-      restaurant_idx,
+      restaurants_idx,
       menu_name: "테스트 메뉴",
       price: "10000",
     });
 
-    const review_idx = await helper.createTempReviewReturnIdx({
+    const reviews_idx = await helper.createTempReviewReturnIdx({
       users_idx,
       menu_idx,
       content: "테스트 후기",
       image_url: "",
+      restaurants_idx,
     });
 
-    const res = await agent.post(`/users/likes/reviews/${review_idx}`).set("Cookie", cookie);
+    const res = await agent.post(`/users/likes/reviews/${reviews_idx}`).set("Cookie", cookie);
 
     expect(res.status).toBe(200);
     expect(res.body.message).toBe("요청 처리 성공");
@@ -832,14 +833,14 @@ describe("POST /users/likes/reviews/:review_idx", () => {
 
     expect(res.status).toBe(400);
     expect(res.body.message).toBe("입력값 확인 필요");
-    expect(res.body.target).toBe("review_idx");
+    expect(res.body.target).toBe("reviews_idx");
   });
 
   it("인증이 유효하지 않은 경우 상태코드 401을 응답해야한다.", async () => {
     const res = await agent.post(`/users/likes/reviews/1`);
 
     expect(res.status).toBe(401);
-    expect(res.body.message).toBe("토큰 없음");
+    expect(res.body.message).toBe("로그인 필요");
   });
 
   it("후기가 없는 경우 상태코드 404를 응답해야한다.", async () => {
@@ -883,7 +884,7 @@ describe("POST /users/likes/reviews/:review_idx", () => {
       category_name: "테스트 카테고리",
     });
 
-    const restaurant_idx = await helper.createTempRestaurantReturnIdx({
+    const restaurants_idx = await helper.createTempRestaurantReturnIdx({
       category_idx,
       users_idx,
       restaurant_name: "테스트 음식점",
@@ -898,7 +899,7 @@ describe("POST /users/likes/reviews/:review_idx", () => {
 
     const menu_idx = await helper.createTempMenuReturnIdx({
       users_idx,
-      restaurant_idx,
+      restaurants_idx,
       menu_name: "테스트 메뉴",
       price: "10000",
     });
@@ -908,6 +909,7 @@ describe("POST /users/likes/reviews/:review_idx", () => {
       menu_idx,
       content: "테스트 후기",
       image_url: "",
+      restaurants_idx,
     });
 
     await helper.createTempReviewLikes({
@@ -944,7 +946,7 @@ describe("DELETE /users/likes/reviews/:review_idx", () => {
       category_name: "테스트 카테고리",
     });
 
-    const restaurant_idx = await helper.createTempRestaurantReturnIdx({
+    const restaurants_idx = await helper.createTempRestaurantReturnIdx({
       category_idx,
       users_idx,
       restaurant_name: "테스트 음식점",
@@ -959,7 +961,7 @@ describe("DELETE /users/likes/reviews/:review_idx", () => {
 
     const menu_idx = await helper.createTempMenuReturnIdx({
       users_idx,
-      restaurant_idx,
+      restaurants_idx,
       menu_name: "테스트 메뉴",
       price: "10000",
     });
@@ -969,6 +971,7 @@ describe("DELETE /users/likes/reviews/:review_idx", () => {
       menu_idx,
       content: "테스트 후기",
       image_url: "",
+      restaurants_idx,
     });
 
     await helper.createTempReviewLikes({
@@ -1001,14 +1004,14 @@ describe("DELETE /users/likes/reviews/:review_idx", () => {
 
     expect(res.status).toBe(400);
     expect(res.body.message).toBe("입력값 확인 필요");
-    expect(res.body.target).toBe("review_idx");
+    expect(res.body.target).toBe("reviews_idx");
   });
 
   it("인증이 유효하지 않은 경우 상태코그 401을 응답해야한다.", async () => {
     const res = await agent.delete(`/users/likes/reviews/1`);
 
     expect(res.status).toBe(401);
-    expect(res.body.message).toBe("토큰 없음");
+    expect(res.body.message).toBe("로그인 필요");
   });
 
   it("후기 좋아요 내역 없는 경우 상태코드 404를 응답해야한다.", async () => {

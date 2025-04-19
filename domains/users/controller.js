@@ -19,7 +19,7 @@ exports.updateMyInfo = tryCatchWrapperWithDb(async (req, res, next, client) => {
 
 // 사용자 정보 상세정보 조회
 exports.getUserInfoByIdx = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const users_idx_from_cookie = req[COOKIE_NAME.ACCESS_TOKEN]?.user_idx;
+  const users_idx_from_cookie = req[COOKIE_NAME.ACCESS_TOKEN]?.users_idx;
   const { users_idx } = req.params;
 
   const data = await us.getUserInfoByIdxFromDb({ users_idx_from_cookie, users_idx, client });
@@ -31,13 +31,13 @@ exports.getUserInfoByIdx = tryCatchWrapperWithDb(async (req, res, next, client) 
 
 // 사용자가 즐겨찾기 등록한 음식점 리스트 조회
 exports.getRestaurantLikeList = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const user_idx_from_cookie = req[COOKIE_NAME.ACCESS_TOKEN]?.users_idx;
+  const users_idx_from_cookie = req[COOKIE_NAME.ACCESS_TOKEN]?.users_idx;
   const { users_idx } = req.params;
   const { page } = req.query;
 
   const { data, total_pages } = await us.getRestaurantLikeListFromDb({
     client,
-    user_idx_from_cookie,
+    users_idx_from_cookie,
     users_idx,
     page,
   });
@@ -49,13 +49,13 @@ exports.getRestaurantLikeList = tryCatchWrapperWithDb(async (req, res, next, cli
 
 // 사용자가 작성한 후기 리스트 조회
 exports.getReviewList = tryCatchWrapperWithDb(async (req, res, next, client) => {
-  const user_idx_from_cookie = req[COOKIE_NAME.ACCESS_TOKEN]?.users_idx;
+  const users_idx_from_cookie = req[COOKIE_NAME.ACCESS_TOKEN]?.users_idx;
   const { users_idx } = req.params;
   const { page } = req.query;
 
   const { data, total_pages } = await us.getReviewListFromDb({
     client,
-    user_idx_from_cookie,
+    users_idx_from_cookie,
     users_idx,
     page,
   });

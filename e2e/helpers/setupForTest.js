@@ -1,6 +1,7 @@
 const request = require("supertest");
 const pool = require("../../database/db");
 const app = require("../../server");
+const COOKIE_NAME = require("../../utils/cookieName");
 
 exports.createTempUserReturnIdx = async ({ id, pw, nickname, email, role, oauth_idx = null }) => {
   const client = await pool.connect();
@@ -22,7 +23,9 @@ exports.createTempUserReturnIdx = async ({ id, pw, nickname, email, role, oauth_
 
 exports.getCookieSavedAccessTokenAfterSignin = async ({ id, pw }) => {
   const res = await request(app).post("/auth/signin").send({ id, pw });
-  const cookie = res.headers["set-cookie"].find((cookie) => cookie.startsWith("accessToken="));
+  const cookie = res.headers["set-cookie"].find((cookie) =>
+    cookie.startsWith(`${COOKIE_NAME.ACCESS_TOKEN}=`)
+  );
 
   return cookie;
 };
@@ -77,7 +80,7 @@ exports.createTempRestaurantReturnIdx = async ({
         ST_SetSRID(ST_MakePoint($4, $5), 4326), 
         $6, $7, $8, $9, $10
       )
-      RETURNING idx AS restaurant_idx
+      RETURNING idx AS restaurants_idx
     `,
     [
       category_idx,
@@ -94,7 +97,7 @@ exports.createTempRestaurantReturnIdx = async ({
   );
   client.release();
 
-  return results.rows[0].restaurant_idx;
+  return results.rows[0].restaurants_idx;
 };
 
 exports.createTempMenuReturnIdx = async ({ users_idx, restaurants_idx, menu_name, price }) => {
@@ -146,7 +149,7 @@ exports.createTempReviewReturnIdx = async ({
   return results.rows[0]?.review_idx;
 };
 
-exports.createTempRestaurantLikes = async ({ restaurant_idx, users_idx }) => {
+exports.createTempRestaurantLikes = async ({ restaurants_idx, users_idx }) => {
   const client = await pool.connect();
   await client.query(
     `
@@ -158,7 +161,7 @@ exports.createTempRestaurantLikes = async ({ restaurant_idx, users_idx }) => {
         $2
       );
     `,
-    [restaurant_idx, users_idx]
+    [restaurants_idx, users_idx]
   );
   client.release();
 };

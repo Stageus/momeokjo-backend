@@ -42,7 +42,7 @@ exports.getRestaurantInfoListFromDb = async ({
       SELECT 
         COALESCE(json_agg(
           json_build_object(
-            'restaurant_idx', list.idx,
+            'restaurants_idx', list.idx,
             'category_name', category.name,
             'likes_count', COALESCE(likes_count::integer , 0),
             'restaurant_name', list.name,
@@ -200,7 +200,7 @@ exports.getRecommendRestaurantFromDb = async ({
     )
 
     SELECT
-          list.idx AS restaurant_idx,
+          list.idx AS restaurants_idx,
           category.name AS category_name,
           COALESCE(likes_count::integer , 0) AS likes_count,
           list.name AS restaurant_name,
@@ -379,8 +379,8 @@ exports.getMenuReviewInfoListFromDb = async ({ users_idx, menus_idx, page, clien
       SELECT
         COALESCE(json_agg(
           json_build_object(
-            'review_idx', reviews.idx,
-            'user_idx', reviews.users_idx,
+            'reviews_idx', reviews.idx,
+            'users_idx', reviews.users_idx,
             'user_name', users.nickname,
             'menu_name', menus.name,
             'content', reviews.content,
@@ -473,7 +473,7 @@ exports.getRestaurantInfoByIdxFromDb = async ({ users_idx, restaurants_idx, clie
       )
       
       SELECT 
-        list.idx AS restaurant_idx,
+        list.idx AS restaurants_idx,
         category.name AS category_name,
         COALESCE(likes_count::integer , 0) AS likes_count,
         list.name AS restaurant_name,
