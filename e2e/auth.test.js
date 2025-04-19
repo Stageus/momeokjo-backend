@@ -126,134 +126,149 @@ describe("POST /verify-email/confirm", () => {
 describe("POST /signup", () => {
   const agent = request(app);
   it("회원가입에 성공한 경우 상태코드 200을 응답해야한다.", async () => {
-    const email = "bluegyufordev@gmail.com";
-    const responseSendEmail = await agent.post("/auth/verify-email").send({ email });
-    const sendEmailCookies = responseSendEmail.headers["set-cookie"].join("; ");
-    expect(sendEmailCookies).toBeDefined();
+    const email = "test@test.com";
+    const resEmail = await agent.post("/auth/verify-email").send({ email });
+    const resEmailCookie = resEmail.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_SEND}=`)
+    );
 
-    const client = await pool.connect();
-    const code = await service.getVerifyCodeFromDb(client, email);
-    client.release();
+    const code = await helper.getTempCodeFromDb({ email });
 
-    const responseVerifyCode = await agent
+    const resVerify = await agent
       .post("/auth/verify-email/confirm")
-      .set("Cookie", sendEmailCookies)
+      .set("Cookie", resEmailCookie)
       .send({ code });
-    const verifyCodeCookies = responseVerifyCode.headers["set-cookie"].join("; ");
-    expect(verifyCodeCookies).toBeDefined();
+    const resVerifyCookie = resVerify.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_VERIFIED}=`)
+    );
 
     const res = await agent
       .post("/auth/signup")
-      .set("Cookie", verifyCodeCookies)
+      .set("Cookie", resVerifyCookie)
       .send({ id: "test", pw: "Test!1@2", nickname: "test", code });
 
     expect(res.status).toBe(200);
     expect(res.body.message).toBe("회원가입 성공");
   });
 
-  it("입력값이 유효하지 않은 경우 상태코드 400을 응답해야한다.", async () => {
-    const email = "bluegyufordev@gmail.com";
-    const responseSendEmail = await agent.post("/auth/verify-email").send({ email });
-    const sendEmailCookies = responseSendEmail.headers["set-cookie"].join("; ");
-    expect(sendEmailCookies).toBeDefined();
+  it("id 입력값이 유효하지 않은 경우 상태코드 400을 응답해야한다.", async () => {
+    const email = "test@test.com";
+    const resEmail = await agent.post("/auth/verify-email").send({ email });
+    const resEmailCookie = resEmail.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_SEND}=`)
+    );
 
-    const client = await pool.connect();
-    const code = await service.getVerifyCodeFromDb(client, email);
-    client.release();
+    const code = await helper.getTempCodeFromDb({ email });
 
-    const responseVerifyCode = await agent
+    const resVerify = await agent
       .post("/auth/verify-email/confirm")
-      .set("Cookie", sendEmailCookies)
+      .set("Cookie", resEmailCookie)
       .send({ code });
-    const verifyCodeCookies = responseVerifyCode.headers["set-cookie"].join("; ");
-    expect(verifyCodeCookies).toBeDefined();
+    const resVerifyCookie = resVerify.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_VERIFIED}=`)
+    );
 
     const res = await agent
       .post("/auth/signup")
-      .set("Cookie", verifyCodeCookies)
-      .send({ id: "test", pw: "", nickname: "test", code });
+      .set("Cookie", resVerifyCookie)
+      .send({ id: "", pw: "Test!1@2", nickname: "test", code });
 
     expect(res.status).toBe(400);
     expect(res.body.message).toBe("입력값 확인 필요");
-    expect(res.body.target).toBe("pw");
+    expect(res.body.target).toBe("id");
   });
 
-  it("토큰이 유효하지 않은 경우 상태코드 401을 응답해야한다.", async () => {
-    const email = "bluegyufordev@gmail.com";
-    const responseSendEmail = await agent.post("/auth/verify-email").send({ email });
-    const sendEmailCookies = responseSendEmail.headers["set-cookie"].join("; ");
-    expect(sendEmailCookies).toBeDefined();
+  it("nickname 입력값이 유효하지 않은 경우 상태코드 400을 응답해야한다.", async () => {
+    const email = "test@test.com";
+    const resEmail = await agent.post("/auth/verify-email").send({ email });
+    const resEmailCookie = resEmail.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_SEND}=`)
+    );
 
-    const client = await pool.connect();
-    const code = await service.getVerifyCodeFromDb(client, email);
-    client.release();
+    const code = await helper.getTempCodeFromDb({ email });
 
-    const res = await agent
-      .post("/auth/signup")
-      .send({ id: "test", pw: "Test!1@2", nickname: "test", code });
-
-    expect(res.status).toBe(401);
-    expect(res.body.message).toBe("토큰 없음");
-  });
-
-  it("인증번호가 없는 경우 상태코드 404를 응답해야한다.", async () => {
-    const email = "bluegyufordev@gmail.com";
-    const responseSendEmail = await agent.post("/auth/verify-email").send({ email });
-    const sendEmailCookies = responseSendEmail.headers["set-cookie"].join("; ");
-    expect(sendEmailCookies).toBeDefined();
-
-    const client = await pool.connect();
-    const code = await service.getVerifyCodeFromDb(client, email);
-    client.release();
-
-    const responseVerifyCode = await agent
+    const resVerify = await agent
       .post("/auth/verify-email/confirm")
-      .set("Cookie", sendEmailCookies)
+      .set("Cookie", resEmailCookie)
       .send({ code });
-    const verifyCodeCookies = responseVerifyCode.headers["set-cookie"].join("; ");
-    expect(verifyCodeCookies).toBeDefined();
+    const resVerifyCookie = resVerify.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_VERIFIED}=`)
+    );
 
     const res = await agent
       .post("/auth/signup")
-      .set("Cookie", verifyCodeCookies)
+      .set("Cookie", resVerifyCookie)
+      .send({ id: "test", pw: "Test!1@2", nickname: "", code });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe("입력값 확인 필요");
+    expect(res.body.target).toBe("nickname");
+  });
+
+  it("인증번호가 없는 경우 상태코드 400을 응답해야한다.", async () => {
+    const email = "test@test.com";
+    const resEmail = await agent.post("/auth/verify-email").send({ email });
+    const resEmailCookie = resEmail.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_SEND}=`)
+    );
+
+    const code = await helper.getTempCodeFromDb({ email });
+
+    const resVerify = await agent
+      .post("/auth/verify-email/confirm")
+      .set("Cookie", resEmailCookie)
+      .send({ code });
+    const resVerifyCookie = resVerify.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_VERIFIED}=`)
+    );
+
+    const res = await agent
+      .post("/auth/signup")
+      .set("Cookie", resVerifyCookie)
       .send({ id: "test", pw: "Test!1@2", nickname: "test", code: "123456" });
 
-    expect(res.status).toBe(404);
-    expect(res.body.message).toBe("인증번호 전송내역 없음");
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe("입력값 확인 필요");
+    expect(res.body.target).toBe("code");
+  });
+
+  it("이메일 인증이 되지 않은 경우 상태코드 401을 응답해야한다.", async () => {
+    const res = await agent
+      .post("/auth/signup")
+      .send({ id: "test", pw: "Test!1@2", nickname: "test", code: "123456" });
+
+    expect(res.status).toBe(401);
+    expect(res.body.message).toBe("이메일 인증되지 않음");
   });
 
   it("중복된 아이디를 가진 회원이 있는 경우 상태코드 409를 응답해야한다.", async () => {
-    const email = "bluegyufordev@gmail.com";
-    const responseSendEmail = await agent.post("/auth/verify-email").send({ email });
-    const sendEmailCookies = responseSendEmail.headers["set-cookie"].join("; ");
-    expect(sendEmailCookies).toBeDefined();
-
-    const client1 = await pool.connect();
-    const code = await service.getVerifyCodeFromDb(client1, email);
-    client1.release();
-
-    const responseVerifyCode = await agent
-      .post("/auth/verify-email/confirm")
-      .set("Cookie", sendEmailCookies)
-      .send({ code });
-    const verifyCodeCookies = responseVerifyCode.headers["set-cookie"].join("; ");
-    expect(verifyCodeCookies).toBeDefined();
-
-    const client2 = await pool.connect();
-    await service.createUserAtDb(
-      client2,
-      "test",
-      "Test!1@2",
-      "test1",
-      "test@test.com",
-      "USER",
-      null
+    const email = "test@test.com";
+    const resEmail = await agent.post("/auth/verify-email").send({ email });
+    const resEmailCookie = resEmail.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_SEND}=`)
     );
-    client2.release();
+
+    const code = await helper.getTempCodeFromDb({ email });
+
+    const resVerify = await agent
+      .post("/auth/verify-email/confirm")
+      .set("Cookie", resEmailCookie)
+      .send({ code });
+    const resVerifyCookie = resVerify.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_VERIFIED}=`)
+    );
+
+    await helper.createTempUserReturnIdx({
+      id: "test",
+      pw: "Test!1@2",
+      nickname: "test1",
+      email: "test1@test.com",
+      role: "USER",
+    });
 
     const res = await agent
       .post("/auth/signup")
-      .set("Cookie", verifyCodeCookies)
+      .set("Cookie", resVerifyCookie)
       .send({ id: "test", pw: "Test!1@2", nickname: "test", code });
 
     expect(res.status).toBe(409);
@@ -262,38 +277,34 @@ describe("POST /signup", () => {
   });
 
   it("중복된 닉네임을 가진 회원이 있는 경우 상태코드 409를 응답해야한다.", async () => {
-    const email = "bluegyufordev@gmail.com";
-    const responseSendEmail = await agent.post("/auth/verify-email").send({ email });
-    const sendEmailCookies = responseSendEmail.headers["set-cookie"].join("; ");
-    expect(sendEmailCookies).toBeDefined();
-
-    const client1 = await pool.connect();
-    const code = await service.getVerifyCodeFromDb(client1, email);
-    client1.release();
-
-    const responseVerifyCode = await agent
-      .post("/auth/verify-email/confirm")
-      .set("Cookie", sendEmailCookies)
-      .send({ code });
-    const verifyCodeCookies = responseVerifyCode.headers["set-cookie"].join("; ");
-    expect(verifyCodeCookies).toBeDefined();
-
-    const client2 = await pool.connect();
-    await service.createUserAtDb(
-      client2,
-      "test1",
-      "Test!1@2",
-      "same",
-      "test@test.com",
-      "USER",
-      null
+    const email = "test@test.com";
+    const resEmail = await agent.post("/auth/verify-email").send({ email });
+    const resEmailCookie = resEmail.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_SEND}=`)
     );
-    client2.release();
+
+    const code = await helper.getTempCodeFromDb({ email });
+
+    const resVerify = await agent
+      .post("/auth/verify-email/confirm")
+      .set("Cookie", resEmailCookie)
+      .send({ code });
+    const resVerifyCookie = resVerify.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_VERIFIED}=`)
+    );
+
+    await helper.createTempUserReturnIdx({
+      id: "test",
+      pw: "Test!1@2",
+      nickname: "test",
+      email: "test1@test.com",
+      role: "USER",
+    });
 
     const res = await agent
       .post("/auth/signup")
-      .set("Cookie", verifyCodeCookies)
-      .send({ id: "test", pw: "Test!1@2", nickname: "same", code });
+      .set("Cookie", resVerifyCookie)
+      .send({ id: "test1", pw: "Test!1@2", nickname: "test", code });
 
     expect(res.status).toBe(409);
     expect(res.body.message).toBe("중복 닉네임 회원 있음");
@@ -301,30 +312,34 @@ describe("POST /signup", () => {
   });
 
   it("중복된 이메일을 가진 회원이 있는 경우 상태코드 409를 응답해야한다.", async () => {
-    const email = "bluegyufordev@gmail.com";
-    const responseSendEmail = await agent.post("/auth/verify-email").send({ email });
-    const sendEmailCookies = responseSendEmail.headers["set-cookie"].join("; ");
-    expect(sendEmailCookies).toBeDefined();
+    const email = "test@test.com";
+    const resEmail = await agent.post("/auth/verify-email").send({ email });
+    const resEmailCookie = resEmail.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_SEND}=`)
+    );
 
-    const client1 = await pool.connect();
-    const code = await service.getVerifyCodeFromDb(client1, email);
-    client1.release();
+    const code = await helper.getTempCodeFromDb({ email });
 
-    const responseVerifyCode = await agent
+    const resVerify = await agent
       .post("/auth/verify-email/confirm")
-      .set("Cookie", sendEmailCookies)
+      .set("Cookie", resEmailCookie)
       .send({ code });
-    const verifyCodeCookies = responseVerifyCode.headers["set-cookie"].join("; ");
-    expect(verifyCodeCookies).toBeDefined();
+    const resVerifyCookie = resVerify.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_VERIFIED}=`)
+    );
 
-    const client2 = await pool.connect();
-    await service.createUserAtDb(client2, "test1", "Test!1@2", "test1", email, "USER", null);
-    client2.release();
+    await helper.createTempUserReturnIdx({
+      id: "test",
+      pw: "Test!1@2",
+      nickname: "test",
+      email: "test@test.com",
+      role: "USER",
+    });
 
     const res = await agent
       .post("/auth/signup")
-      .set("Cookie", verifyCodeCookies)
-      .send({ id: "test", pw: "Test!1@2", nickname: "test", code });
+      .set("Cookie", resVerifyCookie)
+      .send({ id: "test1", pw: "Test!1@2", nickname: "test1", code });
 
     expect(res.status).toBe(409);
     expect(res.body.message).toBe("중복 이메일 회원 있음");
