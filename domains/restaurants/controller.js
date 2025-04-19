@@ -248,7 +248,7 @@ exports.updateRestaurantInfoByIdx = tryCatchWrapperWithDb(async (req, res, next,
     end_time,
     client,
   });
-  if (!isUpdated) throw customErrorResponse({ status: 404, message: "조회 결과 없음" });
+  if (!isUpdated) throw customErrorResponse({ status: 404, message: "음식점 정보 없음" });
 
   res.status(200).json({ message: "요청 처리 성공" });
 });
