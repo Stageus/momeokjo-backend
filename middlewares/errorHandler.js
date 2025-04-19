@@ -19,21 +19,21 @@ const errorHandler = (err, req, res, next) => {
     }
   } else if (code === "23503") {
     if (constraint === "lists_restaurants_idx_fkey") {
-      res.status(404).json({ message: "음식점 없음", target: "restaurant_idx" });
+      res.status(400).json({ message: "입력값 확인 필요", target: "restaurants_idx" });
     } else if (constraint === "lists_menus_idx_fkey") {
-      res.status(404).json({ message: "메뉴 없음", target: "menu_idx" });
+      res.status(400).json({ message: "입력값 확인 필요", target: "menus_idx" });
     } else if (constraint === "local_tokens_users_idx_fkey") {
-      res.status(404).json({ message: "사용자 없음", target: "users_idx" });
+      res.status(400).json({ message: "입력값 확인 필요", target: "users_idx" });
     } else if (constraint === "likes_restaurants_idx_fkey") {
-      res.status(404).json({ message: "음식점 없음" });
+      res.status(400).json({ message: "입력값 확인 필요", target: "restaurant_idx" });
     } else if (constraint === "likes_menus_idx_fkey") {
-      res.status(404).json({ message: "메뉴 없음" });
+      res.status(400).json({ message: "입력값 확인 필요", target: "menus_idx" });
     } else if (constraint === "likes_reviews_idx_fkey") {
-      res.status(404).json({ message: "후기 없음" });
+      res.status(400).json({ message: "입력값 확인 필요", target: "reviews_idx" });
     } else if (constraint === "lists_categories_idx_fkey") {
       res.status(400).json({ message: "입력값 확인 필요", target: "category_idx" });
     } else {
-      res.status(404).json({ message, target: constraint });
+      res.status(400).json({ message, target: constraint });
     }
   }
 

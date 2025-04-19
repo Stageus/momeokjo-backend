@@ -306,7 +306,7 @@ exports.getRestaurantMenuInfoListFromDb = async ({ users_idx, restaurants_idx, p
 // 음식점 메뉴 등록
 exports.createRestaurantMenuAtDb = async ({
   users_idx,
-  restaurant_idx,
+  restaurants_idx,
   menu_name,
   price,
   client,
@@ -320,9 +320,9 @@ exports.createRestaurantMenuAtDb = async ({
         price
       ) VALUES (
         $1, $2, $3, $4
-      )
+      );
     `,
-    [users_idx, restaurant_idx, menu_name, price]
+    [users_idx, restaurants_idx, menu_name, price]
   );
 };
 

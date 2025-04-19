@@ -143,10 +143,16 @@ exports.getRestaurantMenuInfoList = tryCatchWrapperWithDb(async (req, res, next,
 // 음식점 메뉴 등록
 exports.createRestaurantMenu = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { users_idx } = req[COOKIE_NAME.ACCESS_TOKEN];
-  const { restaurant_idx } = req.params;
+  const { restaurants_idx } = req.params;
   const { menu_name, price } = req.body;
 
-  await rs.createRestaurantMenuAtDb({ users_idx, restaurant_idx, menu_name, price, client });
+  await rs.createRestaurantMenuAtDb({
+    users_idx,
+    restaurants_idx,
+    menu_name,
+    price,
+    client,
+  });
 
   res.status(200).json({ message: "요청 처리 성공" });
 });
