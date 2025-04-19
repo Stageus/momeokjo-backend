@@ -128,33 +128,33 @@ exports.checkIsExistedEmailFromDb = async (client, email) => {
           FROM users.lists
           WHERE email = $1
           AND is_deleted = false
-      ) AS is_exist_email;
+      ) AS is_exist;
     `,
     [email]
   );
 
-  return results.rows[0].is_exist_email;
+  return results.rows[0].is_exist;
 };
 
 exports.createVerificationCode = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-exports.saveVerificationCodeAtDb = async (client, email, code) => {
+exports.saveVerificationCodeAtDb = async ({ client, email, code }) => {
   await client.query(
     `
-        INSERT INTO users.codes(
+      INSERT INTO users.codes(
         email,
         code
       ) VALUES (
-       $1, $2
+        $1, $2
       )
     `,
     [email, code]
   );
 };
 
-exports.sendEmailVerificationCode = async (email, code) => {
+exports.sendEmailVerificationCode = async ({ email, code }) => {
   await transporter.sendMail({
     from: process.env.EMAIL_USER,
     to: email,

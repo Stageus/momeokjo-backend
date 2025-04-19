@@ -151,25 +151,27 @@ exports.sendEmailVerificationCode = tryCatchWrapperWithDb(async (req, res, next,
   const { email } = req.body;
 
   // 이메일 확인
-  const isExistedEmail = await as.checkIsExistedEmailFromDb(client, email);
-  if (isExistedEmail) {
-    throw customErrorResponse(409, "이미 회원가입에 사용된 이메일입니다.");
-  }
+  const isExisted = await as.checkIsExistedEmailFromDb({ client, email });
+  if (isExisted)
+    throw customErrorResponse({ status: 409, message: "이미 회원가입에 사용된 이메일입니다." });
 
   // 이메일 인증번호 생성
   const code = as.createVerificationCode();
 
   // 데이터베이스에 인증번호 저장
-  await as.saveVerificationCodeAtDb(client, email, code);
+  await as.saveVerificationCodeAtDb({ client, email, code });
 
   // 이메일 인증번호 전송
-  await as.sendEmailVerificationCode(email, code);
+  await as.sendEmailVerificationCode({ email, code });
 
   // 토큰 생성
-  const token = jwt.createAccessToken({ email }, process.env.JWT_ACCESS_EXPIRES_IN);
+  const token = jwt.createAccessToken({
+    payload: { email },
+    expiresIn: process.env.JWT_ACCESS_EXPIRES_IN,
+  });
 
   // 쿠키 생성
-  res.cookie("email", token, accessTokenOptions);
+  res.cookie(COOKIE_NAME.EMAIL_AUTH_SEND, token, accessTokenOptions);
   res.status(200).json({ message: "이메일 인증 코드 전송 성공" });
 });
 
