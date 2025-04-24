@@ -6,7 +6,7 @@
     "prod": "NODE_ENV=production node index.js",
     "dev": "NODE_ENV=develop nodemon index.js",
     "local": "NODE_ENV=local nodemon index.js",
-    "test": "NODE_ENV=test npx jest --detectOpenHandles --testPathPattern=e2e"
+    "test": "NODE_ENV=test npx jest"
   },
   "keywords": [],
   "author": "",
