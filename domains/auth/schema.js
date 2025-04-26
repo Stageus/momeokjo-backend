@@ -97,10 +97,5 @@ exports.signUpWithOauth = {
       defaultValue: null,
       regexp: REGEXP.NICKNAME,
     },
-    code: {
-      isRequired: true,
-      defaultValue: null,
-      regexp: REGEXP.CODE,
-    },
   },
 };

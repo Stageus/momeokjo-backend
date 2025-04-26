@@ -81,12 +81,7 @@ exports.signUp = tryCatchWrapperWithDb(async (req, res, next, client) => {
 exports.signUpWithOauth = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { oauth_idx } = req[COOKIE_NAME.OAUTH_INDEX];
   const { email } = req[COOKIE_NAME.EMAIL_AUTH_VERIFIED];
-  const { nickname, code } = req.body;
-
-  // 인증번호 확인
-  const isCode = await as.checkVerifyCodeFromDb({ client, email, code });
-  if (!isCode)
-    throw customErrorResponse({ status: 400, message: "입력값 확인 필요", target: "code" });
+  const { nickname } = req.body;
 
   await as.createUserAtDb({ client, id: null, pw: null, nickname, email, role: "USER", oauth_idx });
 
