@@ -1,3 +1,8 @@
+CREATE SCHEMA users;
+CREATE SCHEMA restaurants;
+CREATE SCHEMA menus;
+CREATE SCHEMA reviews;
+
 CREATE TABLE users.codes
 (
   idx         serial       PRIMARY KEY,
@@ -7,6 +12,16 @@ CREATE TABLE users.codes
 );
 
 create type role_enum as enum ('ADMIN', 'USER');
+
+CREATE TABLE users.oauth
+(
+  idx         serial       PRIMARY KEY,
+  provider    varchar(20)  NOT NULL,
+  provider_id varchar(50)  NOT NULL,
+  email       varchar(254) NOT NULL UNIQUE,
+  created_at  timestamp    NOT NULL DEFAULT current_timestamp,
+  updated_at  timestamp    NOT NULL DEFAULT current_timestamp
+);
 
 CREATE TABLE users.lists
 (
@@ -21,18 +36,6 @@ CREATE TABLE users.lists
   created_at timestamp    NOT NULL DEFAULT current_timestamp,
   updated_at timestamp    NOT NULL DEFAULT current_timestamp
 );
-
-CREATE TABLE users.local_tokens
-(
-  idx                 serial      PRIMARY KEY,
-  users_idx           bigint      NOT NULL REFERENCES users.lists(idx),
-  refresh_token       text        NOT NULL,
-  refresh_expired_at  timestamp   NOT NULL,
-  is_deleted          boolean     NOT NULL DEFAULT false,
-  created_at          timestamp   NOT NULL DEFAULT current_timestamp,
-  updated_at          timestamp   NOT NULL DEFAULT current_timestamp
-);
-
 
 CREATE TABLE users.reports
 (
