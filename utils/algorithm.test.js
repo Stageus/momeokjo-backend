@@ -11,11 +11,12 @@ describe("encrypt", () => {
       try {
         await algorithm.encrypt(input);
       } catch (err) {
+        console.log(err);
         expect(err).toBeDefined();
         expect(err.status).toBe(500);
         expect(err.message).toBe("암호화할 대상의 타입이 string이 아님");
 
-        const errRes = customErrorResponse(err.status, err.message);
+        const errRes = customErrorResponse({ status: err.status, message: err.message });
         expect(errRes).toBeInstanceOf(Error);
         expect(errRes).toMatchObject(
           expect.objectContaining({
@@ -51,7 +52,7 @@ describe("decrypt", () => {
         expect(err.status).toBe(500);
         expect(err.message).toBe("복호화할 대상의 타입이 string이 아님");
 
-        const errRes = customErrorResponse(err.status, err.message);
+        const errRes = customErrorResponse({ status: err.status, message: err.message });
         expect(errRes).toBeInstanceOf(Error);
         expect(errRes).toMatchObject(
           expect.objectContaining({
@@ -72,7 +73,7 @@ describe("decrypt", () => {
         "The first argument must be of type string or an instance of Buffer, ArrayBuffer, or Array or an Array-like Object. Received undefined"
       );
 
-      const errRes = customErrorResponse(err.status, err.message);
+      const errRes = customErrorResponse({ status: err.status, message: err.message });
       expect(errRes).toBeInstanceOf(Error);
       expect(errRes).toMatchObject(
         expect.objectContaining({
@@ -91,7 +92,7 @@ describe("decrypt", () => {
       expect(err.status).toBe(500);
       expect(err.message).toBe("Invalid initialization vector");
 
-      const errRes = customErrorResponse(err.status, err.message);
+      const errRes = customErrorResponse({ status: err.status, message: err.message });
       expect(errRes).toBeInstanceOf(Error);
       expect(errRes).toMatchObject(
         expect.objectContaining({
