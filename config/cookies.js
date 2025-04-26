@@ -6,10 +6,10 @@ exports.baseCookieOptions = {
 
 exports.accessTokenOptions = {
   ...exports.baseCookieOptions,
-  maxAge: 60 * 15 * 1000,
+  expires: new Date(Date.now() + 60 * parseInt(process.env.JWT_ACCESS_EXPIRES_IN) * 1000),
 };
 
 exports.refreshTokenOptions = {
   ...exports.baseCookieOptions,
-  maxAge: 60 * 60 * 30 * 1000,
+  expires: new Date(Date.now() + 60 * 60 * parseInt(process.env.JWT_REFRESH_EXPIRES_IN) * 1000),
 };

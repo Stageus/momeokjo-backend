@@ -1,16 +1,17 @@
 const jwt = require("jsonwebtoken");
 const customErrorResponse = require("./customErrorResponse");
 
-exports.createAccessToken = ({ payload, expiresIn }) => {
+exports.createAccessToken = ({ payload }) => {
   try {
     if (!payload || typeof payload !== "object" || Object.keys(payload).length === 0)
       throw new Error("payload 확인 필요");
 
-    if (!expiresIn || typeof expiresIn !== "string") throw new Error("expiresIn 확인 필요");
+    if (!process.env.JWT_ACCESS_SECRET || !process.env.JWT_ACCESS_EXPIRES_IN)
+      throw new Error("access 토큰 생성 jwt 환경 변수 확인 필요");
 
-    if (!process.env.JWT_ACCESS_SECRET) throw new Error("환경 변수 JWT_ACCESS_SECRET 확인 필요");
-
-    const token = jwt.sign(payload, process.env.JWT_ACCESS_SECRET, { expiresIn });
+    const token = jwt.sign(payload, process.env.JWT_ACCESS_SECRET, {
+      expiresIn: `${process.env.JWT_ACCESS_EXPIRES_IN}m`,
+    });
 
     return token;
   } catch (err) {
@@ -18,16 +19,17 @@ exports.createAccessToken = ({ payload, expiresIn }) => {
   }
 };
 
-exports.createRefreshToken = ({ payload, expiresIn }) => {
+exports.createRefreshToken = ({ payload }) => {
   try {
     if (!payload || typeof payload !== "object" || Object.keys(payload).length === 0)
       throw new Error("payload 확인 필요");
 
-    if (!expiresIn || typeof expiresIn !== "string") throw new Error("expiresIn 확인 필요");
+    if (!process.env.JWT_REFRESH_SECRET || !process.env.JWT_REFRESH_EXPIRES_IN)
+      throw new Error("refresh 토큰 생성 jwt 환경 변수 확인 필요");
 
-    if (!process.env.JWT_REFRESH_SECRET) throw new Error("환경 변수 JWT_REFRESH_SECRET 확인 필요");
-
-    const token = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, { expiresIn });
+    const token = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
+      expiresIn: `${process.env.JWT_REFRESH_EXPIRES_IN}d`,
+    });
 
     return token;
   } catch (err) {

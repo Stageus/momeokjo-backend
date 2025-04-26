@@ -19,12 +19,10 @@ exports.signIn = tryCatchWrapperWithDb(async (req, res, next, client) => {
 
   const refreshToken = jwt.createRefreshToken({
     payload: { users_idx },
-    expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
   });
 
   const accessToken = jwt.createAccessToken({
     payload: { users_idx, provider: "LOCAL", role },
-    expiresIn: process.env.JWT_ACCESS_EXPIRES_IN,
   });
 
   res.cookie(COOKIE_NAME.REFRESH_TOKEN, refreshToken, refreshTokenOptions);
@@ -97,7 +95,6 @@ exports.createRequestPasswordReset = tryCatchWrapperWithDb(async (req, res, next
 
   const token = jwt.createAccessToken({
     payload: { id, email },
-    expiresIn: process.env.JWT_ACCESS_EXPIRES_IN,
   });
 
   res.cookie(COOKIE_NAME.PASSWORD_RESET, token, accessTokenOptions);
@@ -138,7 +135,6 @@ exports.sendEmailVerificationCode = tryCatchWrapperWithDb(async (req, res, next,
   // 토큰 생성
   const token = jwt.createAccessToken({
     payload: { email },
-    expiresIn: process.env.JWT_ACCESS_EXPIRES_IN,
   });
 
   // 쿠키 생성
@@ -157,7 +153,6 @@ exports.checkEmailVerificationCode = tryCatchWrapperWithDb(async (req, res, next
 
   const token = jwt.createAccessToken({
     payload: { email },
-    expiresIn: process.env.JWT_ACCESS_EXPIRES_IN,
   });
 
   res.clearCookie(COOKIE_NAME.EMAIL_AUTH_SEND, baseCookieOptions);
@@ -208,14 +203,14 @@ exports.checkOauthAndRedirect = tryCatchWrapperWithDb(async (req, res, next, cli
 
     const token = jwt.createAccessToken({
       payload: { oauth_idx },
-      expiresIn: process.env.JWT_ACCESS_EXPIRES_IN,
     });
 
     res.cookie(COOKIE_NAME.OAUTH_INDEX, token, accessTokenOptions);
     res.redirect("http://localhost:3000/oauth/signup");
   } else {
-    const payload = { users_idx, provider: "KAKAO", role: "USER" };
-    const token = jwt.createAccessToken({ payload, expiresIn: process.env.JWT_ACCESS_EXPIRES_IN });
+    const token = jwt.createAccessToken({
+      payload: { users_idx, provider: "KAKAO", role: "USER" },
+    });
 
     res.cookie(COOKIE_NAME.ACCESS_TOKEN, token, accessTokenOptions);
     res.redirect("http://localhost:3000/");
