@@ -3,7 +3,11 @@ const { tryCatchWrapper, tryCatchWrapperWithDb } = require("../../utils/customWr
 const customErrorResponse = require("../../utils/customErrorResponse");
 const jwt = require("../../utils/jwt");
 const algorithm = require("../../utils/algorithm");
-const { baseCookieOptions, accessTokenOptions } = require("../../config/cookies");
+const {
+  baseCookieOptions,
+  accessTokenOptions,
+  refreshTokenOptions,
+} = require("../../config/cookies");
 const COOKIE_NAME = require("../../utils/cookieName");
 
 // 로그인
@@ -13,34 +17,17 @@ exports.signIn = tryCatchWrapperWithDb(async (req, res, next, client) => {
   const { isUser, users_idx, role } = await as.checkIsUserFromDb({ client, id, pw });
   if (!isUser) throw customErrorResponse({ status: 404, message: "등록된 계정 없음" });
 
-  const { isExpired, refreshToken } = await as.checkLocalRefreshTokenFromDb({ client, users_idx });
-
-  let newRefreshToken = "";
-  const payload = { users_idx, provider: "LOCAL", role };
-  if (isExpired) {
-    const refreshToken = jwt.createRefreshToken({
-      payload,
-      expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
-    });
-    newRefreshToken = algorithm.encrypt(refreshToken);
-
-    // 날짜 계산 오늘 + 30일;
-    const now = new Date();
-    const refresh_expired_at = new Date(now.getTime() + 1000 * 60 * 60 * 24 * 30);
-
-    await as.saveNewRefreshTokenAtDb({
-      client,
-      users_idx,
-      refreshToken: newRefreshToken,
-      refresh_expired_at,
-    });
-  }
+  const refreshToken = jwt.createRefreshToken({
+    payload: { users_idx },
+    expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
+  });
 
   const accessToken = jwt.createAccessToken({
-    payload,
+    payload: { users_idx, provider: "LOCAL", role },
     expiresIn: process.env.JWT_ACCESS_EXPIRES_IN,
   });
 
+  res.cookie(COOKIE_NAME.REFRESH_TOKEN, refreshToken, refreshTokenOptions);
   res.cookie(COOKIE_NAME.ACCESS_TOKEN, accessToken, accessTokenOptions);
   res.status(200).json({ message: "요청 처리 성공" });
 });

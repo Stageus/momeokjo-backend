@@ -44,28 +44,6 @@ exports.checkLocalRefreshTokenFromDb = async ({ client, users_idx }) => {
   };
 };
 
-exports.saveNewRefreshTokenAtDb = async ({
-  client,
-  users_idx,
-  refreshToken,
-  refresh_expired_at,
-}) => {
-  await client.query(
-    `
-    INSERT INTO users.local_tokens (
-      users_idx,
-      refresh_token,
-      refresh_expired_at
-   ) VALUES (
-      $1,
-      $2,
-      $3
-   );
-    `,
-    [users_idx, refreshToken, refresh_expired_at]
-  );
-};
-
 exports.createUserAtDb = async ({ client, id, pw, nickname, email, role, oauth_idx = null }) => {
   await client.query(
     "INSERT INTO users.lists (id, pw, nickname, email, role, oauth_idx) VALUES ($1, $2, $3, $4, $5, $6);",
