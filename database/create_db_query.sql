@@ -22,19 +22,6 @@ CREATE TABLE users.lists
   updated_at timestamp    NOT NULL DEFAULT current_timestamp
 );
 
-CREATE TABLE users.oauth
-(
-  idx                 serial      PRIMARY KEY,
-  provider            varchar(50) NOT NULL,
-  provider_user_id    text        NOT NULL,
-  refresh_token       text        NOT NULL,
-  refresh_expires_in  bigint      NOT NULL,
-  access_token        text        NOT NULL,
-  is_deleted          boolean     NOT NULL DEFAULT false,
-  created_at          timestamp   NOT NULL DEFAULT current_timestamp,
-  updated_at          timestamp   NOT NULL DEFAULT current_timestamp
-);
-
 CREATE TABLE users.local_tokens
 (
   idx                 serial      PRIMARY KEY,
