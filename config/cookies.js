@@ -1,7 +1,7 @@
 exports.baseCookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "Strict",
+  secure: process.env.NODE_ENV === "production" || process.env.NODE_ENV === "develop",
+  sameSite: "None",
 };
 
 exports.accessTokenOptions = {
