@@ -40,7 +40,7 @@ describe("createChain", () => {
       expect(err.status).toBe(500);
       expect(err.message).toBe(`validate 대상이 올바르지 않습니다. type: ${type}`);
 
-      const errRes = customErrorResponse(err.status, err.message);
+      const errRes = customErrorResponse({ status: err.status, message: err.message });
       expect(errRes).toBeInstanceOf(Error);
       expect(errRes).toMatchObject({
         status: 500,
@@ -57,7 +57,7 @@ describe("createChain", () => {
       expect(err.status).toBe(500);
       expect(err.message).toBe(`validate 객체가 없습니다.`);
 
-      const errRes = customErrorResponse(err.status, err.message);
+      const errRes = customErrorResponse({ status: err.status, message: err.message });
       expect(errRes).toBeInstanceOf(Error);
       expect(errRes).toMatchObject({
         status: 500,
@@ -68,7 +68,7 @@ describe("createChain", () => {
 
   const validObject = [
     { body: { id: { isRequired: true, defaultValue: null, regexp: /^./ } } },
-    { query: { id: { isRequired: true, defaultValue: null, regexp: /^./ } } },
+    { query: { id: { isRequired: false, defaultValue: 1, regexp: /^./ } } },
     { param: { id: { isRequired: true, defaultValue: null, regexp: /^./ } } },
   ];
   it.each(validObject)("타입과 객체가 유효하면 validator chain 배열을 리턴해야한다.", (obj) => {
