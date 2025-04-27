@@ -15,7 +15,10 @@ exports.createAccessToken = ({ payload }) => {
 
     return token;
   } catch (err) {
-    throw customErrorResponse(500, err.message || "access 토큰 생성 중 오류 발생");
+    throw customErrorResponse({
+      status: 500,
+      message: err.message || "access 토큰 생성 중 오류 발생",
+    });
   }
 };
 

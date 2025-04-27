@@ -9,14 +9,13 @@ jest.mock("jsonwebtoken");
 describe("createAccessToken", () => {
   const invalidPayload = ["", [], undefined, null, {}, 123];
   it.each(invalidPayload)("payload가 유효하지 않으면 예외를 발생시켜야 한다.", (payload) => {
-    const expiresIn = "";
     try {
-      createAccessToken(payload, expiresIn);
+      createAccessToken({ payload });
     } catch (err) {
       expect(err.status).toBe(500);
       expect(err.message).toBe("payload 확인 필요");
 
-      const errRes = customErrorResponse(err.status, err.message);
+      const errRes = customErrorResponse({ status: err.status, message: err.message });
       expect(errRes).toBeInstanceOf(Error);
       expect(errRes).toMatchObject(
         expect.objectContaining({
@@ -27,55 +26,34 @@ describe("createAccessToken", () => {
     }
   });
 
-  const invalidExpiresIn = ["", [], undefined, null, {}, 123];
-  it.each(invalidExpiresIn)("expiresIn가 유효하지 않으면 예외를 발생시켜야 한다.", (expiresIn) => {
-    const payload = { payload_a: "a" };
-    try {
-      createAccessToken(payload, expiresIn);
-    } catch (err) {
-      expect(err.status).toBe(500);
-      expect(err.message).toBe("expiresIn 확인 필요");
-
-      const errRes = customErrorResponse(err.status, err.message);
-      expect(errRes).toBeInstanceOf(Error);
-      expect(errRes).toMatchObject(
-        expect.objectContaining({
-          status: 500,
-          message: "expiresIn 확인 필요",
-        })
-      );
-    }
-  });
-
-  it("payload, expiresIn가 유효하지만 환경 변수가 유효하지 않으면 예외를 발생시켜야 한다.", () => {
+  it("payload가 유효하지만 환경 변수가 유효하지 않으면 예외를 발생시켜야 한다.", () => {
     process.env.JWT_ACCESS_SECRET = "";
     const payload = { payload_a: "a" };
-    const expiresIn = "15m";
+
     try {
-      createAccessToken(payload, expiresIn);
+      createAccessToken({ payload });
     } catch (err) {
       expect(err.status).toBe(500);
-      expect(err.message).toBe("환경 변수 JWT_ACCESS_SECRET 확인 필요");
+      expect(err.message).toBe("access 토큰 생성 jwt 환경 변수 확인 필요");
 
-      const errRes = customErrorResponse(err.status, err.message);
+      const errRes = customErrorResponse({ status: err.status, message: err.message });
       expect(errRes).toBeInstanceOf(Error);
       expect(errRes).toMatchObject(
         expect.objectContaining({
           status: 500,
-          message: "환경 변수 JWT_ACCESS_SECRET 확인 필요",
+          message: "access 토큰 생성 jwt 환경 변수 확인 필요",
         })
       );
     }
   });
 
-  it("payload, expiresIn, 환경 변수가 유효하면 토큰을 리턴해야한다.", () => {
+  it("payload, 환경 변수가 유효하면 토큰을 리턴해야한다.", () => {
     const payload = { payload_a: "a" };
-    const expiresIn = "15m";
     process.env.JWT_ACCESS_SECRET = "some_scret";
 
     jwt.sign.mockReturnValue("some_access_token");
 
-    const token = createAccessToken(payload, expiresIn);
+    const token = createAccessToken({ payload });
 
     expect(jwt.sign).toHaveBeenCalledTimes(1);
     expect(token).toBe("some_access_token");
@@ -85,14 +63,13 @@ describe("createAccessToken", () => {
 describe("createRefreshToken", () => {
   const invalidPayload = ["", [], undefined, null, {}, 123];
   it.each(invalidPayload)("payload가 유효하지 않으면 예외를 발생시켜야 한다.", (payload) => {
-    const expiresIn = "";
     try {
-      createRefreshToken(payload, expiresIn);
+      createRefreshToken({ payload });
     } catch (err) {
       expect(err.status).toBe(500);
       expect(err.message).toBe("payload 확인 필요");
 
-      const errRes = customErrorResponse(err.status, err.message);
+      const errRes = customErrorResponse({ status: err.status, message: err.message });
       expect(errRes).toBeInstanceOf(Error);
       expect(errRes).toMatchObject(
         expect.objectContaining({
@@ -103,55 +80,33 @@ describe("createRefreshToken", () => {
     }
   });
 
-  const invalidExpiresIn = ["", [], undefined, null, {}, 123];
-  it.each(invalidExpiresIn)("expiresIn가 유효하지 않으면 예외를 발생시켜야 한다.", (expiresIn) => {
-    const payload = { payload_a: "a" };
-    try {
-      createRefreshToken(payload, expiresIn);
-    } catch (err) {
-      expect(err.status).toBe(500);
-      expect(err.message).toBe("expiresIn 확인 필요");
-
-      const errRes = customErrorResponse(err.status, err.message);
-      expect(errRes).toBeInstanceOf(Error);
-      expect(errRes).toMatchObject(
-        expect.objectContaining({
-          status: 500,
-          message: "expiresIn 확인 필요",
-        })
-      );
-    }
-  });
-
-  it("payload, expiresIn가 유효하지만 환경 변수가 유효하지 않으면 예외를 발생시켜야 한다.", () => {
+  it("payload가 유효하지만 환경 변수가 유효하지 않으면 예외를 발생시켜야 한다.", () => {
     process.env.JWT_REFRESH_SECRET = "";
     const payload = { payload_a: "a" };
-    const expiresIn = "15m";
     try {
-      createRefreshToken(payload, expiresIn);
+      createRefreshToken({ payload });
     } catch (err) {
       expect(err.status).toBe(500);
-      expect(err.message).toBe("환경 변수 JWT_REFRESH_SECRET 확인 필요");
+      expect(err.message).toBe("refresh 토큰 생성 jwt 환경 변수 확인 필요");
 
-      const errRes = customErrorResponse(err.status, err.message);
+      const errRes = customErrorResponse({ status: err.status, message: err.message });
       expect(errRes).toBeInstanceOf(Error);
       expect(errRes).toMatchObject(
         expect.objectContaining({
           status: 500,
-          message: "환경 변수 JWT_REFRESH_SECRET 확인 필요",
+          message: "refresh 토큰 생성 jwt 환경 변수 확인 필요",
         })
       );
     }
   });
 
-  it("payload, expiresIn, 환경 변수가 유효하면 토큰을 리턴해야한다.", () => {
+  it("payload, 환경 변수가 유효하면 토큰을 리턴해야한다.", () => {
     const payload = { payload_a: "a" };
-    const expiresIn = "15m";
     process.env.JWT_REFRESH_SECRET = "some_scret";
 
     jwt.sign.mockReturnValue("some_refresh_token");
 
-    const token = createRefreshToken(payload, expiresIn);
+    const token = createRefreshToken({ payload });
 
     expect(jwt.sign).toHaveBeenCalledTimes(1);
     expect(token).toBe("some_refresh_token");
@@ -162,12 +117,12 @@ describe("verifyToken", () => {
   const invalidToken = ["", [], undefined, null, {}, 123];
   it.each(invalidToken)("token이 유효하지 않으면 예외를 발생시켜야한다.", (token) => {
     try {
-      verifyToken(token);
+      verifyToken({ token });
     } catch (err) {
       expect(err.status).toBe(500);
       expect(err.message).toBe("token 확인 필요");
 
-      const errRes = customErrorResponse(err.status, err.message);
+      const errRes = customErrorResponse({ status: err.status, message: err.message });
       expect(errRes).toBeInstanceOf(Error);
       expect(errRes).toMatchObject(
         expect.objectContaining({
@@ -182,12 +137,12 @@ describe("verifyToken", () => {
     process.env.JWT_ACCESS_SECRET = "";
     const token = "some_access_token";
     try {
-      verifyToken(token);
+      verifyToken({ token });
     } catch (err) {
       expect(err.status).toBe(500);
       expect(err.message).toBe("환경 변수 JWT_ACCESS_SECRET 확인 필요");
 
-      const errRes = customErrorResponse(err.status, err.message);
+      const errRes = customErrorResponse({ status: err.status, message: err.message });
       expect(errRes).toBeInstanceOf(Error);
       expect(errRes).toMatchObject(
         expect.objectContaining({
@@ -202,22 +157,25 @@ describe("verifyToken", () => {
     process.env.JWT_ACCESS_SECRET = "some_scret";
     const token = "some_access_token";
 
-    jwt.verify.mockReturnValue("decoded_access_token");
+    const returnVierify = "decoded_access_token";
+    const verifySpy = jest.spyOn(jwt, "verify").mockReturnValue(returnVierify);
 
-    const decoded = verifyToken(token);
-    expect(decoded).toBe("decoded_access_token");
+    const decoded = verifyToken({ token });
+
+    expect(verifySpy).toHaveBeenCalledTimes(1);
+    expect(decoded.results).toStrictEqual(returnVierify);
   });
 
   it("refresh token 디코딩하는 경우 토큰이 유효하지만 환경 변수가 유효하지 않으면 예외를 발생시켜야 한다.", () => {
     process.env.JWT_REFRESH_SECRET = "";
     const token = "some_refresh_token";
     try {
-      verifyToken(token, true);
+      verifyToken({ token, isRefresh: true });
     } catch (err) {
       expect(err.status).toBe(500);
       expect(err.message).toBe("환경 변수 JWT_REFRESH_SECRET 확인 필요");
 
-      const errRes = customErrorResponse(err.status, err.message);
+      const errRes = customErrorResponse({ status: err.status, message: err.message });
       expect(errRes).toBeInstanceOf(Error);
       expect(errRes).toMatchObject(
         expect.objectContaining({
@@ -232,9 +190,12 @@ describe("verifyToken", () => {
     process.env.JWT_REFRESH_SECRET = "some_scret";
     const token = "some_refresh_token";
 
-    jwt.verify.mockReturnValue("decoded_refresh_token");
+    const returnVierify = "decoded_refresh_token";
+    const verifySpy = jest.spyOn(jwt, "verify").mockReturnValue(returnVierify);
 
-    const decoded = verifyToken(token, true);
-    expect(decoded).toBe("decoded_refresh_token");
+    const decoded = verifyToken({ token, isRefresh: true });
+
+    expect(verifySpy).toHaveBeenCalledTimes(1);
+    expect(decoded.results).toStrictEqual(returnVierify);
   });
 });
