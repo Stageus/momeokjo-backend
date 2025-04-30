@@ -1,103 +1,229 @@
-jest.mock("../utils/jwt");
+require("dotenv").config();
 
-const jwt = require("../utils/jwt");
+const jwt = require("jsonwebtoken");
+const jwtUtils = require("../utils/jwt");
 const customErrorResponse = require("../utils/customErrorResponse");
 const verifyAccessToken = require("./verifyAccessToken");
+const COOKIE_NAME = require("../utils/cookieName");
+const pool = require("../database/db");
+const { createTempUserReturnIdx } = require("../e2e/helpers/setupForTest");
+const { accessTokenOptions } = require("../config/cookies");
+
+afterEach(async () => {
+  const client = await pool.connect();
+  // 데이터베이스 초기화
+  client.query("DELETE FROM users.lists;");
+  client.release();
+});
+
+afterAll(async () => {
+  await pool.end();
+});
 
 describe("verifyAccessToken", () => {
-  it("토큰이 없는 경우 상태코드 401과 안내 메시지로 예외를 발생시켜야한다.", async () => {
+  const cookieNameList = [
+    COOKIE_NAME.ACCESS_TOKEN,
+    COOKIE_NAME.EMAIL_AUTH_SEND,
+    COOKIE_NAME.EMAIL_AUTH_VERIFIED,
+    COOKIE_NAME.PASSWORD_RESET,
+    COOKIE_NAME.OAUTH_INDEX,
+    "",
+  ];
+  it.each(cookieNameList)(
+    "토큰이 없는 경우 상태코드 401과 안내 메시지로 예외를 발생시켜야한다.",
+    async (cookieName) => {
+      const req = {
+        cookies: {},
+      };
+      const res = {};
+      const next = jest.fn();
+
+      await verifyAccessToken(cookieName)(req, res, next);
+
+      expect(next).toHaveBeenCalled();
+      const error = next.mock.calls[0][0];
+      expect(error).toBeInstanceOf(Error);
+      expect(error.status).toBe(401);
+      expect(typeof error.message).toBe("string");
+    }
+  );
+
+  it("액세트 토큰이 만료된 경우 리프레시 토큰이 있는 경우 액세스 토큰을 재발급해야한다.", async () => {
+    const req = {
+      cookies: {},
+    };
+    const res = {
+      cookie: jest.fn(),
+    };
+    const next = jest.fn();
+
+    const users_idx = await createTempUserReturnIdx({
+      id: "test",
+      pw: "Test!@34",
+      nickname: "test",
+      email: "test@test.com",
+      role: "USER",
+    });
+
+    const expiredToken = jwt.sign(
+      { users_idx, provider: "LOCAL", exp: Math.floor(Date.now() / 1000) - 10 },
+      process.env.JWT_ACCESS_SECRET
+    );
+
+    const refreshToken = jwt.sign({ users_idx, role: "USER" }, process.env.JWT_REFRESH_SECRET, {
+      expiresIn: `${process.env.JWT_REFRESH_EXPIRES_IN}d`,
+    });
+
+    req.cookies[COOKIE_NAME.ACCESS_TOKEN] = expiredToken;
+    req.cookies[COOKIE_NAME.REFRESH_TOKEN] = refreshToken;
+
+    await verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN)(req, res, next);
+
+    expect(res.cookie).toHaveBeenCalledTimes(1);
+    const accessToken = res.cookie.mock.calls[0][1];
+    expect(res.cookie).toHaveBeenCalledWith(
+      COOKIE_NAME.ACCESS_TOKEN,
+      accessToken,
+      accessTokenOptions
+    );
+
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it("액세스 토큰과 리프레시 토큰이 만료된 경우 상태코드 401과 안내 메시지를 응답해야한다.", async () => {
     const req = {
       cookies: {},
     };
     const res = {};
     const next = jest.fn();
 
-    await verifyAccessToken("token")(req, res, next);
+    const users_idx = await createTempUserReturnIdx({
+      id: "test",
+      pw: "Test!@34",
+      nickname: "test",
+      email: "test@test.com",
+      role: "USER",
+    });
 
-    const error = customErrorResponse(400, "토큰 없음");
+    const expiredAccessToken = jwt.sign(
+      { users_idx, provider: "LOCAL", exp: Math.floor(Date.now() / 1000) - 10 },
+      process.env.JWT_ACCESS_SECRET
+    );
+
+    const expiredRefreshToken = jwt.sign(
+      { users_idx, role: "USER", exp: Math.floor(Date.now() / 1000) - 10 },
+      process.env.JWT_REFRESH_SECRET
+    );
+
+    req.cookies[COOKIE_NAME.ACCESS_TOKEN] = expiredAccessToken;
+    req.cookies[COOKIE_NAME.REFRESH_TOKEN] = expiredRefreshToken;
+
+    await verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN)(req, res, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+
+    const error = customErrorResponse({ status: 401, message: "로그인 필요" });
     expect(next).toHaveBeenCalledWith(error);
   });
 
-  it("토큰이 만료된 경우 상태코드 401과 안내 메시지로 예외를 발생시켜야한다.", async () => {
+  it("액세스 토큰이 만료되고 리프레시 토큰이 잘못된 경우 상태코드 401과 안내 메시지를 응답해야한다.", async () => {
     const req = {
-      cookies: { token: "expired-token" },
+      cookies: {},
     };
     const res = {};
     const next = jest.fn();
 
-    const jwtSpy = jest.spyOn(jwt, "verifyToken");
-    jwtSpy.mockReturnValue({ isValid: false, results: "TokenExpiredError" });
+    const users_idx = await createTempUserReturnIdx({
+      id: "test",
+      pw: "Test!@34",
+      nickname: "test",
+      email: "test@test.com",
+      role: "USER",
+    });
 
-    await verifyAccessToken("token")(req, res, next);
+    const expiredAccessToken = jwt.sign(
+      { users_idx, provider: "LOCAL", exp: Math.floor(Date.now() / 1000) - 10 },
+      process.env.JWT_ACCESS_SECRET
+    );
 
-    expect(jwtSpy).toHaveBeenCalledTimes(1);
-    expect(jwtSpy).toHaveBeenCalledWith(req.cookies.token);
+    const wrongRefreshToken = jwt.sign({ users_idx, role: "USER" }, "wrong_secret_key", {
+      expiresIn: `${process.env.JWT_REFRESH_EXPIRES_IN}d`,
+    });
 
-    const error = customErrorResponse(401, "토큰 만료");
+    req.cookies[COOKIE_NAME.ACCESS_TOKEN] = expiredAccessToken;
+    req.cookies[COOKIE_NAME.REFRESH_TOKEN] = wrongRefreshToken;
+
+    await verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN)(req, res, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+
+    const error = customErrorResponse({ status: 401, message: "잘못된 토큰" });
     expect(next).toHaveBeenCalledWith(error);
-
-    expect(req.token).toBe(undefined);
   });
 
-  it("토큰이 유효하지 않은 경우 상태코드 401과 안내 메시지로 예외를 발생시켜야한다.", async () => {
+  it("액세스 토큰이 잘못된 경우 상태코드 401과 안내 메시지를 응답해야한다.", async () => {
     const req = {
-      cookies: { token: "invalid-token" },
+      cookies: {},
     };
     const res = {};
     const next = jest.fn();
 
-    const jwtSpy = jest.spyOn(jwt, "verifyToken");
-    jwtSpy.mockReturnValue({ isValid: false, results: "JsonWebTokenError" });
+    const wrongToken = jwt.sign(
+      { users_idx: 1, provider: "LOCAL", exp: Math.floor(Date.now() / 1000) - 10 },
+      "wrong_secret_key"
+    );
 
-    await verifyAccessToken("token")(req, res, next);
+    req.cookies[COOKIE_NAME.EMAIL_AUTH_SEND] = wrongToken;
 
-    expect(jwtSpy).toHaveBeenCalledTimes(1);
-    expect(jwtSpy).toHaveBeenCalledWith(req.cookies.token);
+    await verifyAccessToken(COOKIE_NAME.EMAIL_AUTH_SEND)(req, res, next);
 
-    const error = customErrorResponse(401, "유효하지 않은 토큰");
+    expect(next).toHaveBeenCalledTimes(1);
+
+    const error = customErrorResponse({ status: 401, message: "잘못된 토큰" });
     expect(next).toHaveBeenCalledWith(error);
-
-    expect(req.token).toBe(undefined);
-  });
-
-  it("토큰 디코딩 중 오류가 발생한 경우 상태코드 500과 안내 메시지로 예외를 발생시켜야한다.", async () => {
-    const req = {
-      cookies: { token: "some-token" },
-    };
-    const res = {};
-    const next = jest.fn();
-
-    const jwtSpy = jest.spyOn(jwt, "verifyToken");
-    jwtSpy.mockReturnValue({ isValid: false, results: null });
-
-    await verifyAccessToken("token")(req, res, next);
-
-    expect(jwtSpy).toHaveBeenCalledTimes(1);
-    expect(jwtSpy).toHaveBeenCalledWith(req.cookies.token);
-
-    const error = customErrorResponse(500, "토큰 디코딩 중 오류 발생");
-    expect(next).toHaveBeenCalledWith(error);
-
-    expect(req.token).toBe(undefined);
   });
 
   it("토큰이 정상적으로 디코딩된 경우 req 객체에 저장하고 다음 미들웨어를 호출해야한다.", async () => {
     const req = {
-      cookies: { token: "right-token" },
+      cookies: {},
     };
-    const res = {};
+    const res = {
+      cookie: jest.fn(),
+    };
     const next = jest.fn();
 
-    const jwtSpy = jest.spyOn(jwt, "verifyToken");
-    const decoded = { users_idx: 1, provider: "LOCAL" };
-    jwtSpy.mockReturnValue({ isValid: true, results: decoded });
+    const users_idx = await createTempUserReturnIdx({
+      id: "test",
+      pw: "Test!@34",
+      nickname: "test",
+      email: "test@test.com",
+      role: "USER",
+    });
 
-    await verifyAccessToken("token")(req, res, next);
+    const accessToken = jwt.sign(
+      { users_idx, provider: "LOCAL", role: "USER" },
+      process.env.JWT_ACCESS_SECRET,
+      {
+        expiresIn: `${process.env.JWT_ACCESS_EXPIRES_IN}m`,
+      }
+    );
 
-    expect(jwtSpy).toHaveBeenCalledTimes(1);
-    expect(jwtSpy).toHaveBeenCalledWith(req.cookies.token);
+    const refreshToken = jwt.sign({ users_idx, role: "USER" }, process.env.JWT_REFRESH_SECRET, {
+      expiresIn: `${process.env.JWT_REFRESH_EXPIRES_IN}d`,
+    });
 
-    expect(req.token).toStrictEqual(decoded);
-    expect(next).toHaveBeenCalled();
+    req.cookies[COOKIE_NAME.ACCESS_TOKEN] = accessToken;
+    req.cookies[COOKIE_NAME.REFRESH_TOKEN] = refreshToken;
+
+    await verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN)(req, res, next);
+
+    expect(req[COOKIE_NAME.ACCESS_TOKEN]).toEqual(
+      expect.objectContaining({
+        users_idx,
+        provider: "LOCAL",
+        role: "USER",
+      })
+    );
+    expect(next).toHaveBeenCalledTimes(1);
   });
 });
