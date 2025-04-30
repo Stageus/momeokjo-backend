@@ -15,12 +15,15 @@ create type role_enum as enum ('ADMIN', 'USER');
 
 CREATE TABLE users.oauth
 (
-  idx         serial       PRIMARY KEY,
-  provider    varchar(20)  NOT NULL,
-  provider_id varchar(50)  NOT NULL,
-  email       varchar(254) NOT NULL UNIQUE,
-  created_at  timestamp    NOT NULL DEFAULT current_timestamp,
-  updated_at  timestamp    NOT NULL DEFAULT current_timestamp
+  idx                 serial      PRIMARY KEY,
+  provider            varchar(50) NOT NULL,
+  provider_user_id    text        NOT NULL,
+  refresh_token       text        NOT NULL,
+  refresh_expires_in  bigint      NOT NULL,
+  access_token        text        NOT NULL,
+  is_deleted          boolean     NOT NULL DEFAULT false,
+  created_at          timestamp   NOT NULL DEFAULT current_timestamp,
+  updated_at          timestamp   NOT NULL DEFAULT current_timestamp
 );
 
 CREATE TABLE users.lists
