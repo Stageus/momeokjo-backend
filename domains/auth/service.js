@@ -217,8 +217,8 @@ exports.checkOauthUserAtDb = async ({ client, provider_user_id, provider }) => {
 // oauth 인증정보 데이터베이스에 저장
 exports.saveOauthInfoAtDb = async ({
   client,
-  encryptedAccessToken,
-  encryptedRefreshToken,
+  accessToken,
+  refreshToken,
   refreshTokenExpiresIn,
   provider_user_id,
   provider,
@@ -240,22 +240,10 @@ exports.saveOauthInfoAtDb = async ({
         )
         RETURNING idx AS oauth_idx;
       `,
-    [provider, provider_user_id, encryptedRefreshToken, encryptedAccessToken, refreshTokenExpiresIn]
+    [provider, provider_user_id, refreshToken, accessToken, refreshTokenExpiresIn]
   );
 
   return results.rows[0].oauth_idx;
-};
-
-exports.removeLocalRefreshTokenAtDb = async ({ client, users_idx }) => {
-  await client.query(
-    `
-      UPDATE users.local_tokens SET
-        is_deleted = true
-      WHERE users_idx = $1
-      AND is_deleted = false;
-    `,
-    [users_idx]
-  );
 };
 
 exports.getOauthAccessTokenFromDb = async ({ client, users_idx }) => {

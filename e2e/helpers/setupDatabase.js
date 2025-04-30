@@ -26,8 +26,8 @@ exports.clearDatabase = async () => {
   await client.query(`DELETE FROM restaurants.categories;`);
 
   await client.query(`DELETE FROM users.reports;`);
-  await client.query(`DELETE FROM users.oauth`);
   await client.query(`DELETE FROM users.lists`);
+  await client.query(`DELETE FROM users.oauth`);
   await client.query(`DELETE FROM users.codes`);
 };
 
