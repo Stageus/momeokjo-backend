@@ -1,9 +1,16 @@
 const request = require("supertest");
-const pool = require("../../database/db");
 const app = require("../../server");
 const COOKIE_NAME = require("../../utils/cookieName");
 
-exports.createTempUserReturnIdx = async ({ id, pw, nickname, email, role, oauth_idx = null }) => {
+exports.createTempUserReturnIdx = async ({
+  id,
+  pw,
+  nickname,
+  email,
+  role,
+  oauth_idx = null,
+  pool,
+}) => {
   const client = await pool.connect();
   const results = await client.query(
     `
@@ -30,7 +37,7 @@ exports.getCookieSavedAccessTokenAfterSignin = async ({ id, pw }) => {
   return cookie;
 };
 
-exports.createTempCateoryReturnIdx = async ({ users_idx, category_name }) => {
+exports.createTempCateoryReturnIdx = async ({ users_idx, category_name, pool }) => {
   const client = await pool.connect();
   const results = await client.query(
     `
@@ -59,6 +66,7 @@ exports.createTempRestaurantReturnIdx = async ({
   phone,
   start_time,
   end_time,
+  pool,
 }) => {
   const client = await pool.connect();
   const results = await client.query(
@@ -100,7 +108,13 @@ exports.createTempRestaurantReturnIdx = async ({
   return results.rows[0].restaurants_idx;
 };
 
-exports.createTempMenuReturnIdx = async ({ users_idx, restaurants_idx, menu_name, price }) => {
+exports.createTempMenuReturnIdx = async ({
+  users_idx,
+  restaurants_idx,
+  menu_name,
+  price,
+  pool,
+}) => {
   const client = await pool.connect();
   const results = await client.query(
     `
@@ -127,6 +141,7 @@ exports.createTempReviewReturnIdx = async ({
   content,
   image_url,
   restaurants_idx,
+  pool,
 }) => {
   const client = await pool.connect();
   const results = await client.query(
@@ -149,7 +164,7 @@ exports.createTempReviewReturnIdx = async ({
   return results.rows[0]?.review_idx;
 };
 
-exports.createTempRestaurantLikes = async ({ restaurants_idx, users_idx }) => {
+exports.createTempRestaurantLikes = async ({ restaurants_idx, users_idx, pool }) => {
   const client = await pool.connect();
   await client.query(
     `
@@ -166,7 +181,7 @@ exports.createTempRestaurantLikes = async ({ restaurants_idx, users_idx }) => {
   client.release();
 };
 
-exports.createTempMenuLikes = async ({ menu_idx, users_idx }) => {
+exports.createTempMenuLikes = async ({ menu_idx, users_idx, pool }) => {
   const client = await pool.connect();
   await client.query(
     `
@@ -183,7 +198,7 @@ exports.createTempMenuLikes = async ({ menu_idx, users_idx }) => {
   client.release();
 };
 
-exports.createTempReviewLikes = async ({ review_idx, users_idx }) => {
+exports.createTempReviewLikes = async ({ review_idx, users_idx, pool }) => {
   const client = await pool.connect();
   client.query(
     `
@@ -200,7 +215,7 @@ exports.createTempReviewLikes = async ({ review_idx, users_idx }) => {
   client.release();
 };
 
-exports.getTempCodeFromDb = async ({ email }) => {
+exports.getTempCodeFromDb = async ({ email, pool }) => {
   const client = await pool.connect();
   const results = await client.query(
     `
@@ -224,6 +239,7 @@ exports.createTempOauthReturnIdx = async ({
   encryptedRefreshToken,
   encryptedAccessToken,
   refreshTokenExpiresIn,
+  pool,
 }) => {
   const client = await pool.connect();
   const results = await client.query(

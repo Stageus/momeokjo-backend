@@ -1,26 +1,31 @@
 require("dotenv").config();
 
 const jwt = require("jsonwebtoken");
-const jwtUtils = require("../utils/jwt");
 const customErrorResponse = require("../utils/customErrorResponse");
 const verifyAccessToken = require("./verifyAccessToken");
 const COOKIE_NAME = require("../utils/cookieName");
-const pool = require("../database/db");
 const { createTempUserReturnIdx } = require("../e2e/helpers/setupForTest");
 const { accessTokenOptions } = require("../config/cookies");
+const {
+  initializeDatabase,
+  clearDatabase,
+  disconnectDatabse,
+} = require("../e2e/helpers/setupDatabase");
 
-afterEach(async () => {
-  const client = await pool.connect();
-  // 데이터베이스 초기화
-  client.query("DELETE FROM users.lists;");
-  client.release();
+let pool;
+beforeAll(async () => {
+  pool = await initializeDatabase();
 });
 
 afterAll(async () => {
-  await pool.end();
+  await disconnectDatabse();
 });
 
 describe("verifyAccessToken", () => {
+  afterEach(async () => {
+    await clearDatabase();
+  });
+
   const cookieNameList = [
     COOKIE_NAME.ACCESS_TOKEN,
     COOKIE_NAME.EMAIL_AUTH_SEND,
@@ -38,7 +43,7 @@ describe("verifyAccessToken", () => {
       const res = {};
       const next = jest.fn();
 
-      await verifyAccessToken(cookieName)(req, res, next);
+      await verifyAccessToken(cookieName, pool)(req, res, next);
 
       expect(next).toHaveBeenCalled();
       const error = next.mock.calls[0][0];
@@ -63,6 +68,7 @@ describe("verifyAccessToken", () => {
       nickname: "test",
       email: "test@test.com",
       role: "USER",
+      pool,
     });
 
     const expiredToken = jwt.sign(
@@ -77,7 +83,7 @@ describe("verifyAccessToken", () => {
     req.cookies[COOKIE_NAME.ACCESS_TOKEN] = expiredToken;
     req.cookies[COOKIE_NAME.REFRESH_TOKEN] = refreshToken;
 
-    await verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN)(req, res, next);
+    await verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN, pool)(req, res, next);
 
     expect(res.cookie).toHaveBeenCalledTimes(1);
     const accessToken = res.cookie.mock.calls[0][1];
@@ -103,6 +109,7 @@ describe("verifyAccessToken", () => {
       nickname: "test",
       email: "test@test.com",
       role: "USER",
+      pool,
     });
 
     const expiredAccessToken = jwt.sign(
@@ -118,7 +125,7 @@ describe("verifyAccessToken", () => {
     req.cookies[COOKIE_NAME.ACCESS_TOKEN] = expiredAccessToken;
     req.cookies[COOKIE_NAME.REFRESH_TOKEN] = expiredRefreshToken;
 
-    await verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN)(req, res, next);
+    await verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN, pool)(req, res, next);
 
     expect(next).toHaveBeenCalledTimes(1);
 
@@ -139,6 +146,7 @@ describe("verifyAccessToken", () => {
       nickname: "test",
       email: "test@test.com",
       role: "USER",
+      pool,
     });
 
     const expiredAccessToken = jwt.sign(
@@ -153,7 +161,7 @@ describe("verifyAccessToken", () => {
     req.cookies[COOKIE_NAME.ACCESS_TOKEN] = expiredAccessToken;
     req.cookies[COOKIE_NAME.REFRESH_TOKEN] = wrongRefreshToken;
 
-    await verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN)(req, res, next);
+    await verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN, pool)(req, res, next);
 
     expect(next).toHaveBeenCalledTimes(1);
 
@@ -175,7 +183,7 @@ describe("verifyAccessToken", () => {
 
     req.cookies[COOKIE_NAME.EMAIL_AUTH_SEND] = wrongToken;
 
-    await verifyAccessToken(COOKIE_NAME.EMAIL_AUTH_SEND)(req, res, next);
+    await verifyAccessToken(COOKIE_NAME.EMAIL_AUTH_SEND, pool)(req, res, next);
 
     expect(next).toHaveBeenCalledTimes(1);
 
@@ -198,6 +206,7 @@ describe("verifyAccessToken", () => {
       nickname: "test",
       email: "test@test.com",
       role: "USER",
+      pool,
     });
 
     const accessToken = jwt.sign(
@@ -215,7 +224,7 @@ describe("verifyAccessToken", () => {
     req.cookies[COOKIE_NAME.ACCESS_TOKEN] = accessToken;
     req.cookies[COOKIE_NAME.REFRESH_TOKEN] = refreshToken;
 
-    await verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN)(req, res, next);
+    await verifyAccessToken(COOKIE_NAME.ACCESS_TOKEN, pool)(req, res, next);
 
     expect(req[COOKIE_NAME.ACCESS_TOKEN]).toEqual(
       expect.objectContaining({
