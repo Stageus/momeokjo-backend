@@ -3,10 +3,10 @@ const { tryCatchWrapperWithDb } = require("../utils/customWrapper");
 const { verifyToken, createAccessToken } = require("../utils/jwt");
 const COOKIE_NAME = require("../utils/cookieName");
 const { accessTokenOptions } = require("../config/cookies");
-const pool = require("../database/db");
+const { getPool } = require("../database/db");
 
-const verifyAccessToken = (tokenKey, pool) =>
-  tryCatchWrapperWithDb(pool)(async (req, res, next, client) => {
+const verifyAccessToken = (tokenKey) =>
+  tryCatchWrapperWithDb(getPool())(async (req, res, next, client) => {
     const token = req.cookies[tokenKey];
     if (!token) {
       if (tokenKey === COOKIE_NAME.ACCESS_TOKEN) {

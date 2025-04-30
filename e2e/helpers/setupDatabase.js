@@ -1,11 +1,13 @@
 const { Pool } = require("pg");
 const config = require("../../database/config");
+const { getPool, setPool } = require("../../database/db");
 
 let client;
 let pool;
 exports.initializeDatabase = async () => {
-  pool = new Pool({ ...config[process.env.NODE_ENV], port: 5432 });
-  client = await pool.connect();
+  setPool(new Pool({ ...config[process.env.NODE_ENV], port: 5432 }));
+  pool = getPool();
+  client = await getPool().connect();
   return pool;
 };
 
