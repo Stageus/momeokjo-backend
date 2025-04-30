@@ -33,7 +33,6 @@ describe("encrypt", () => {
 
     const { isEncrypted, results } = await algorithm.encrypt("some_text");
 
-    console.log(isEncrypted, results);
     expect(isEncrypted).toBe(false);
     expect(results).toBe("암호화 중 오류 발생");
   });
