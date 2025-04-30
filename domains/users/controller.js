@@ -5,9 +5,10 @@ const {
 } = require("../../utils/customWrapper");
 const us = require("./service");
 const COOKIE_NAME = require("../../utils/cookieName");
+const { getPool } = require("../../database/db");
 
 // 내 정보 수정
-exports.updateMyInfo = tryCatchWrapperWithDb(async (req, res, next, client) => {
+exports.updateMyInfo = tryCatchWrapperWithDb(getPool())(async (req, res, next, client) => {
   const { users_idx } = req[COOKIE_NAME.ACCESS_TOKEN];
   const { nickname } = req.body;
 
@@ -18,7 +19,7 @@ exports.updateMyInfo = tryCatchWrapperWithDb(async (req, res, next, client) => {
 });
 
 // 사용자 정보 상세정보 조회
-exports.getUserInfoByIdx = tryCatchWrapperWithDb(async (req, res, next, client) => {
+exports.getUserInfoByIdx = tryCatchWrapperWithDb(getPool())(async (req, res, next, client) => {
   const users_idx_from_cookie = req[COOKIE_NAME.ACCESS_TOKEN]?.users_idx;
   const { users_idx } = req.params;
 
@@ -30,11 +31,11 @@ exports.getUserInfoByIdx = tryCatchWrapperWithDb(async (req, res, next, client) 
 });
 
 // 사용자가 즐겨찾기 등록한 음식점 리스트 조회
-exports.getRestaurantLikeList = tryCatchWrapperWithDb(async (req, res, next, client) => {
+exports.getRestaurantLikeList = tryCatchWrapperWithDb(getPool())(async (req, res, next, client) => {
   const users_idx_from_cookie = req[COOKIE_NAME.ACCESS_TOKEN]?.users_idx;
   const { users_idx } = req.params;
   const { page } = req.query;
-  console.log(page);
+
   const { data, total_pages } = await us.getRestaurantLikeListFromDb({
     client,
     users_idx_from_cookie,
@@ -48,7 +49,7 @@ exports.getRestaurantLikeList = tryCatchWrapperWithDb(async (req, res, next, cli
 });
 
 // 사용자가 작성한 후기 리스트 조회
-exports.getReviewList = tryCatchWrapperWithDb(async (req, res, next, client) => {
+exports.getReviewList = tryCatchWrapperWithDb(getPool())(async (req, res, next, client) => {
   const users_idx_from_cookie = req[COOKIE_NAME.ACCESS_TOKEN]?.users_idx;
   const { users_idx } = req.params;
   const { page } = req.query;
@@ -66,7 +67,7 @@ exports.getReviewList = tryCatchWrapperWithDb(async (req, res, next, client) => 
 });
 
 // 음식점 즐겨찾기 등록
-exports.createRestaurantLike = tryCatchWrapperWithDb(async (req, res, next, client) => {
+exports.createRestaurantLike = tryCatchWrapperWithDb(getPool())(async (req, res, next, client) => {
   const { users_idx } = req[COOKIE_NAME.ACCESS_TOKEN];
   const { restaurants_idx } = req.params;
 
@@ -76,7 +77,7 @@ exports.createRestaurantLike = tryCatchWrapperWithDb(async (req, res, next, clie
 });
 
 // 음식점 즐겨찾기 해제
-exports.deleteRestaurantLike = tryCatchWrapperWithDb(async (req, res, next, client) => {
+exports.deleteRestaurantLike = tryCatchWrapperWithDb(getPool())(async (req, res, next, client) => {
   const { users_idx } = req[COOKIE_NAME.ACCESS_TOKEN];
   const { restaurants_idx } = req.params;
 
@@ -88,7 +89,7 @@ exports.deleteRestaurantLike = tryCatchWrapperWithDb(async (req, res, next, clie
 });
 
 // 메뉴 추천 등록
-exports.createMenuLike = tryCatchWrapperWithDb(async (req, res, next, client) => {
+exports.createMenuLike = tryCatchWrapperWithDb(getPool())(async (req, res, next, client) => {
   const { users_idx } = req[COOKIE_NAME.ACCESS_TOKEN];
   const { menus_idx } = req.params;
 
@@ -98,7 +99,7 @@ exports.createMenuLike = tryCatchWrapperWithDb(async (req, res, next, client) =>
 });
 
 // 메뉴 추천 해제
-exports.deleteMenuLike = tryCatchWrapperWithDb(async (req, res, next, client) => {
+exports.deleteMenuLike = tryCatchWrapperWithDb(getPool())(async (req, res, next, client) => {
   const { users_idx } = req[COOKIE_NAME.ACCESS_TOKEN];
   const { menus_idx } = req.params;
 
@@ -109,7 +110,7 @@ exports.deleteMenuLike = tryCatchWrapperWithDb(async (req, res, next, client) =>
 });
 
 // 후기 좋아요 등록
-exports.createReviewLike = tryCatchWrapperWithDb(async (req, res, next, client) => {
+exports.createReviewLike = tryCatchWrapperWithDb(getPool())(async (req, res, next, client) => {
   const { users_idx } = req[COOKIE_NAME.ACCESS_TOKEN];
   const { reviews_idx } = req.params;
 
@@ -119,7 +120,7 @@ exports.createReviewLike = tryCatchWrapperWithDb(async (req, res, next, client) 
 });
 
 // 후기 좋아요 해제
-exports.deleteReviewLike = tryCatchWrapperWithDb(async (req, res, next, client) => {
+exports.deleteReviewLike = tryCatchWrapperWithDb(getPool())(async (req, res, next, client) => {
   const { users_idx } = req[COOKIE_NAME.ACCESS_TOKEN];
   const { reviews_idx } = req.params;
 
@@ -130,7 +131,7 @@ exports.deleteReviewLike = tryCatchWrapperWithDb(async (req, res, next, client) 
 });
 
 // 음식점 신고 등록
-exports.createRestaurantReport = tryCatchWrapperWithDbTransaction(
+exports.createRestaurantReport = tryCatchWrapperWithDbTransaction(getPool())(
   async (req, res, next, client) => {
     const { users_idx } = req[COOKIE_NAME.ACCESS_TOKEN];
     const { restaurants_idx } = req.params;
@@ -158,44 +159,48 @@ exports.createRestaurantReport = tryCatchWrapperWithDbTransaction(
 );
 
 // 메뉴 신고 등록
-exports.createMenuReport = tryCatchWrapperWithDbTransaction(async (req, res, next, client) => {
-  const { users_idx } = req[COOKIE_NAME.ACCESS_TOKEN];
-  const { menus_idx } = req.params;
+exports.createMenuReport = tryCatchWrapperWithDbTransaction(getPool())(
+  async (req, res, next, client) => {
+    const { users_idx } = req[COOKIE_NAME.ACCESS_TOKEN];
+    const { menus_idx } = req.params;
 
-  await us.createMenuReportAtDb({ client, menus_idx, users_idx });
+    await us.createMenuReportAtDb({ client, menus_idx, users_idx });
 
-  const total_count = await us.checkTotalMenuReportByIdx({ client, menus_idx });
+    const total_count = await us.checkTotalMenuReportByIdx({ client, menus_idx });
 
-  if (total_count >= 5) {
-    const menus_idx_list = await us.deleteMenuFromDbByMenusIdx({ client, menus_idx });
-    await us.deleteMenuLikeFromDbWithArray({ client, menus_idx_list });
+    if (total_count >= 5) {
+      const menus_idx_list = await us.deleteMenuFromDbByMenusIdx({ client, menus_idx });
+      await us.deleteMenuLikeFromDbWithArray({ client, menus_idx_list });
 
-    const reviews_idx_list = await us.deleteReviewFromDbByMenusIdx({
-      client,
-      menus_idx,
-    });
-    await us.deleteReviewLikeFromDbWithArray({ client, reviews_idx_list });
+      const reviews_idx_list = await us.deleteReviewFromDbByMenusIdx({
+        client,
+        menus_idx,
+      });
+      await us.deleteReviewLikeFromDbWithArray({ client, reviews_idx_list });
+    }
+
+    res.status(200).json({ message: "요청 처리 성공" });
   }
-
-  res.status(200).json({ message: "요청 처리 성공" });
-});
+);
 
 // 후기 신고 등록
-exports.createReviewReport = tryCatchWrapperWithDbTransaction(async (req, res, next, client) => {
-  const { users_idx } = req[COOKIE_NAME.ACCESS_TOKEN];
-  const { reviews_idx } = req.params;
+exports.createReviewReport = tryCatchWrapperWithDbTransaction(getPool())(
+  async (req, res, next, client) => {
+    const { users_idx } = req[COOKIE_NAME.ACCESS_TOKEN];
+    const { reviews_idx } = req.params;
 
-  await us.createReviewReportAtDb({ client, reviews_idx, users_idx });
+    await us.createReviewReportAtDb({ client, reviews_idx, users_idx });
 
-  const total_count = await us.checkTotalReviewReportByIdx({ client, reviews_idx });
+    const total_count = await us.checkTotalReviewReportByIdx({ client, reviews_idx });
 
-  if (total_count >= 5) {
-    const reviews_idx_list = await us.deleteReviewFromDbByReviewsIdx({
-      client,
-      reviews_idx,
-    });
-    await us.deleteReviewLikeFromDbWithArray({ client, reviews_idx_list });
+    if (total_count >= 5) {
+      const reviews_idx_list = await us.deleteReviewFromDbByReviewsIdx({
+        client,
+        reviews_idx,
+      });
+      await us.deleteReviewLikeFromDbWithArray({ client, reviews_idx_list });
+    }
+
+    res.status(200).json({ message: "요청 처리 성공" });
   }
-
-  res.status(200).json({ message: "요청 처리 성공" });
-});
+);
