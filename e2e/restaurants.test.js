@@ -317,10 +317,10 @@ describe("POST /restaurants", () => {
       longitude: "127.0316",
       latitude: "37.4979",
       address: "테스트 음식점 테스트로 123",
-      address_detail: "테스트 음식점 상세 주소",
-      phone: "01012345678",
-      start_time: "0000",
-      end_time: "0000",
+      address_detail: "",
+      phone: "",
+      start_time: "",
+      end_time: "",
     });
 
     expect(res.status).toBe(200);
