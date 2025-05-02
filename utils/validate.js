@@ -42,8 +42,9 @@ const createChain = (type, obj) => {
 
       return method(key)
         .customSanitizer((value) => {
-          return value === undefined || value === null ? defaultValue : value;
+          return value === undefined || value === null || value === "" ? defaultValue : value;
         })
+        .if((value) => value !== null && value !== undefined && value !== "")
         .matches(regexp)
         .withMessage("정규표현식과 일치하지 않습니다.");
     });
