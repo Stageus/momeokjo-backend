@@ -762,13 +762,15 @@ describe("GET /restaurants", () => {
       pool,
     });
 
+    const longitude = "127.0316";
+    const latitude = "37.4970";
     const res = await agent
-      .get("/restaurants")
-      .set("Cookie", cookie)
-      .send({ user_longitude: "127.0316", user_latitude: "37.4970" });
+      .get(`/restaurants?longitude=${longitude}&latitude=${latitude}`)
+      .set("Cookie", cookie);
 
     expect(res.status).toBe(200);
     expect(res.body.message).toBe("요청 처리 성공");
+    expect(res.body.data).not.toStrictEqual([]);
     expect(res.body.data).toStrictEqual(expect.any(Array));
   });
 
@@ -806,14 +808,15 @@ describe("GET /restaurants", () => {
       pool,
     });
 
+    const longitude = "";
+    const latitude = "37.4970";
     const res = await agent
-      .get("/restaurants?range=500")
-      .set("Cookie", cookie)
-      .send({ user_longitude: "", user_latitude: "37.4970" });
+      .get(`/restaurants?longitude=${longitude}&latitude=${latitude}`)
+      .set("Cookie", cookie);
 
     expect(res.status).toBe(400);
     expect(res.body.message).toBe("입력값 확인 필요");
-    expect(res.body.target).toBe("user_longitude");
+    expect(res.body.target).toBe("longitude");
   });
 });
 

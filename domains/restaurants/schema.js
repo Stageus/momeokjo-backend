@@ -17,14 +17,12 @@ exports.getRestaurantInfoList = {
       defaultValue: 1,
       regexp: REGEXP.PAGE,
     },
-  },
-  body: {
-    user_longitude: {
+    longitude: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.COORDINATE,
     },
-    user_latitude: {
+    latitude: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.COORDINATE,
@@ -131,14 +129,12 @@ exports.getRecommendRestaurant = {
       defaultValue: 500,
       regexp: REGEXP.RANGE,
     },
-  },
-  body: {
-    user_longitude: {
+    longitude: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.COORDINATE,
     },
-    user_latitude: {
+    latitude: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.COORDINATE,

@@ -7,16 +7,15 @@ const { getPool } = require("../../database/db");
 // 음식점 리스트 조회
 exports.getRestaurantInfoList = tryCatchWrapperWithDb(getPool())(async (req, res, next, client) => {
   const users_idx = req[COOKIE_NAME.ACCESS_TOKEN]?.users_idx;
-  const { category_idx, range, page } = req.query;
-  const { user_longitude, user_latitude } = req.body;
+  const { category_idx, range, page, longitude, latitude } = req.query;
 
   const { total_pages, data } = await rs.getRestaurantInfoListFromDb({
     users_idx,
     category_idx: category_idx === 0 ? null : category_idx,
     range,
     page,
-    user_longitude,
-    user_latitude,
+    longitude,
+    latitude,
     client,
   });
 
