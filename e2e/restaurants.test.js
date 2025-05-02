@@ -560,10 +560,10 @@ describe("PUT /restaurants/:restaurants_idx", () => {
     const res = await agent.put(`/restaurants/${restaurants_idx}`).set("Cookie", cookie).send({
       category_idx,
       restaurant_name: "테스트 음식점 수정",
-      address_detail: "테스트 음식점 상세 주소 수정",
-      phone: "021234567",
-      start_time: "0000",
-      end_time: "0100",
+      address_detail: "",
+      phone: "",
+      start_time: "",
+      end_time: "",
     });
 
     expect(res.status).toBe(200);
@@ -607,10 +607,10 @@ describe("PUT /restaurants/:restaurants_idx", () => {
     const res = await agent.put(`/restaurants/${restaurants_idx}`).set("Cookie", cookie).send({
       category_idx,
       restaurant_name: "",
-      address_detail: "테스트 음식점 상세 주소 수정",
-      phone: "021234567",
-      start_time: "0000",
-      end_time: "0100",
+      address_detail: "",
+      phone: "",
+      start_time: "",
+      end_time: "",
     });
 
     expect(res.status).toBe(400);
@@ -653,10 +653,10 @@ describe("PUT /restaurants/:restaurants_idx", () => {
     const res = await agent.put(`/restaurants/${restaurants_idx}`).send({
       category_idx,
       restaurant_name: "테스트 음식점 수정",
-      address_detail: "테스트 음식점 상세 주소 수정",
-      phone: "021234567",
-      start_time: "0000",
-      end_time: "0100",
+      address_detail: "",
+      phone: "",
+      start_time: "",
+      end_time: "",
     });
 
     expect(res.status).toBe(401);
@@ -712,10 +712,10 @@ describe("PUT /restaurants/:restaurants_idx", () => {
     const res = await agent.put(`/restaurants/${restaurants_idx}`).set("Cookie", cookie).send({
       category_idx,
       restaurant_name: "테스트 음식점 수정",
-      address_detail: "테스트 음식점 상세 주소 수정",
-      phone: "021234567",
-      start_time: "0000",
-      end_time: "0100",
+      address_detail: "",
+      phone: "",
+      start_time: "",
+      end_time: "",
     });
 
     expect(res.status).toBe(404);

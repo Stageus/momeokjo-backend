@@ -289,22 +289,22 @@ exports.updateRestaurantInfoByIdx = {
       regexp: REGEXP.RESTAURANT_NAME,
     },
     address_detail: {
-      isRequired: true,
+      isRequired: false,
       defaultValue: null,
       regexp: REGEXP.ADDRESS_DETAIL,
     },
     phone: {
-      isRequired: true,
+      isRequired: false,
       defaultValue: null,
       regexp: REGEXP.RESTAURANT_PHONE,
     },
     start_time: {
-      isRequired: true,
+      isRequired: false,
       defaultValue: null,
       regexp: REGEXP.RESTAURANT_RUN_TIME,
     },
     end_time: {
-      isRequired: true,
+      isRequired: false,
       defaultValue: null,
       regexp: REGEXP.RESTAURANT_RUN_TIME,
     },
