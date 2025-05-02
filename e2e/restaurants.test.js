@@ -859,13 +859,15 @@ describe("GET /restaurants/recommands", () => {
       pool,
     });
 
+    const longitude = "127.0316";
+    const latitude = "37.4970";
     const res = await agent
-      .get("/restaurants/recommends")
-      .set("Cookie", cookie)
-      .send({ user_longitude: "127.0316", user_latitude: "37.4970" });
+      .get(`/restaurants/recommends?longitude=${longitude}&latitude=${latitude}`)
+      .set("Cookie", cookie);
 
     expect(res.status).toBe(200);
     expect(res.body.message).toBe("요청 처리 성공");
+    expect(res.body.data).not.toStrictEqual({});
     expect(res.body.data).toStrictEqual(expect.any(Object));
   });
 
@@ -903,14 +905,15 @@ describe("GET /restaurants/recommands", () => {
       pool,
     });
 
+    const longitude = "";
+    const latitude = "37.4970";
     const res = await agent
-      .get("/restaurants/recommends")
-      .set("Cookie", cookie)
-      .send({ user_longitude: "", user_latitude: "37.4970" });
+      .get(`/restaurants/recommends?longitude=${longitude}&latitude=${latitude}`)
+      .set("Cookie", cookie);
 
     expect(res.status).toBe(400);
     expect(res.body.message).toBe("입력값 확인 필요");
-    expect(res.body.target).toBe("user_longitude");
+    expect(res.body.target).toBe("longitude");
   });
 
   it("추천 음식점 없는 경우 상태코드 404를 응답해야한다.", async () => {
@@ -927,10 +930,11 @@ describe("GET /restaurants/recommands", () => {
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
 
+    const longitude = "127.0316";
+    const latitude = "37.4970";
     const res = await agent
-      .get("/restaurants/recommends")
-      .set("Cookie", cookie)
-      .send({ user_longitude: "127.0316", user_latitude: "37.4970" });
+      .get(`/restaurants/recommends?longitude=${longitude}&latitude=${latitude}`)
+      .set("Cookie", cookie);
 
     expect(res.status).toBe(404);
     expect(res.body.message).toBe("추천 음식점 없음");

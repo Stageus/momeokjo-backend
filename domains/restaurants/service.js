@@ -185,8 +185,8 @@ exports.getRecommendRestaurantFromDb = async ({
   users_idx,
   category_idx,
   range,
-  user_longitude,
-  user_latitude,
+  longitude,
+  latitude,
   client,
 }) => {
   const results = await client.query(
@@ -230,7 +230,7 @@ exports.getRecommendRestaurantFromDb = async ({
       ORDER BY RANDOM()
       LIMIT 1
     `,
-    [users_idx, category_idx, user_longitude, user_latitude, range]
+    [users_idx, category_idx, longitude, latitude, range]
   );
 
   return results.rows[0] ?? {};

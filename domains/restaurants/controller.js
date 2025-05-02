@@ -110,15 +110,14 @@ exports.updateRestaurantCategoryByIdx = tryCatchWrapperWithDb(getPool())(
 exports.getRecommendRestaurant = tryCatchWrapperWithDb(getPool())(
   async (req, res, next, client) => {
     const users_idx = req[COOKIE_NAME.ACCESS_TOKEN]?.users_idx;
-    const { category_idx, range } = req.query;
-    const { user_longitude, user_latitude } = req.body;
+    const { category_idx, range, longitude, latitude } = req.query;
 
     const data = await rs.getRecommendRestaurantFromDb({
       users_idx,
       category_idx: category_idx === 0 ? null : category_idx,
       range,
-      user_longitude,
-      user_latitude,
+      longitude,
+      latitude,
       client,
     });
     if (Object.keys(data).length === 0)
