@@ -129,7 +129,7 @@ describe("verifyToken", () => {
 
     expect(jwt.verify).not.toHaveBeenCalled();
     expect(isValid).toBe(false);
-    expect(results).toBe("token 확인 필요");
+    expect(results).toBe("NoTokenError");
   });
 
   it("access token 디코딩하는 경우 토큰이 유효하지만 환경 변수가 유효하지 않으면 예외를 발생시켜야 한다.", () => {

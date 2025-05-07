@@ -38,7 +38,7 @@ exports.createRefreshToken = ({ payload }) => {
 
 exports.verifyToken = ({ token, isRefresh = false }) => {
   try {
-    if (!token || typeof token !== "string") return { isValid: false, results: "token 확인 필요" };
+    if (!token || typeof token !== "string") return { isValid: false, results: "NoTokenError" };
 
     if (isRefresh === false && !process.env.JWT_ACCESS_SECRET)
       return { isValid: false, results: "환경 변수 JWT_ACCESS_SECRET 확인 필요" };

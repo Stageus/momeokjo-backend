@@ -9,7 +9,7 @@ const verifyAccessToken = (tokenKey) =>
   tryCatchWrapperWithDb(getPool())(async (req, res, next, client) => {
     const token = req.cookies[tokenKey];
     if (!token) {
-      if (tokenKey === COOKIE_NAME.ACCESS_TOKEN) {
+      if (tokenKey === COOKIE_NAME.ACCESS_TOKEN && !req.cookies[COOKIE_NAME.REFRESH_TOKEN]) {
         throw customErrorResponse({ status: 401, message: "로그인 필요" });
       } else if (tokenKey === COOKIE_NAME.EMAIL_AUTH_SEND) {
         throw customErrorResponse({ status: 401, message: "인증번호 이메일 전송되지 않음" });
@@ -19,17 +19,17 @@ const verifyAccessToken = (tokenKey) =>
         throw customErrorResponse({ status: 401, message: "비밀번호 변경 인증 정보 없음" });
       } else if (tokenKey === COOKIE_NAME.OAUTH_INDEX) {
         throw customErrorResponse({ status: 401, message: "카카오 인증되지 않음" });
-      } else {
-        throw customErrorResponse({ status: 401, message: "토큰 없음" });
       }
     }
 
     const { isValid, results } = verifyToken({ token });
     if (!isValid) {
-      if (tokenKey === COOKIE_NAME.ACCESS_TOKEN && results === "TokenExpiredError") {
-        const refreshToken = req.cookies[COOKIE_NAME.REFRESH_TOKEN];
+      if (
+        tokenKey === COOKIE_NAME.ACCESS_TOKEN &&
+        (results === "TokenExpiredError" || results === "NoTokenError")
+      ) {
         const { isValid, results: verifyResults } = verifyToken({
-          token: refreshToken,
+          token: req.cookies[COOKIE_NAME.REFRESH_TOKEN],
           isRefresh: true,
         });
 

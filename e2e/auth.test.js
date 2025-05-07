@@ -1017,11 +1017,14 @@ describe("GET /status", () => {
     });
 
     const resSignin = await agent.post("/auth/signin").send({ id, pw });
-    const resSigninCookie = resSignin.headers["set-cookie"].find((cookie) =>
+    const resAccessCookie = resSignin.headers["set-cookie"].find((cookie) =>
       cookie.startsWith(`${COOKIE_NAME.ACCESS_TOKEN}=`)
     );
+    const resRefreshCookie = resSignin.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith(`${COOKIE_NAME.REFRESH_TOKEN}=`)
+    );
 
-    const res = await agent.get("/auth/status").set("Cookie", resSigninCookie);
+    const res = await agent.get("/auth/status").set("Cookie", [resRefreshCookie, resAccessCookie]);
 
     expect(res.status).toBe(200);
     expect(res.body.data.nickname).toBe("test");
