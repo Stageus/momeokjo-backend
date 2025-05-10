@@ -2,19 +2,6 @@ const { body, query, param } = require("express-validator");
 const { getValidationMethod, createChain } = require("./validate");
 const customErrorResponse = require("./customErrorResponse");
 
-const mockChain = {
-  notEmpty: jest.fn().mockReturnThis(),
-  withMessage: jest.fn().mockReturnThis(),
-  matches: jest.fn().mockReturnThis(),
-  customSanitizer: jest.fn().mockReturnThis(),
-};
-
-jest.mock("express-validator", () => ({
-  body: jest.fn(() => mockChain),
-  query: jest.fn(() => mockChain),
-  param: jest.fn(() => mockChain),
-}));
-
 describe("getValidationMethod", () => {
   const invalidType = [null, undefined, "", 123, true, [], {}];
   it.each(invalidType)("type이 유효하지 않으면 null을 리턴해야한다.", (type) => {
@@ -40,7 +27,7 @@ describe("createChain", () => {
       expect(err.status).toBe(500);
       expect(err.message).toBe(`validate 대상이 올바르지 않습니다. type: ${type}`);
 
-      const errRes = customErrorResponse(err.status, err.message);
+      const errRes = customErrorResponse({ status: err.status, message: err.message });
       expect(errRes).toBeInstanceOf(Error);
       expect(errRes).toMatchObject({
         status: 500,
@@ -57,7 +44,7 @@ describe("createChain", () => {
       expect(err.status).toBe(500);
       expect(err.message).toBe(`validate 객체가 없습니다.`);
 
-      const errRes = customErrorResponse(err.status, err.message);
+      const errRes = customErrorResponse({ status: err.status, message: err.message });
       expect(errRes).toBeInstanceOf(Error);
       expect(errRes).toMatchObject({
         status: 500,
@@ -68,17 +55,19 @@ describe("createChain", () => {
 
   const validObject = [
     { body: { id: { isRequired: true, defaultValue: null, regexp: /^./ } } },
-    { query: { id: { isRequired: true, defaultValue: null, regexp: /^./ } } },
+    { query: { id: { isRequired: false, defaultValue: "1", regexp: /^./ } } },
     { param: { id: { isRequired: true, defaultValue: null, regexp: /^./ } } },
   ];
-  it.each(validObject)("타입과 객체가 유효하면 validator chain 배열을 리턴해야한다.", (obj) => {
+  it.each(validObject)("%s 타입과 객체가 유효하면 validator chain 배열을 리턴해야한다.", (obj) => {
     const type = Object.keys(obj)[0];
     const result = createChain(type, obj[type]);
 
     expect(result).toHaveLength(1);
-    expect(result[0]).toMatchObject(
+    expect(result[0]).toEqual(
       expect.objectContaining({
-        ...mockChain,
+        notEmpty: expect.any(Function),
+        matches: expect.any(Function),
+        withMessage: expect.any(Function),
       })
     );
   });

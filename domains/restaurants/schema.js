@@ -17,14 +17,12 @@ exports.getRestaurantInfoList = {
       defaultValue: 1,
       regexp: REGEXP.PAGE,
     },
-  },
-  body: {
-    user_longitude: {
+    longitude: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.COORDINATE,
     },
-    user_latitude: {
+    latitude: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.COORDINATE,
@@ -60,22 +58,22 @@ exports.createRestaurantInfo = {
       regexp: REGEXP.ADDRESS,
     },
     address_detail: {
-      isRequired: true,
+      isRequired: false,
       defaultValue: null,
       regexp: REGEXP.ADDRESS_DETAIL,
     },
     phone: {
-      isRequired: true,
+      isRequired: false,
       defaultValue: null,
       regexp: REGEXP.RESTAURANT_PHONE,
     },
     start_time: {
-      isRequired: true,
+      isRequired: false,
       defaultValue: null,
       regexp: REGEXP.RESTAURANT_RUN_TIME,
     },
     end_time: {
-      isRequired: true,
+      isRequired: false,
       defaultValue: null,
       regexp: REGEXP.RESTAURANT_RUN_TIME,
     },
@@ -131,14 +129,12 @@ exports.getRecommendRestaurant = {
       defaultValue: 500,
       regexp: REGEXP.RANGE,
     },
-  },
-  body: {
-    user_longitude: {
+    longitude: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.COORDINATE,
     },
-    user_latitude: {
+    latitude: {
       isRequired: true,
       defaultValue: null,
       regexp: REGEXP.COORDINATE,
@@ -293,22 +289,22 @@ exports.updateRestaurantInfoByIdx = {
       regexp: REGEXP.RESTAURANT_NAME,
     },
     address_detail: {
-      isRequired: true,
+      isRequired: false,
       defaultValue: null,
       regexp: REGEXP.ADDRESS_DETAIL,
     },
     phone: {
-      isRequired: true,
+      isRequired: false,
       defaultValue: null,
       regexp: REGEXP.RESTAURANT_PHONE,
     },
     start_time: {
-      isRequired: true,
+      isRequired: false,
       defaultValue: null,
       regexp: REGEXP.RESTAURANT_RUN_TIME,
     },
     end_time: {
-      isRequired: true,
+      isRequired: false,
       defaultValue: null,
       regexp: REGEXP.RESTAURANT_RUN_TIME,
     },

@@ -1,4 +1,3 @@
-const customErrorResponse = require("../utils/customErrorResponse");
 const { tryCatchWrapper } = require("../utils/customWrapper");
 const { verifyToken } = require("../utils/jwt");
 

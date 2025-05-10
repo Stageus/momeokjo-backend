@@ -44,28 +44,6 @@ exports.checkLocalRefreshTokenFromDb = async ({ client, users_idx }) => {
   };
 };
 
-exports.saveNewRefreshTokenAtDb = async ({
-  client,
-  users_idx,
-  refreshToken,
-  refresh_expired_at,
-}) => {
-  await client.query(
-    `
-    INSERT INTO users.local_tokens (
-      users_idx,
-      refresh_token,
-      refresh_expired_at
-   ) VALUES (
-      $1,
-      $2,
-      $3
-   );
-    `,
-    [users_idx, refreshToken, refresh_expired_at]
-  );
-};
-
 exports.createUserAtDb = async ({ client, id, pw, nickname, email, role, oauth_idx = null }) => {
   await client.query(
     "INSERT INTO users.lists (id, pw, nickname, email, role, oauth_idx) VALUES ($1, $2, $3, $4, $5, $6);",
@@ -239,8 +217,8 @@ exports.checkOauthUserAtDb = async ({ client, provider_user_id, provider }) => {
 // oauth 인증정보 데이터베이스에 저장
 exports.saveOauthInfoAtDb = async ({
   client,
-  encryptedAccessToken,
-  encryptedRefreshToken,
+  accessToken,
+  refreshToken,
   refreshTokenExpiresIn,
   provider_user_id,
   provider,
@@ -262,22 +240,10 @@ exports.saveOauthInfoAtDb = async ({
         )
         RETURNING idx AS oauth_idx;
       `,
-    [provider, provider_user_id, encryptedRefreshToken, encryptedAccessToken, refreshTokenExpiresIn]
+    [provider, provider_user_id, refreshToken, accessToken, refreshTokenExpiresIn]
   );
 
   return results.rows[0].oauth_idx;
-};
-
-exports.removeLocalRefreshTokenAtDb = async ({ client, users_idx }) => {
-  await client.query(
-    `
-      UPDATE users.local_tokens SET
-        is_deleted = true
-      WHERE users_idx = $1
-      AND is_deleted = false;
-    `,
-    [users_idx]
-  );
 };
 
 exports.getOauthAccessTokenFromDb = async ({ client, users_idx }) => {

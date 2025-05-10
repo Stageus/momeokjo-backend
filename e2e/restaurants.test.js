@@ -1,25 +1,26 @@
 const request = require("supertest");
-const app = require("../server");
-const pool = require("../database/db");
+const {
+  initializeDatabase,
+  clearDatabase,
+  disconnectDatabse,
+} = require("../e2e/helpers/setupDatabase");
 
+const app = require("../server");
 const helper = require("./helpers/setupForTest");
 
-afterEach(async () => {
-  const client = await pool.connect();
-  await client.query("DELETE FROM reviews.lists");
-  await client.query("DELETE FROM menus.lists");
-  await client.query("DELETE FROM restaurants.lists");
-  await client.query("DELETE FROM restaurants.categories");
-  await client.query("DELETE FROM users.local_tokens");
-  await client.query("DELETE FROM users.lists");
-  client.release();
+let pool;
+beforeAll(async () => {
+  pool = await initializeDatabase();
 });
 
 afterAll(async () => {
-  await pool.end();
+  await disconnectDatabse();
 });
 
 describe("POST /restaurants/categories", () => {
+  afterEach(async () => {
+    await clearDatabase();
+  });
   const agent = request(app);
   it("카테고리 등록 성공한 경우 상태코드 200을 응답해야한다.", async () => {
     const id = "test";
@@ -31,10 +32,10 @@ describe("POST /restaurants/categories", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
-
     const res = await agent
       .post("/restaurants/categories")
       .set("Cookie", cookie)
@@ -54,6 +55,7 @@ describe("POST /restaurants/categories", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -85,6 +87,7 @@ describe("POST /restaurants/categories", () => {
       nickname: "test",
       email: "test@test.com",
       role: "USER",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -100,6 +103,9 @@ describe("POST /restaurants/categories", () => {
 });
 
 describe("GET /restaurants/categories", () => {
+  afterEach(async () => {
+    await clearDatabase();
+  });
   const agent = request(app);
   it("조회 성공한 경우 상태코드 200과 카테고리 리스트를 응답해야한다.", async () => {
     const users_idx = await helper.createTempUserReturnIdx({
@@ -108,9 +114,10 @@ describe("GET /restaurants/categories", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
-    await helper.createTempCateoryReturnIdx({ users_idx, category_name: "테스트" });
+    await helper.createTempCateoryReturnIdx({ users_idx, category_name: "테스트", pool });
 
     const res = await agent.get("/restaurants/categories");
 
@@ -121,6 +128,9 @@ describe("GET /restaurants/categories", () => {
 });
 
 describe("PUT /restaurants/categories/:category_idx", () => {
+  afterEach(async () => {
+    await clearDatabase();
+  });
   const agent = request(app);
   it("카테고리 수정 성공한 경우 상태코드 200을 응답해야한다.", async () => {
     const id = "test";
@@ -132,11 +142,13 @@ describe("PUT /restaurants/categories/:category_idx", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -160,11 +172,13 @@ describe("PUT /restaurants/categories/:category_idx", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -189,11 +203,13 @@ describe("PUT /restaurants/categories/:category_idx", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const res = await agent
@@ -214,11 +230,13 @@ describe("PUT /restaurants/categories/:category_idx", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx: admin_users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const user_id = "test1";
@@ -229,6 +247,7 @@ describe("PUT /restaurants/categories/:category_idx", () => {
       nickname: "test1",
       email: "test1@test.com",
       role: "USER",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id: user_id, pw: user_pw });
@@ -252,6 +271,7 @@ describe("PUT /restaurants/categories/:category_idx", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -267,6 +287,9 @@ describe("PUT /restaurants/categories/:category_idx", () => {
 });
 
 describe("POST /restaurants", () => {
+  afterEach(async () => {
+    await clearDatabase();
+  });
   const agent = request(app);
   it("음식점 등록에 성공하면 상태코드 200을 응답해야한다.", async () => {
     const id = "test";
@@ -277,6 +300,7 @@ describe("POST /restaurants", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -284,6 +308,7 @@ describe("POST /restaurants", () => {
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const res = await agent.post("/restaurants").set("Cookie", cookie).send({
@@ -292,10 +317,10 @@ describe("POST /restaurants", () => {
       longitude: "127.0316",
       latitude: "37.4979",
       address: "테스트 음식점 테스트로 123",
-      address_detail: "테스트 음식점 상세 주소",
-      phone: "01012345678",
-      start_time: "0000",
-      end_time: "0000",
+      address_detail: "",
+      phone: "",
+      start_time: "",
+      end_time: "",
     });
 
     expect(res.status).toBe(200);
@@ -311,6 +336,7 @@ describe("POST /restaurants", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -318,6 +344,7 @@ describe("POST /restaurants", () => {
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const res = await agent.post("/restaurants").set("Cookie", cookie).send({
@@ -346,6 +373,7 @@ describe("POST /restaurants", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -376,11 +404,13 @@ describe("POST /restaurants", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const res = await agent.post("/restaurants").send({
@@ -401,6 +431,9 @@ describe("POST /restaurants", () => {
 });
 
 describe("GET /restaurants/:restaurants_idx", () => {
+  afterEach(async () => {
+    await clearDatabase();
+  });
   const agent = request(app);
   it("음식점 조회 성공한 경우 상태코드 200과 음식점 상세정보를 응답해야한다.", async () => {
     const id = "test";
@@ -411,6 +444,7 @@ describe("GET /restaurants/:restaurants_idx", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -418,6 +452,7 @@ describe("GET /restaurants/:restaurants_idx", () => {
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const restaurants_idx = await helper.createTempRestaurantReturnIdx({
@@ -431,6 +466,7 @@ describe("GET /restaurants/:restaurants_idx", () => {
       phone: "01012345678",
       start_time: "0000",
       end_time: "0000",
+      pool,
     });
 
     const res = await agent.get(`/restaurants/${restaurants_idx}`).set("Cookie", cookie);
@@ -449,6 +485,7 @@ describe("GET /restaurants/:restaurants_idx", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -469,6 +506,7 @@ describe("GET /restaurants/:restaurants_idx", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -481,6 +519,9 @@ describe("GET /restaurants/:restaurants_idx", () => {
 });
 
 describe("PUT /restaurants/:restaurants_idx", () => {
+  afterEach(async () => {
+    await clearDatabase();
+  });
   const agent = request(app);
   it("음식점 정보 수정에 성공한 경우 상태코드 200을 응답해야한다.", async () => {
     const id = "test";
@@ -491,6 +532,7 @@ describe("PUT /restaurants/:restaurants_idx", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -498,6 +540,7 @@ describe("PUT /restaurants/:restaurants_idx", () => {
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const restaurants_idx = await helper.createTempRestaurantReturnIdx({
@@ -511,15 +554,16 @@ describe("PUT /restaurants/:restaurants_idx", () => {
       phone: "01012345678",
       start_time: "0000",
       end_time: "0000",
+      pool,
     });
 
     const res = await agent.put(`/restaurants/${restaurants_idx}`).set("Cookie", cookie).send({
       category_idx,
       restaurant_name: "테스트 음식점 수정",
-      address_detail: "테스트 음식점 상세 주소 수정",
-      phone: "021234567",
-      start_time: "0000",
-      end_time: "0100",
+      address_detail: "",
+      phone: "",
+      start_time: "",
+      end_time: "",
     });
 
     expect(res.status).toBe(200);
@@ -535,6 +579,7 @@ describe("PUT /restaurants/:restaurants_idx", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -542,6 +587,7 @@ describe("PUT /restaurants/:restaurants_idx", () => {
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const restaurants_idx = await helper.createTempRestaurantReturnIdx({
@@ -555,15 +601,16 @@ describe("PUT /restaurants/:restaurants_idx", () => {
       phone: "01012345678",
       start_time: "0000",
       end_time: "0000",
+      pool,
     });
 
     const res = await agent.put(`/restaurants/${restaurants_idx}`).set("Cookie", cookie).send({
       category_idx,
       restaurant_name: "",
-      address_detail: "테스트 음식점 상세 주소 수정",
-      phone: "021234567",
-      start_time: "0000",
-      end_time: "0100",
+      address_detail: "",
+      phone: "",
+      start_time: "",
+      end_time: "",
     });
 
     expect(res.status).toBe(400);
@@ -580,11 +627,13 @@ describe("PUT /restaurants/:restaurants_idx", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const restaurants_idx = await helper.createTempRestaurantReturnIdx({
@@ -598,15 +647,16 @@ describe("PUT /restaurants/:restaurants_idx", () => {
       phone: "01012345678",
       start_time: "0000",
       end_time: "0000",
+      pool,
     });
 
     const res = await agent.put(`/restaurants/${restaurants_idx}`).send({
       category_idx,
       restaurant_name: "테스트 음식점 수정",
-      address_detail: "테스트 음식점 상세 주소 수정",
-      phone: "021234567",
-      start_time: "0000",
-      end_time: "0100",
+      address_detail: "",
+      phone: "",
+      start_time: "",
+      end_time: "",
     });
 
     expect(res.status).toBe(401);
@@ -620,11 +670,13 @@ describe("PUT /restaurants/:restaurants_idx", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const restaurants_idx = await helper.createTempRestaurantReturnIdx({
@@ -638,6 +690,7 @@ describe("PUT /restaurants/:restaurants_idx", () => {
       phone: "01012345678",
       start_time: "0000",
       end_time: "0000",
+      pool,
     });
 
     const diff_user_id = "test1";
@@ -648,6 +701,7 @@ describe("PUT /restaurants/:restaurants_idx", () => {
       nickname: "test1",
       email: "test1@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({
@@ -658,10 +712,10 @@ describe("PUT /restaurants/:restaurants_idx", () => {
     const res = await agent.put(`/restaurants/${restaurants_idx}`).set("Cookie", cookie).send({
       category_idx,
       restaurant_name: "테스트 음식점 수정",
-      address_detail: "테스트 음식점 상세 주소 수정",
-      phone: "021234567",
-      start_time: "0000",
-      end_time: "0100",
+      address_detail: "",
+      phone: "",
+      start_time: "",
+      end_time: "",
     });
 
     expect(res.status).toBe(404);
@@ -670,6 +724,9 @@ describe("PUT /restaurants/:restaurants_idx", () => {
 });
 
 describe("GET /restaurants", () => {
+  afterEach(async () => {
+    await clearDatabase();
+  });
   const agent = request(app);
   it("음식점 리스트 조회 성공한 경우 상태코드 200과 음식점 리스트를 응답해야한다.", async () => {
     const id = "test";
@@ -680,6 +737,7 @@ describe("GET /restaurants", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -687,6 +745,7 @@ describe("GET /restaurants", () => {
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     await helper.createTempRestaurantReturnIdx({
@@ -700,15 +759,18 @@ describe("GET /restaurants", () => {
       phone: "01012345678",
       start_time: "0000",
       end_time: "0000",
+      pool,
     });
 
+    const longitude = "127.0316";
+    const latitude = "37.4970";
     const res = await agent
-      .get("/restaurants")
-      .set("Cookie", cookie)
-      .send({ user_longitude: "127.0316", user_latitude: "37.4970" });
+      .get(`/restaurants?longitude=${longitude}&latitude=${latitude}`)
+      .set("Cookie", cookie);
 
     expect(res.status).toBe(200);
     expect(res.body.message).toBe("요청 처리 성공");
+    expect(res.body.data).not.toStrictEqual([]);
     expect(res.body.data).toStrictEqual(expect.any(Array));
   });
 
@@ -721,6 +783,7 @@ describe("GET /restaurants", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -728,6 +791,7 @@ describe("GET /restaurants", () => {
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     await helper.createTempRestaurantReturnIdx({
@@ -741,20 +805,25 @@ describe("GET /restaurants", () => {
       phone: "01012345678",
       start_time: "0000",
       end_time: "0000",
+      pool,
     });
 
+    const longitude = "";
+    const latitude = "37.4970";
     const res = await agent
-      .get("/restaurants?range=500")
-      .set("Cookie", cookie)
-      .send({ user_longitude: "", user_latitude: "37.4970" });
+      .get(`/restaurants?longitude=${longitude}&latitude=${latitude}`)
+      .set("Cookie", cookie);
 
     expect(res.status).toBe(400);
     expect(res.body.message).toBe("입력값 확인 필요");
-    expect(res.body.target).toBe("user_longitude");
+    expect(res.body.target).toBe("longitude");
   });
 });
 
 describe("GET /restaurants/recommands", () => {
+  afterEach(async () => {
+    await clearDatabase();
+  });
   const agent = request(app);
   it("음식점 랜덤 추천 성공한 경우 상태코드 200과 음식점 상세정보를 응답해야한다.", async () => {
     const id = "test";
@@ -765,6 +834,7 @@ describe("GET /restaurants/recommands", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -772,6 +842,7 @@ describe("GET /restaurants/recommands", () => {
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     await helper.createTempRestaurantReturnIdx({
@@ -785,15 +856,18 @@ describe("GET /restaurants/recommands", () => {
       phone: "01012345678",
       start_time: "0000",
       end_time: "0000",
+      pool,
     });
 
+    const longitude = "127.0316";
+    const latitude = "37.4970";
     const res = await agent
-      .get("/restaurants/recommends")
-      .set("Cookie", cookie)
-      .send({ user_longitude: "127.0316", user_latitude: "37.4970" });
+      .get(`/restaurants/recommends?longitude=${longitude}&latitude=${latitude}`)
+      .set("Cookie", cookie);
 
     expect(res.status).toBe(200);
     expect(res.body.message).toBe("요청 처리 성공");
+    expect(res.body.data).not.toStrictEqual({});
     expect(res.body.data).toStrictEqual(expect.any(Object));
   });
 
@@ -806,6 +880,7 @@ describe("GET /restaurants/recommands", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -813,6 +888,7 @@ describe("GET /restaurants/recommands", () => {
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     await helper.createTempRestaurantReturnIdx({
@@ -826,16 +902,18 @@ describe("GET /restaurants/recommands", () => {
       phone: "01012345678",
       start_time: "0000",
       end_time: "0000",
+      pool,
     });
 
+    const longitude = "";
+    const latitude = "37.4970";
     const res = await agent
-      .get("/restaurants/recommends")
-      .set("Cookie", cookie)
-      .send({ user_longitude: "", user_latitude: "37.4970" });
+      .get(`/restaurants/recommends?longitude=${longitude}&latitude=${latitude}`)
+      .set("Cookie", cookie);
 
     expect(res.status).toBe(400);
     expect(res.body.message).toBe("입력값 확인 필요");
-    expect(res.body.target).toBe("user_longitude");
+    expect(res.body.target).toBe("longitude");
   });
 
   it("추천 음식점 없는 경우 상태코드 404를 응답해야한다.", async () => {
@@ -847,14 +925,16 @@ describe("GET /restaurants/recommands", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
 
+    const longitude = "127.0316";
+    const latitude = "37.4970";
     const res = await agent
-      .get("/restaurants/recommends")
-      .set("Cookie", cookie)
-      .send({ user_longitude: "127.0316", user_latitude: "37.4970" });
+      .get(`/restaurants/recommends?longitude=${longitude}&latitude=${latitude}`)
+      .set("Cookie", cookie);
 
     expect(res.status).toBe(404);
     expect(res.body.message).toBe("추천 음식점 없음");
@@ -862,6 +942,9 @@ describe("GET /restaurants/recommands", () => {
 });
 
 describe("POST /restaurants/:restaurants_idx/menus", () => {
+  afterEach(async () => {
+    await clearDatabase();
+  });
   const agent = request(app);
   it("음식점 메뉴 등록 성공한 경우 상태코드 200을 응답해야한다.", async () => {
     const id = "test";
@@ -872,6 +955,7 @@ describe("POST /restaurants/:restaurants_idx/menus", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -879,6 +963,7 @@ describe("POST /restaurants/:restaurants_idx/menus", () => {
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const restaurants_idx = await helper.createTempRestaurantReturnIdx({
@@ -892,6 +977,7 @@ describe("POST /restaurants/:restaurants_idx/menus", () => {
       phone: "01012345678",
       start_time: "0000",
       end_time: "0000",
+      pool,
     });
 
     const res = await agent
@@ -912,6 +998,7 @@ describe("POST /restaurants/:restaurants_idx/menus", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -919,6 +1006,7 @@ describe("POST /restaurants/:restaurants_idx/menus", () => {
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const restaurants_idx = await helper.createTempRestaurantReturnIdx({
@@ -932,6 +1020,7 @@ describe("POST /restaurants/:restaurants_idx/menus", () => {
       phone: "01012345678",
       start_time: "0000",
       end_time: "0000",
+      pool,
     });
 
     const res = await agent
@@ -953,6 +1042,7 @@ describe("POST /restaurants/:restaurants_idx/menus", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -976,11 +1066,13 @@ describe("POST /restaurants/:restaurants_idx/menus", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const restaurants_idx = await helper.createTempRestaurantReturnIdx({
@@ -994,6 +1086,7 @@ describe("POST /restaurants/:restaurants_idx/menus", () => {
       phone: "01012345678",
       start_time: "0000",
       end_time: "0000",
+      pool,
     });
 
     const res = await agent
@@ -1006,6 +1099,9 @@ describe("POST /restaurants/:restaurants_idx/menus", () => {
 });
 
 describe("PUT /restaurants/menus/:menus_idx", () => {
+  afterEach(async () => {
+    await clearDatabase();
+  });
   const agent = request(app);
   it("음식점 메뉴 수정을 성공한 경우 상태코드 200을 응답해야한다.", async () => {
     const id = "test";
@@ -1016,6 +1112,7 @@ describe("PUT /restaurants/menus/:menus_idx", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -1023,6 +1120,7 @@ describe("PUT /restaurants/menus/:menus_idx", () => {
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const restaurants_idx = await helper.createTempRestaurantReturnIdx({
@@ -1036,6 +1134,7 @@ describe("PUT /restaurants/menus/:menus_idx", () => {
       phone: "01012345678",
       start_time: "0000",
       end_time: "0000",
+      pool,
     });
 
     const menus_idx = await helper.createTempMenuReturnIdx({
@@ -1043,6 +1142,7 @@ describe("PUT /restaurants/menus/:menus_idx", () => {
       restaurants_idx,
       menu_name: "테스트 메뉴",
       price: "10000",
+      pool,
     });
 
     const res = await agent
@@ -1063,6 +1163,7 @@ describe("PUT /restaurants/menus/:menus_idx", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -1070,6 +1171,7 @@ describe("PUT /restaurants/menus/:menus_idx", () => {
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const restaurants_idx = await helper.createTempRestaurantReturnIdx({
@@ -1083,6 +1185,7 @@ describe("PUT /restaurants/menus/:menus_idx", () => {
       phone: "01012345678",
       start_time: "0000",
       end_time: "0000",
+      pool,
     });
 
     const menus_idx = await helper.createTempMenuReturnIdx({
@@ -1090,6 +1193,7 @@ describe("PUT /restaurants/menus/:menus_idx", () => {
       restaurants_idx,
       menu_name: "테스트 메뉴",
       price: "10000",
+      pool,
     });
 
     const res = await agent
@@ -1111,11 +1215,13 @@ describe("PUT /restaurants/menus/:menus_idx", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const restaurants_idx = await helper.createTempRestaurantReturnIdx({
@@ -1129,6 +1235,7 @@ describe("PUT /restaurants/menus/:menus_idx", () => {
       phone: "01012345678",
       start_time: "0000",
       end_time: "0000",
+      pool,
     });
 
     const menus_idx = await helper.createTempMenuReturnIdx({
@@ -1136,6 +1243,7 @@ describe("PUT /restaurants/menus/:menus_idx", () => {
       restaurants_idx,
       menu_name: "테스트 메뉴",
       price: "10000",
+      pool,
     });
 
     const res = await agent
@@ -1153,11 +1261,13 @@ describe("PUT /restaurants/menus/:menus_idx", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const restaurants_idx = await helper.createTempRestaurantReturnIdx({
@@ -1171,6 +1281,7 @@ describe("PUT /restaurants/menus/:menus_idx", () => {
       phone: "01012345678",
       start_time: "0000",
       end_time: "0000",
+      pool,
     });
 
     const menus_idx = await helper.createTempMenuReturnIdx({
@@ -1178,6 +1289,7 @@ describe("PUT /restaurants/menus/:menus_idx", () => {
       restaurants_idx,
       menu_name: "테스트 메뉴",
       price: "10000",
+      pool,
     });
 
     const diff_user_id = "test1";
@@ -1188,6 +1300,7 @@ describe("PUT /restaurants/menus/:menus_idx", () => {
       nickname: "test1",
       email: "test1@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({
@@ -1206,6 +1319,9 @@ describe("PUT /restaurants/menus/:menus_idx", () => {
 });
 
 describe("GET /restaurants/:restaurants_idx/menus", () => {
+  afterEach(async () => {
+    await clearDatabase();
+  });
   const agent = request(app);
   it("음식점 메뉴 리스트 조회 성공한 경우 상태코드 200과 메뉴 리스트를 응답해야한다.", async () => {
     const id = "test";
@@ -1216,6 +1332,7 @@ describe("GET /restaurants/:restaurants_idx/menus", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -1223,6 +1340,7 @@ describe("GET /restaurants/:restaurants_idx/menus", () => {
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const restaurants_idx = await helper.createTempRestaurantReturnIdx({
@@ -1236,6 +1354,7 @@ describe("GET /restaurants/:restaurants_idx/menus", () => {
       phone: "01012345678",
       start_time: "0000",
       end_time: "0000",
+      pool,
     });
 
     await helper.createTempMenuReturnIdx({
@@ -1243,6 +1362,7 @@ describe("GET /restaurants/:restaurants_idx/menus", () => {
       restaurants_idx,
       menu_name: "테스트 메뉴",
       price: "10000",
+      pool,
     });
 
     const res = await agent.get(`/restaurants/${restaurants_idx}/menus`).set("Cookie", cookie);
@@ -1261,6 +1381,7 @@ describe("GET /restaurants/:restaurants_idx/menus", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -1268,6 +1389,7 @@ describe("GET /restaurants/:restaurants_idx/menus", () => {
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const restaurants_idx = await helper.createTempRestaurantReturnIdx({
@@ -1281,6 +1403,7 @@ describe("GET /restaurants/:restaurants_idx/menus", () => {
       phone: "01012345678",
       start_time: "0000",
       end_time: "0000",
+      pool,
     });
 
     await helper.createTempMenuReturnIdx({
@@ -1288,6 +1411,7 @@ describe("GET /restaurants/:restaurants_idx/menus", () => {
       restaurants_idx,
       menu_name: "테스트 메뉴",
       price: "10000",
+      pool,
     });
 
     const res = await agent.get(`/restaurants/ㅁㄴㅇㄹㅁㄴㅇㄹ/menus`).set("Cookie", cookie);
@@ -1299,6 +1423,9 @@ describe("GET /restaurants/:restaurants_idx/menus", () => {
 });
 
 describe("POST /restaurants/menus/:reviews_idx/review", () => {
+  afterEach(async () => {
+    await clearDatabase();
+  });
   const agent = request(app);
   it("후기 등록 성공한 경우 상태코드 200을 응답해야한다.", async () => {
     const id = "test";
@@ -1309,6 +1436,7 @@ describe("POST /restaurants/menus/:reviews_idx/review", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -1316,6 +1444,7 @@ describe("POST /restaurants/menus/:reviews_idx/review", () => {
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const restaurants_idx = await helper.createTempRestaurantReturnIdx({
@@ -1329,6 +1458,7 @@ describe("POST /restaurants/menus/:reviews_idx/review", () => {
       phone: "01012345678",
       start_time: "0000",
       end_time: "0000",
+      pool,
     });
 
     const menus_idx = await helper.createTempMenuReturnIdx({
@@ -1336,6 +1466,7 @@ describe("POST /restaurants/menus/:reviews_idx/review", () => {
       restaurants_idx,
       menu_name: "테스트 메뉴",
       price: "10000",
+      pool,
     });
 
     const res = await agent
@@ -1356,6 +1487,7 @@ describe("POST /restaurants/menus/:reviews_idx/review", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -1363,6 +1495,7 @@ describe("POST /restaurants/menus/:reviews_idx/review", () => {
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const restaurants_idx = await helper.createTempRestaurantReturnIdx({
@@ -1376,6 +1509,7 @@ describe("POST /restaurants/menus/:reviews_idx/review", () => {
       phone: "01012345678",
       start_time: "0000",
       end_time: "0000",
+      pool,
     });
 
     const menus_idx = await helper.createTempMenuReturnIdx({
@@ -1383,6 +1517,7 @@ describe("POST /restaurants/menus/:reviews_idx/review", () => {
       restaurants_idx,
       menu_name: "테스트 메뉴",
       price: "10000",
+      pool,
     });
 
     const res = await agent
@@ -1404,6 +1539,7 @@ describe("POST /restaurants/menus/:reviews_idx/review", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -1411,6 +1547,7 @@ describe("POST /restaurants/menus/:reviews_idx/review", () => {
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const restaurants_idx = await helper.createTempRestaurantReturnIdx({
@@ -1424,6 +1561,7 @@ describe("POST /restaurants/menus/:reviews_idx/review", () => {
       phone: "01012345678",
       start_time: "0000",
       end_time: "0000",
+      pool,
     });
 
     await helper.createTempMenuReturnIdx({
@@ -1431,6 +1569,7 @@ describe("POST /restaurants/menus/:reviews_idx/review", () => {
       restaurants_idx,
       menu_name: "테스트 메뉴",
       price: "10000",
+      pool,
     });
 
     const res = await agent
@@ -1452,11 +1591,13 @@ describe("POST /restaurants/menus/:reviews_idx/review", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const restaurants_idx = await helper.createTempRestaurantReturnIdx({
@@ -1470,6 +1611,7 @@ describe("POST /restaurants/menus/:reviews_idx/review", () => {
       phone: "01012345678",
       start_time: "0000",
       end_time: "0000",
+      pool,
     });
 
     const menus_idx = await helper.createTempMenuReturnIdx({
@@ -1477,6 +1619,7 @@ describe("POST /restaurants/menus/:reviews_idx/review", () => {
       restaurants_idx,
       menu_name: "테스트 메뉴",
       price: "10000",
+      pool,
     });
 
     const res = await agent
@@ -1489,6 +1632,9 @@ describe("POST /restaurants/menus/:reviews_idx/review", () => {
 });
 
 describe("PUT /restaurants/menus/reviews/:reviews_idx", () => {
+  afterEach(async () => {
+    await clearDatabase();
+  });
   const agent = request(app);
   it("후기 수정에 성공한 경우 상태코드 200을 응답해야한다.", async () => {
     const id = "test";
@@ -1499,6 +1645,7 @@ describe("PUT /restaurants/menus/reviews/:reviews_idx", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -1506,6 +1653,7 @@ describe("PUT /restaurants/menus/reviews/:reviews_idx", () => {
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const restaurants_idx = await helper.createTempRestaurantReturnIdx({
@@ -1519,6 +1667,7 @@ describe("PUT /restaurants/menus/reviews/:reviews_idx", () => {
       phone: "01012345678",
       start_time: "0000",
       end_time: "0000",
+      pool,
     });
 
     const menus_idx = await helper.createTempMenuReturnIdx({
@@ -1526,6 +1675,7 @@ describe("PUT /restaurants/menus/reviews/:reviews_idx", () => {
       restaurants_idx,
       menu_name: "테스트 메뉴",
       price: "10000",
+      pool,
     });
 
     const reviews_idx = await helper.createTempReviewReturnIdx({
@@ -1534,6 +1684,7 @@ describe("PUT /restaurants/menus/reviews/:reviews_idx", () => {
       content: "테스트 후기",
       image_url: "",
       restaurants_idx,
+      pool,
     });
 
     const res = await agent
@@ -1554,6 +1705,7 @@ describe("PUT /restaurants/menus/reviews/:reviews_idx", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -1561,6 +1713,7 @@ describe("PUT /restaurants/menus/reviews/:reviews_idx", () => {
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const restaurants_idx = await helper.createTempRestaurantReturnIdx({
@@ -1574,6 +1727,7 @@ describe("PUT /restaurants/menus/reviews/:reviews_idx", () => {
       phone: "01012345678",
       start_time: "0000",
       end_time: "0000",
+      pool,
     });
 
     const menus_idx = await helper.createTempMenuReturnIdx({
@@ -1581,6 +1735,7 @@ describe("PUT /restaurants/menus/reviews/:reviews_idx", () => {
       restaurants_idx,
       menu_name: "테스트 메뉴",
       price: "10000",
+      pool,
     });
 
     const reviews_idx = await helper.createTempReviewReturnIdx({
@@ -1589,6 +1744,7 @@ describe("PUT /restaurants/menus/reviews/:reviews_idx", () => {
       content: "테스트 후기",
       image_url: "",
       restaurants_idx,
+      pool,
     });
 
     const res = await agent
@@ -1610,11 +1766,13 @@ describe("PUT /restaurants/menus/reviews/:reviews_idx", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const restaurants_idx = await helper.createTempRestaurantReturnIdx({
@@ -1628,6 +1786,7 @@ describe("PUT /restaurants/menus/reviews/:reviews_idx", () => {
       phone: "01012345678",
       start_time: "0000",
       end_time: "0000",
+      pool,
     });
 
     const menus_idx = await helper.createTempMenuReturnIdx({
@@ -1635,6 +1794,7 @@ describe("PUT /restaurants/menus/reviews/:reviews_idx", () => {
       restaurants_idx,
       menu_name: "테스트 메뉴",
       price: "10000",
+      pool,
     });
 
     const reviews_idx = await helper.createTempReviewReturnIdx({
@@ -1643,6 +1803,7 @@ describe("PUT /restaurants/menus/reviews/:reviews_idx", () => {
       content: "테스트 후기",
       image_url: "",
       restaurants_idx,
+      pool,
     });
 
     const res = await agent
@@ -1662,6 +1823,7 @@ describe("PUT /restaurants/menus/reviews/:reviews_idx", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -1669,6 +1831,7 @@ describe("PUT /restaurants/menus/reviews/:reviews_idx", () => {
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const restaurants_idx = await helper.createTempRestaurantReturnIdx({
@@ -1682,6 +1845,7 @@ describe("PUT /restaurants/menus/reviews/:reviews_idx", () => {
       phone: "01012345678",
       start_time: "0000",
       end_time: "0000",
+      pool,
     });
 
     const menus_idx = await helper.createTempMenuReturnIdx({
@@ -1689,6 +1853,7 @@ describe("PUT /restaurants/menus/reviews/:reviews_idx", () => {
       restaurants_idx,
       menu_name: "테스트 메뉴",
       price: "10000",
+      pool,
     });
 
     await helper.createTempReviewReturnIdx({
@@ -1697,6 +1862,7 @@ describe("PUT /restaurants/menus/reviews/:reviews_idx", () => {
       content: "테스트 후기",
       image_url: "",
       restaurants_idx,
+      pool,
     });
 
     const res = await agent
@@ -1710,6 +1876,9 @@ describe("PUT /restaurants/menus/reviews/:reviews_idx", () => {
 });
 
 describe("GET /restaurants/menus/:menu_idx/reviews", () => {
+  afterEach(async () => {
+    await clearDatabase();
+  });
   const agent = request(app);
   it("후기 리스트 조회 성공한 경우 상태코드 200과 후기 리스트를 응답해야한다.", async () => {
     const id = "test";
@@ -1720,6 +1889,7 @@ describe("GET /restaurants/menus/:menu_idx/reviews", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -1727,6 +1897,7 @@ describe("GET /restaurants/menus/:menu_idx/reviews", () => {
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const restaurants_idx = await helper.createTempRestaurantReturnIdx({
@@ -1740,6 +1911,7 @@ describe("GET /restaurants/menus/:menu_idx/reviews", () => {
       phone: "01012345678",
       start_time: "0000",
       end_time: "0000",
+      pool,
     });
 
     const menus_idx = await helper.createTempMenuReturnIdx({
@@ -1747,6 +1919,7 @@ describe("GET /restaurants/menus/:menu_idx/reviews", () => {
       restaurants_idx,
       menu_name: "테스트 메뉴",
       price: "10000",
+      pool,
     });
 
     await helper.createTempReviewReturnIdx({
@@ -1755,6 +1928,7 @@ describe("GET /restaurants/menus/:menu_idx/reviews", () => {
       content: "테스트 후기",
       image_url: "",
       restaurants_idx,
+      pool,
     });
 
     const res = await agent.get(`/restaurants/menus/${menus_idx}/reviews`).set("Cookie", cookie);
@@ -1773,6 +1947,7 @@ describe("GET /restaurants/menus/:menu_idx/reviews", () => {
       nickname: "test",
       email: "test@test.com",
       role: "ADMIN",
+      pool,
     });
 
     const cookie = await helper.getCookieSavedAccessTokenAfterSignin({ id, pw });
@@ -1780,6 +1955,7 @@ describe("GET /restaurants/menus/:menu_idx/reviews", () => {
     const category_idx = await helper.createTempCateoryReturnIdx({
       users_idx,
       category_name: "테스트",
+      pool,
     });
 
     const restaurants_idx = await helper.createTempRestaurantReturnIdx({
@@ -1793,6 +1969,7 @@ describe("GET /restaurants/menus/:menu_idx/reviews", () => {
       phone: "01012345678",
       start_time: "0000",
       end_time: "0000",
+      pool,
     });
 
     const menus_idx = await helper.createTempMenuReturnIdx({
@@ -1800,6 +1977,7 @@ describe("GET /restaurants/menus/:menu_idx/reviews", () => {
       restaurants_idx,
       menu_name: "테스트 메뉴",
       price: "10000",
+      pool,
     });
 
     await helper.createTempReviewReturnIdx({
@@ -1808,6 +1986,7 @@ describe("GET /restaurants/menus/:menu_idx/reviews", () => {
       content: "테스트 후기",
       image_url: "",
       restaurants_idx,
+      pool,
     });
 
     const res = await agent.get(`/restaurants/menus/asdfasdfasdf/reviews`).set("Cookie", cookie);

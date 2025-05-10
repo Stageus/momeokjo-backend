@@ -1,27 +1,32 @@
+require("dotenv").config();
+
 const request = require("supertest");
 const nock = require("nock");
-require("dotenv").config();
+const {
+  initializeDatabase,
+  clearDatabase,
+  disconnectDatabse,
+} = require("../e2e/helpers/setupDatabase");
+
 const app = require("../server");
-const pool = require("../database/db");
 const service = require("../domains/auth/service");
 const algorithm = require("../utils/algorithm");
 const COOKIE_NAME = require("../utils/cookieName");
 const helper = require("./helpers/setupForTest");
 
-afterEach(async () => {
-  const client = await pool.connect();
-  await client.query("DELETE FROM users.codes");
-  await client.query("DELETE FROM users.local_tokens");
-  await client.query("DELETE FROM users.lists");
-  await client.query("DELETE FROM users.oauth");
-  client.release();
+let pool;
+beforeAll(async () => {
+  pool = await initializeDatabase();
 });
 
 afterAll(async () => {
-  await pool.end();
+  await disconnectDatabse();
 });
 
 describe("POST /auth/verify-email", () => {
+  afterEach(async () => {
+    await clearDatabase();
+  });
   const agent = request(app);
   it("이메일이 유효하면 상태코드 200를 응답해야한다.", async () => {
     jest.spyOn(service, "sendEmailVerificationCode").mockResolvedValue();
@@ -50,6 +55,7 @@ describe("POST /auth/verify-email", () => {
       nickname: "test",
       email: "test@test.com",
       role: "USER",
+      pool,
     });
 
     const res = await agent.post("/auth/verify-email").send({ email: "test@test.com" });
@@ -60,6 +66,9 @@ describe("POST /auth/verify-email", () => {
 });
 
 describe("POST /verify-email/confirm", () => {
+  afterEach(async () => {
+    await clearDatabase();
+  });
   const agent = request(app);
   it("유효한 인증번호를 전송한 경우 상태코드 200을 응답해야한다.", async () => {
     jest.spyOn(service, "sendEmailVerificationCode").mockResolvedValue();
@@ -70,8 +79,7 @@ describe("POST /verify-email/confirm", () => {
       cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_SEND}=`)
     );
 
-    const code = await helper.getTempCodeFromDb({ email });
-
+    const code = await helper.getTempCodeFromDb({ email, pool });
     const res = await agent
       .post("/auth/verify-email/confirm")
       .set("Cookie", resEmailCookie)
@@ -132,6 +140,9 @@ describe("POST /verify-email/confirm", () => {
 });
 
 describe("POST /signup", () => {
+  afterEach(async () => {
+    await clearDatabase();
+  });
   const agent = request(app);
   it("회원가입에 성공한 경우 상태코드 200을 응답해야한다.", async () => {
     jest.spyOn(service, "sendEmailVerificationCode").mockResolvedValue();
@@ -142,7 +153,7 @@ describe("POST /signup", () => {
       cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_SEND}=`)
     );
 
-    const code = await helper.getTempCodeFromDb({ email });
+    const code = await helper.getTempCodeFromDb({ email, pool });
 
     const resVerify = await agent
       .post("/auth/verify-email/confirm")
@@ -155,7 +166,7 @@ describe("POST /signup", () => {
     const res = await agent
       .post("/auth/signup")
       .set("Cookie", resVerifyCookie)
-      .send({ id: "test", pw: "Test!1@2", nickname: "test", code });
+      .send({ id: "test", pw: "Test!1@2", nickname: "test" });
 
     expect(res.status).toBe(200);
     expect(res.body.message).toBe("회원가입 성공");
@@ -170,7 +181,7 @@ describe("POST /signup", () => {
       cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_SEND}=`)
     );
 
-    const code = await helper.getTempCodeFromDb({ email });
+    const code = await helper.getTempCodeFromDb({ email, pool });
 
     const resVerify = await agent
       .post("/auth/verify-email/confirm")
@@ -183,7 +194,7 @@ describe("POST /signup", () => {
     const res = await agent
       .post("/auth/signup")
       .set("Cookie", resVerifyCookie)
-      .send({ id: "", pw: "Test!1@2", nickname: "test", code });
+      .send({ id: "", pw: "Test!1@2", nickname: "test" });
 
     expect(res.status).toBe(400);
     expect(res.body.message).toBe("입력값 확인 필요");
@@ -199,7 +210,7 @@ describe("POST /signup", () => {
       cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_SEND}=`)
     );
 
-    const code = await helper.getTempCodeFromDb({ email });
+    const code = await helper.getTempCodeFromDb({ email, pool });
 
     const resVerify = await agent
       .post("/auth/verify-email/confirm")
@@ -212,40 +223,11 @@ describe("POST /signup", () => {
     const res = await agent
       .post("/auth/signup")
       .set("Cookie", resVerifyCookie)
-      .send({ id: "test", pw: "Test!1@2", nickname: "", code });
+      .send({ id: "test", pw: "Test!1@2", nickname: "" });
 
     expect(res.status).toBe(400);
     expect(res.body.message).toBe("입력값 확인 필요");
     expect(res.body.target).toBe("nickname");
-  });
-
-  it("인증번호가 없는 경우 상태코드 400을 응답해야한다.", async () => {
-    jest.spyOn(service, "sendEmailVerificationCode").mockResolvedValue();
-
-    const email = "test@test.com";
-    const resEmail = await agent.post("/auth/verify-email").send({ email });
-    const resEmailCookie = resEmail.headers["set-cookie"].find((cookie) =>
-      cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_SEND}=`)
-    );
-
-    const code = await helper.getTempCodeFromDb({ email });
-
-    const resVerify = await agent
-      .post("/auth/verify-email/confirm")
-      .set("Cookie", resEmailCookie)
-      .send({ code });
-    const resVerifyCookie = resVerify.headers["set-cookie"].find((cookie) =>
-      cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_VERIFIED}=`)
-    );
-
-    const res = await agent
-      .post("/auth/signup")
-      .set("Cookie", resVerifyCookie)
-      .send({ id: "test", pw: "Test!1@2", nickname: "test", code: "123456" });
-
-    expect(res.status).toBe(400);
-    expect(res.body.message).toBe("입력값 확인 필요");
-    expect(res.body.target).toBe("code");
   });
 
   it("이메일 인증이 되지 않은 경우 상태코드 401을 응답해야한다.", async () => {
@@ -266,7 +248,7 @@ describe("POST /signup", () => {
       cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_SEND}=`)
     );
 
-    const code = await helper.getTempCodeFromDb({ email });
+    const code = await helper.getTempCodeFromDb({ email, pool });
 
     const resVerify = await agent
       .post("/auth/verify-email/confirm")
@@ -282,12 +264,13 @@ describe("POST /signup", () => {
       nickname: "test1",
       email: "test1@test.com",
       role: "USER",
+      pool,
     });
 
     const res = await agent
       .post("/auth/signup")
       .set("Cookie", resVerifyCookie)
-      .send({ id: "test", pw: "Test!1@2", nickname: "test", code });
+      .send({ id: "test", pw: "Test!1@2", nickname: "test" });
 
     expect(res.status).toBe(409);
     expect(res.body.message).toBe("중복 아이디 회원 있음");
@@ -303,7 +286,7 @@ describe("POST /signup", () => {
       cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_SEND}=`)
     );
 
-    const code = await helper.getTempCodeFromDb({ email });
+    const code = await helper.getTempCodeFromDb({ email, pool });
 
     const resVerify = await agent
       .post("/auth/verify-email/confirm")
@@ -319,12 +302,13 @@ describe("POST /signup", () => {
       nickname: "test",
       email: "test1@test.com",
       role: "USER",
+      pool,
     });
 
     const res = await agent
       .post("/auth/signup")
       .set("Cookie", resVerifyCookie)
-      .send({ id: "test1", pw: "Test!1@2", nickname: "test", code });
+      .send({ id: "test1", pw: "Test!1@2", nickname: "test" });
 
     expect(res.status).toBe(409);
     expect(res.body.message).toBe("중복 닉네임 회원 있음");
@@ -340,7 +324,7 @@ describe("POST /signup", () => {
       cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_SEND}=`)
     );
 
-    const code = await helper.getTempCodeFromDb({ email });
+    const code = await helper.getTempCodeFromDb({ email, pool });
 
     const resVerify = await agent
       .post("/auth/verify-email/confirm")
@@ -356,12 +340,13 @@ describe("POST /signup", () => {
       nickname: "test",
       email: "test@test.com",
       role: "USER",
+      pool,
     });
 
     const res = await agent
       .post("/auth/signup")
       .set("Cookie", resVerifyCookie)
-      .send({ id: "test1", pw: "Test!1@2", nickname: "test1", code });
+      .send({ id: "test1", pw: "Test!1@2", nickname: "test1" });
 
     expect(res.status).toBe(409);
     expect(res.body.message).toBe("중복 이메일 회원 있음");
@@ -370,6 +355,9 @@ describe("POST /signup", () => {
 });
 
 describe("POST /signin", () => {
+  afterEach(async () => {
+    await clearDatabase();
+  });
   const agent = request(app);
   it("로그인 성공한 경우 상태코드 200을 응답해야한다.", async () => {
     const id = "test";
@@ -381,6 +369,7 @@ describe("POST /signin", () => {
       nickname: "test",
       email: "test@test.com",
       role: "USER",
+      pool,
     });
 
     const res = await agent.post("/auth/signin").send({ id, pw });
@@ -410,6 +399,9 @@ describe("POST /signin", () => {
 });
 
 describe("POST /findid", () => {
+  afterEach(async () => {
+    await clearDatabase();
+  });
   const agent = request(app);
   it("아이디 찾기 성공한 경우 상태코드 200과 아이디를 응답해야한다.", async () => {
     const id = "test";
@@ -421,6 +413,7 @@ describe("POST /findid", () => {
       nickname: "test",
       email,
       role: "USER",
+      pool,
     });
 
     const res = await agent.post("/auth/findid").send({ email });
@@ -447,6 +440,9 @@ describe("POST /findid", () => {
 });
 
 describe("POST /findpw", () => {
+  afterEach(async () => {
+    await clearDatabase();
+  });
   const agent = request(app);
   it("비밀번호 찾기 성공한 경우 상태코드 200을 응답해야한다.", async () => {
     const id = "test";
@@ -458,6 +454,7 @@ describe("POST /findpw", () => {
       nickname: "test",
       email,
       role: "USER",
+      pool,
     });
 
     const res = await agent.post("/auth/findpw").send({ id, email });
@@ -489,6 +486,9 @@ describe("POST /findpw", () => {
 });
 
 describe("PUT /resetpw", () => {
+  afterEach(async () => {
+    await clearDatabase();
+  });
   const agent = request(app);
   it("비밀번호 성공한 경우 상태코드 200을 응답해야한다.", async () => {
     const id = "test";
@@ -499,6 +499,7 @@ describe("PUT /resetpw", () => {
       nickname: "test",
       email,
       role: "USER",
+      pool,
     });
 
     const resReset = await agent.post("/auth/findpw").send({ id, email });
@@ -530,6 +531,7 @@ describe("PUT /resetpw", () => {
       nickname: "test",
       email,
       role: "USER",
+      pool,
     });
 
     const resReset = await agent.post("/auth/findpw").send({ id, email });
@@ -559,6 +561,7 @@ describe("PUT /resetpw", () => {
       nickname: "test",
       email,
       role: "USER",
+      pool,
     });
 
     const resReset = await agent.post("/auth/findpw").send({ id, email });
@@ -592,6 +595,9 @@ describe("GET /auth/oauth/kakao", () => {
 });
 
 describe("GET /auth/oauth/kakao/redirect", () => {
+  afterEach(async () => {
+    await clearDatabase();
+  });
   const agent = request(app);
   it("카카오 로그인 성공한 신규 회원인 경우 회원가입 페이지로 리다이렉트를 해야한다.", async () => {
     nock("https://kauth.kakao.com").post("/oauth/token").reply(200, {
@@ -618,6 +624,7 @@ describe("GET /auth/oauth/kakao/redirect", () => {
       encryptedRefreshToken: "enchrypted_refresh_token",
       encryptedAccessToken: "encrypted_access_token",
       refreshTokenExpiresIn: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
+      pool,
     });
 
     helper.createTempUserReturnIdx({
@@ -627,6 +634,7 @@ describe("GET /auth/oauth/kakao/redirect", () => {
       nickname: "test",
       role: "USER",
       oauth_idx,
+      pool,
     });
 
     nock("https://kauth.kakao.com").post("/oauth/token").reply(200, {
@@ -654,6 +662,9 @@ describe("GET /auth/oauth/kakao/redirect", () => {
 });
 
 describe("POST /auth/oauth/signup", () => {
+  afterEach(async () => {
+    await clearDatabase();
+  });
   const agent = request(app);
   it("회원가입 성공한 경우 상태코드 200을 응답해야한다.", async () => {
     nock("https://kauth.kakao.com").post("/oauth/token").reply(200, {
@@ -677,7 +688,7 @@ describe("POST /auth/oauth/signup", () => {
       cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_SEND}=`)
     );
 
-    const code = await helper.getTempCodeFromDb({ email });
+    const code = await helper.getTempCodeFromDb({ email, pool });
 
     const resVerify = await agent
       .post("/auth/verify-email/confirm")
@@ -691,7 +702,7 @@ describe("POST /auth/oauth/signup", () => {
     const res = await agent
       .post("/auth/oauth/signup")
       .set("Cookie", `${resOauthCookie}; ${resVerifyCookie}`)
-      .send({ nickname: "test", code });
+      .send({ nickname: "test" });
 
     expect(res.status).toBe(200);
     expect(res.body.message).toBe("요청 처리 성공");
@@ -719,7 +730,7 @@ describe("POST /auth/oauth/signup", () => {
       cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_SEND}=`)
     );
 
-    const code = await helper.getTempCodeFromDb({ email });
+    const code = await helper.getTempCodeFromDb({ email, pool });
 
     const resVerify = await agent
       .post("/auth/verify-email/confirm")
@@ -733,58 +744,11 @@ describe("POST /auth/oauth/signup", () => {
     const res = await agent
       .post("/auth/oauth/signup")
       .set("Cookie", `${resOauthCookie}; ${resVerifyCookie}`)
-      .send({ nickname: "test", code: "" });
+      .send({ nickname: "" });
 
     expect(res.status).toBe(400);
     expect(res.body.message).toBe("입력값 확인 필요");
-    expect(res.body.target).toBe("code");
-  });
-
-  it("이메일 인증번호를 조회할 수 없으면 상태코드 400를 응답해야한다.", async () => {
-    nock("https://kauth.kakao.com").post("/oauth/token").reply(200, {
-      access_token: "some_access_token",
-      refresh_token: "some_refresh_token",
-      refresh_token_expires_in: 123123,
-    });
-
-    nock("https://kapi.kakao.com").get("/v2/user/me").reply(200, { id: 1 });
-
-    const resOauth = await agent.get("/auth/oauth/kakao/redirect?code=code");
-    const resOauthCookie = resOauth.headers["set-cookie"].find((cookie) =>
-      cookie.startsWith(`${COOKIE_NAME.OAUTH_INDEX}=`)
-    );
-
-    jest.spyOn(service, "sendEmailVerificationCode").mockResolvedValue();
-
-    const email = "test@test.com";
-    const resEmail = await agent.post("/auth/verify-email").send({ email });
-    const resEmailCookie = resEmail.headers["set-cookie"].find((cookie) =>
-      cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_SEND}=`)
-    );
-
-    const code = await helper.getTempCodeFromDb({ email });
-
-    const resVerify = await agent
-      .post("/auth/verify-email/confirm")
-      .set("Cookie", resEmailCookie)
-      .send({ code });
-
-    const resVerifyCookie = resVerify.headers["set-cookie"].find((cookie) =>
-      cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_VERIFIED}=`)
-    );
-
-    const client = await pool.connect();
-    await client.query(`DELETE FROM users.codes`);
-    client.release();
-
-    const res = await agent
-      .post("/auth/oauth/signup")
-      .set("Cookie", `${resOauthCookie}; ${resVerifyCookie}`)
-      .send({ nickname: "test", code });
-
-    expect(res.status).toBe(400);
-    expect(res.body.message).toBe("입력값 확인 필요");
-    expect(res.body.target).toBe("code");
+    expect(res.body.target).toBe("nickname");
   });
 
   it("카카오 인증정보가 유효하지 않은 경우 상태코드 401을 응답해야한다.", async () => {
@@ -796,7 +760,7 @@ describe("POST /auth/oauth/signup", () => {
       cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_SEND}=`)
     );
 
-    const code = await helper.getTempCodeFromDb({ email });
+    const code = await helper.getTempCodeFromDb({ email, pool });
 
     const resVerify = await agent
       .post("/auth/verify-email/confirm")
@@ -810,7 +774,7 @@ describe("POST /auth/oauth/signup", () => {
     const res = await agent
       .post("/auth/oauth/signup")
       .set("Cookie", resVerifyCookie)
-      .send({ nickname: "test", code: "123456" });
+      .send({ nickname: "test" });
 
     expect(res.status).toBe(401);
     expect(res.body.message).toBe("카카오 인증되지 않음");
@@ -833,7 +797,7 @@ describe("POST /auth/oauth/signup", () => {
     const res = await agent
       .post("/auth/oauth/signup")
       .set("Cookie", resOauthCookie)
-      .send({ nickname: "test", code: "123456" });
+      .send({ nickname: "test" });
 
     expect(res.status).toBe(401);
     expect(res.body.message).toBe("이메일 인증되지 않음");
@@ -861,7 +825,7 @@ describe("POST /auth/oauth/signup", () => {
       cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_SEND}=`)
     );
 
-    const code = await helper.getTempCodeFromDb({ email });
+    const code = await helper.getTempCodeFromDb({ email, pool });
 
     const resVerify = await agent
       .post("/auth/verify-email/confirm")
@@ -878,12 +842,13 @@ describe("POST /auth/oauth/signup", () => {
       nickname: "test",
       email: "test1@test.com",
       role: "USER",
+      pool,
     });
 
     const res = await agent
       .post("/auth/oauth/signup")
       .set("Cookie", `${resOauthCookie}; ${resVerifyCookie}`)
-      .send({ nickname: "test", code });
+      .send({ nickname: "test" });
 
     expect(res.status).toBe(409);
     expect(res.body.message).toBe("중복 닉네임 회원 있음");
@@ -912,7 +877,7 @@ describe("POST /auth/oauth/signup", () => {
       cookie.startsWith(`${COOKIE_NAME.EMAIL_AUTH_SEND}=`)
     );
 
-    const code = await helper.getTempCodeFromDb({ email });
+    const code = await helper.getTempCodeFromDb({ email, pool });
 
     const resVerify = await agent
       .post("/auth/verify-email/confirm")
@@ -929,12 +894,13 @@ describe("POST /auth/oauth/signup", () => {
       nickname: "test1",
       email: "test@test.com",
       role: "USER",
+      pool,
     });
 
     const res = await agent
       .post("/auth/oauth/signup")
       .set("Cookie", `${resOauthCookie}; ${resVerifyCookie}`)
-      .send({ nickname: "test", code });
+      .send({ nickname: "test" });
 
     expect(res.status).toBe(409);
     expect(res.body.message).toBe("중복 이메일 회원 있음");
@@ -943,6 +909,9 @@ describe("POST /auth/oauth/signup", () => {
 });
 
 describe("DELETE /signout", () => {
+  afterEach(async () => {
+    await clearDatabase();
+  });
   const agent = request(app);
   it("로컬 로그인한 회원이 로그아웃 성공한 경우 상태코드 200을 응답해야한다.", async () => {
     await helper.createTempUserReturnIdx({
@@ -951,6 +920,7 @@ describe("DELETE /signout", () => {
       nickname: "test",
       email: "test@test.com",
       role: "USER",
+      pool,
     });
 
     const resSignin = await agent.post("/auth/signin").send({ id: "test", pw: "Test!1@2" });
@@ -977,6 +947,7 @@ describe("DELETE /signout", () => {
       encryptedAccessToken: "encrypted_access_token",
       encryptedRefreshToken: "enchrypted_refresh_token",
       refreshTokenExpiresIn: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
+      pool,
     });
 
     helper.createTempUserReturnIdx({
@@ -986,6 +957,7 @@ describe("DELETE /signout", () => {
       email: "test@test.com",
       role: "USER",
       oauth_idx,
+      pool,
     });
 
     nock("https://kauth.kakao.com").post("/oauth/token").reply(200, {
@@ -1003,10 +975,12 @@ describe("DELETE /signout", () => {
       cookie.startsWith(`${COOKIE_NAME.ACCESS_TOKEN}=`)
     );
 
-    jest.spyOn(algorithm, "decrypt").mockResolvedValue();
+    jest
+      .spyOn(algorithm, "decrypt")
+      .mockResolvedValue({ isDecrypted: true, results: "decrypted_access_token" });
 
     const res = await agent.delete("/auth/signout").set("Cookie", resOauthCookie);
-
+    // console.log(res);
     expect(res.status).toBe(200);
     expect(res.body.message).toBe("요청 처리 성공");
 
@@ -1026,6 +1000,9 @@ describe("DELETE /signout", () => {
 });
 
 describe("GET /status", () => {
+  afterEach(async () => {
+    await clearDatabase();
+  });
   const agent = request(app);
   it("상태조회 성공한 경우 상태코드 200을 응답해야한다.", async () => {
     const id = "test";
@@ -1036,14 +1013,18 @@ describe("GET /status", () => {
       nickname: "test",
       email: "test@test.com",
       role: "USER",
+      pool,
     });
 
     const resSignin = await agent.post("/auth/signin").send({ id, pw });
-    const resSigninCookie = resSignin.headers["set-cookie"].find((cookie) =>
+    const resAccessCookie = resSignin.headers["set-cookie"].find((cookie) =>
       cookie.startsWith(`${COOKIE_NAME.ACCESS_TOKEN}=`)
     );
+    const resRefreshCookie = resSignin.headers["set-cookie"].find((cookie) =>
+      cookie.startsWith(`${COOKIE_NAME.REFRESH_TOKEN}=`)
+    );
 
-    const res = await agent.get("/auth/status").set("Cookie", resSigninCookie);
+    const res = await agent.get("/auth/status").set("Cookie", [resRefreshCookie, resAccessCookie]);
 
     expect(res.status).toBe(200);
     expect(res.body.data.nickname).toBe("test");

@@ -4,8 +4,8 @@ exports.getRestaurantInfoListFromDb = async ({
   category_idx,
   range,
   page,
-  user_longitude,
-  user_latitude,
+  longitude,
+  latitude,
   client,
 }) => {
   const check_total = await client.query(
@@ -25,7 +25,7 @@ exports.getRestaurantInfoListFromDb = async ({
         $4
       )
     `,
-    [category_idx, user_longitude, user_latitude, range]
+    [category_idx, longitude, latitude, range]
   );
 
   const results = await client.query(
@@ -74,7 +74,7 @@ exports.getRestaurantInfoListFromDb = async ({
       OFFSET $6
       LIMIT 15
     `,
-    [users_idx, category_idx, user_longitude, user_latitude, range, 15 * (page - 1)]
+    [users_idx, category_idx, longitude, latitude, range, 15 * (page - 1)]
   );
 
   return {
@@ -185,8 +185,8 @@ exports.getRecommendRestaurantFromDb = async ({
   users_idx,
   category_idx,
   range,
-  user_longitude,
-  user_latitude,
+  longitude,
+  latitude,
   client,
 }) => {
   const results = await client.query(
@@ -230,7 +230,7 @@ exports.getRecommendRestaurantFromDb = async ({
       ORDER BY RANDOM()
       LIMIT 1
     `,
-    [users_idx, category_idx, user_longitude, user_latitude, range]
+    [users_idx, category_idx, longitude, latitude, range]
   );
 
   return results.rows[0] ?? {};

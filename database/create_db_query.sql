@@ -1,3 +1,8 @@
+CREATE SCHEMA users;
+CREATE SCHEMA restaurants;
+CREATE SCHEMA menus;
+CREATE SCHEMA reviews;
+
 CREATE TABLE users.codes
 (
   idx         serial       PRIMARY KEY,
@@ -7,20 +12,6 @@ CREATE TABLE users.codes
 );
 
 create type role_enum as enum ('ADMIN', 'USER');
-
-CREATE TABLE users.lists
-(
-  idx        serial       PRIMARY KEY,
-  id         varchar(50)  NULL UNIQUE,
-  pw         varchar(32)  NULL,
-  role       role_enum    NOT NULL,
-  oauth_idx  bigint       NULL REFERENCES users.oauth(idx),
-  email      varchar(254) NOT NULL UNIQUE,
-  nickname   varchar(50)  NOT NULL UNIQUE,
-  is_deleted boolean      NOT NULL DEFAULT false,
-  created_at timestamp    NOT NULL DEFAULT current_timestamp,
-  updated_at timestamp    NOT NULL DEFAULT current_timestamp
-);
 
 CREATE TABLE users.oauth
 (
@@ -35,17 +26,19 @@ CREATE TABLE users.oauth
   updated_at          timestamp   NOT NULL DEFAULT current_timestamp
 );
 
-CREATE TABLE users.local_tokens
+CREATE TABLE users.lists
 (
-  idx                 serial      PRIMARY KEY,
-  users_idx           bigint      NOT NULL REFERENCES users.lists(idx),
-  refresh_token       text        NOT NULL,
-  refresh_expired_at  timestamp   NOT NULL,
-  is_deleted          boolean     NOT NULL DEFAULT false,
-  created_at          timestamp   NOT NULL DEFAULT current_timestamp,
-  updated_at          timestamp   NOT NULL DEFAULT current_timestamp
+  idx        serial       PRIMARY KEY,
+  id         varchar(50)  NULL UNIQUE,
+  pw         varchar(32)  NULL,
+  role       role_enum    NOT NULL,
+  oauth_idx  bigint       NULL REFERENCES users.oauth(idx),
+  email      varchar(254) NOT NULL UNIQUE,
+  nickname   varchar(50)  NOT NULL UNIQUE,
+  is_deleted boolean      NOT NULL DEFAULT false,
+  created_at timestamp    NOT NULL DEFAULT current_timestamp,
+  updated_at timestamp    NOT NULL DEFAULT current_timestamp
 );
-
 
 CREATE TABLE users.reports
 (
