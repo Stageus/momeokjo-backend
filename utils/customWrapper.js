@@ -3,7 +3,10 @@ const tryCatchWrapper = (func) => async (req, res, next) => {
   try {
     await func(req, res, next);
   } catch (err) {
+    await client.query("ROLLBACK");
     next(err);
+  } finally {
+    client.release(); // 클라이언트 반환
   }
 };
 

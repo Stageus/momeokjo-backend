@@ -1,3 +1,4 @@
+
 CREATE SCHEMA users;
 CREATE SCHEMA restaurants;
 CREATE SCHEMA menus;
