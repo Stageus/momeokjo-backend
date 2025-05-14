@@ -73,11 +73,32 @@ exports.signUpWithOauth = tryCatchWrapperWithDb(getPool())(async (req, res, next
   const { email } = req[COOKIE_NAME.EMAIL_AUTH_VERIFIED];
   const { nickname } = req.body;
 
-  await as.createUserAtDb({ client, id: null, pw: null, nickname, email, role: "USER", oauth_idx });
+  const users_idx = await as.createUserAtDb({
+    client,
+    id: null,
+    pw: null,
+    nickname,
+    email,
+    role: "USER",
+    oauth_idx,
+  });
+
+  const { isCreated: isAccessCreated, results: accessResults } = jwt.createAccessToken({
+    payload: { users_idx, provider: "KAKAO", role: "USER" },
+  });
+  if (!isAccessCreated) throw customErrorResponse({ status: 500, message: results });
+  const { isCreated: isRefreshCreated, results: refreshResults } = jwt.createRefreshToken({
+    payload: { users_idx, role: "USER" },
+  });
+  if (!isRefreshCreated) throw customErrorResponse({ status: 500, message: results });
 
   // 쿠키 삭제
   res.clearCookie(COOKIE_NAME.EMAIL_AUTH_VERIFIED, baseCookieOptions);
   res.clearCookie(COOKIE_NAME.OAUTH_INDEX, baseCookieOptions);
+
+  res.cookie(COOKIE_NAME.REFRESH_TOKEN, refreshResults, refreshTokenOptions);
+  res.cookie(COOKIE_NAME.ACCESS_TOKEN, accessResults, accessTokenOptions);
+
   res.status(200).json({ message: "요청 처리 성공" });
 });
 
@@ -228,12 +249,17 @@ exports.checkOauthAndRedirect = tryCatchWrapperWithDb(getPool())(async (req, res
     res.cookie(COOKIE_NAME.OAUTH_INDEX, results, accessTokenOptions);
     res.redirect("http://localhost:5173/oauth-signup");
   } else {
-    const { isCreated, results } = jwt.createAccessToken({
+    const { isCreated: isAccessCreated, results: accessResults } = jwt.createAccessToken({
       payload: { users_idx, provider: "KAKAO", role: "USER" },
     });
-    if (!isCreated) throw customErrorResponse({ status: 500, message: results });
+    if (!isAccessCreated) throw customErrorResponse({ status: 500, message: results });
+    const { isCreated: isRefreshCreated, results: refreshResults } = jwt.createRefreshToken({
+      payload: { users_idx, role: "USER" },
+    });
+    if (!isRefreshCreated) throw customErrorResponse({ status: 500, message: results });
 
-    res.cookie(COOKIE_NAME.ACCESS_TOKEN, results, accessTokenOptions);
+    res.cookie(COOKIE_NAME.REFRESH_TOKEN, refreshResults, refreshTokenOptions);
+    res.cookie(COOKIE_NAME.ACCESS_TOKEN, accessResults, accessTokenOptions);
     res.redirect("http://localhost:5173");
   }
 });

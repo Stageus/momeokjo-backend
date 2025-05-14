@@ -45,10 +45,18 @@ exports.checkLocalRefreshTokenFromDb = async ({ client, users_idx }) => {
 };
 
 exports.createUserAtDb = async ({ client, id, pw, nickname, email, role, oauth_idx = null }) => {
-  await client.query(
-    "INSERT INTO users.lists (id, pw, nickname, email, role, oauth_idx) VALUES ($1, $2, $3, $4, $5, $6);",
+  const result = await client.query(
+    `
+    INSERT INTO users.lists (
+      id, pw, nickname, email, role, oauth_idx
+    ) VALUES (
+      $1, $2, $3, $4, $5, $6
+    ) 
+    RETURNING idx AS users_idx;`,
     [id, pw, nickname, email, role, oauth_idx]
   );
+
+  return result.rows[0].users_idx;
 };
 
 exports.getUserIdFromDb = async ({ client, email }) => {
