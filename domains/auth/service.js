@@ -194,7 +194,7 @@ exports.checkOauthUserAtDb = async ({ client, provider_user_id, provider }) => {
   const results = await client.query(
     `
       SELECT
-        TO_TIMESTAMP(oauth.refresh_expires_in) > NOW() AS is_existed,
+        NOW() < TO_TIMESTAMP(EXTRACT(EPOCH FROM oauth.created_at) + oauth.refresh_expires_in) AS is_existed,
         users.idx AS users_idx
       FROM users.oauth oauth
       JOIN users.lists users ON users.oauth_idx = oauth.idx
