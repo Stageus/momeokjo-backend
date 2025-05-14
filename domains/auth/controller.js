@@ -226,7 +226,7 @@ exports.checkOauthAndRedirect = tryCatchWrapperWithDb(getPool())(async (req, res
     if (!isCreated) throw customErrorResponse({ status: 500, message: results });
 
     res.cookie(COOKIE_NAME.OAUTH_INDEX, results, accessTokenOptions);
-    res.redirect("http://localhost:3000/oauth/signup");
+    res.redirect("http://localhost:5173/oauth-signup");
   } else {
     const { isCreated, results } = jwt.createAccessToken({
       payload: { users_idx, provider: "KAKAO", role: "USER" },
@@ -234,7 +234,7 @@ exports.checkOauthAndRedirect = tryCatchWrapperWithDb(getPool())(async (req, res
     if (!isCreated) throw customErrorResponse({ status: 500, message: results });
 
     res.cookie(COOKIE_NAME.ACCESS_TOKEN, results, accessTokenOptions);
-    res.redirect("http://localhost:3000/");
+    res.redirect("http://localhost:5173");
   }
 });
 
