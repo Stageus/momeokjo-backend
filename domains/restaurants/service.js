@@ -61,6 +61,7 @@ exports.getRestaurantInfoListFromDb = async ({
       JOIN restaurants.categories AS category ON list.categories_idx = category.idx
       LEFT JOIN tot_likes ON list.idx = tot_likes.restaurants_idx
       LEFT JOIN restaurants.likes likes ON list.idx = likes.restaurants_idx
+        AND likes.is_deleted = false
       WHERE list.is_deleted = false
       AND category.is_deleted = false
       AND (
@@ -217,6 +218,7 @@ exports.getRecommendRestaurantFromDb = async ({
       JOIN restaurants.categories AS category ON list.categories_idx = category.idx
       LEFT JOIN tot_likes ON list.idx = tot_likes.restaurants_idx
       LEFT JOIN restaurants.likes likes ON list.idx = likes.restaurants_idx
+        AND likes.is_deleted = false
       WHERE list.is_deleted = false
       AND category.is_deleted = false
       AND (
@@ -488,6 +490,7 @@ exports.getRestaurantInfoByIdxFromDb = async ({ users_idx, restaurants_idx, clie
       JOIN restaurants.categories AS category ON list.categories_idx = category.idx
       LEFT JOIN tot_likes ON list.idx = tot_likes.restaurants_idx
       LEFT JOIN restaurants.likes likes ON list.idx = likes.restaurants_idx
+        AND likes.is_deleted = false
       WHERE list.idx = $2
       AND list.is_deleted = false
       AND category.is_deleted = false
