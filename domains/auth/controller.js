@@ -35,21 +35,6 @@ exports.signIn = tryCatchWrapperWithDb(getPool())(async (req, res, next, client)
 
 // 로그아웃
 exports.signOut = tryCatchWrapperWithDb(getPool())(async (req, res, next, client) => {
-  const { users_idx, provider } = req[COOKIE_NAME.ACCESS_TOKEN];
-
-  if (provider !== "LOCAL") {
-    const { accessToken, provider_user_id } = await as.getOauthAccessTokenFromDb({
-      client,
-      users_idx,
-    });
-
-    const decryptedAccessToken = await algorithm.decrypt(accessToken);
-    if (!decryptedAccessToken.isDecrypted)
-      throw customErrorResponse({ status: 500, message: decryptedAccessToken.results });
-
-    await as.requestKakaoLogout({ accessToken: decryptedAccessToken.results, provider_user_id });
-  }
-
   res.clearCookie(COOKIE_NAME.REFRESH_TOKEN, baseCookieOptions);
   res.clearCookie(COOKIE_NAME.ACCESS_TOKEN, baseCookieOptions);
   res.status(200).json({ message: "요청 처리 성공" });
