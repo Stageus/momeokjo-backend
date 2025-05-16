@@ -54,7 +54,7 @@ exports.getRestaurantInfoListFromDb = async ({
             'start_time', start_time,
             'end_time', end_time,
             'is_mine', CASE WHEN list.users_idx = $1 THEN true ELSE false END,
-            'is_my_likes', CASE WHEN likes.users_idx = $1 THEN true ELSE false END
+            'is_my_like', CASE WHEN likes.users_idx = $1 THEN true ELSE false END
           )
         ), '[]'::json) AS data
       FROM restaurants.lists AS list
