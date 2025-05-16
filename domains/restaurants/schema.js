@@ -114,6 +114,11 @@ exports.updateRestaurantCategoryByIdx = {
       defaultValue: null,
       regexp: REGEXP.CATEGORY_NAME,
     },
+    is_deleted: {
+      isRequired: true,
+      defaultValue: null,
+      regexp: REGEXP.BOOLEAN,
+    },
   },
 };
 

@@ -91,11 +91,12 @@ exports.updateRestaurantCategoryByIdx = tryCatchWrapperWithDb(getPool())(
       throw customErrorResponse({ status: 403, message: "권한 없음" });
 
     const { category_idx } = req.params;
-    const { category_name } = req.body;
+    const { category_name, is_deleted } = req.body;
 
     const updated_idx = await rs.updateRestaurantCategoryByIdxAtDb({
       category_idx,
       category_name,
+      is_deleted,
       client,
     });
 

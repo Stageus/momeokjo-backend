@@ -166,16 +166,20 @@ exports.createRestaurantCategoryAtDb = async ({ users_idx, category_name, client
 };
 
 // 음식점 카테고리 수정
-exports.updateRestaurantCategoryByIdxAtDb = async ({ category_idx, category_name, client }) => {
+exports.updateRestaurantCategoryByIdxAtDb = async ({
+  category_idx,
+  category_name,
+  is_deleted,
+  client,
+}) => {
   const results = await client.query(
     `
       UPDATE restaurants.categories
-      SET name = $1
-      WHERE idx = $2
-      AND is_deleted = false
+      SET name = $1, is_deleted = $2
+      WHERE idx = $3
       RETURNING idx AS category_idx
     `,
-    [category_name, category_idx]
+    [category_name, is_deleted, category_idx]
   );
 
   return results.rows[0]?.category_idx;
