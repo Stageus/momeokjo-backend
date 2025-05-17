@@ -139,7 +139,8 @@ exports.getRestaurantCategoryListFromDb = async ({ include_deleted, client }) =>
     `
       SELECT
         idx AS category_idx,
-        name AS category_name
+        name AS category_name,
+        is_deleted
       FROM restaurants.categories
       WHERE (is_deleted = false OR true = $1);
     `,
